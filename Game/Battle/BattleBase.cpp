@@ -11,10 +11,27 @@ namespace Game {
 		_skillSelect->SetUIMode(true)
 			->Disable();
 
+		_skillSelect->SkillSelected += [this](const SkillInfo& skill) {
+			StartAttack(skill);
+		};
+
 		_battleUI->AtkPressed += [this]() {
 			_battleUI->Out();
 			_skillSelect->In();
 			};
+	}
+
+	void BattleBase::StartAttack(const SkillInfo& skill) {
+		if (_allies.empty() || _enemies.empty()) return;
+		_skillSelect->Disable();
+		if (not _attack) {
+			_attack = CreateScene<BattleAttack>();
+			_attack->Completed().Connect([this]() {
+				_attack->Disable();
+				_battleUI->In();
+			}, true);
+		}
+		_attack->Start(_allies.front(), _enemies.front(), skill);
 	}
 
 	void BattleBase::PutCharacters() {

@@ -47,6 +47,10 @@ namespace Game
 		void SetStats(const BattleCharacterStats stats) { _stats = stats; }
 		void SetState(const BattleCharacterState state) { _currentState = state; }
 	public:
-
+		void PlayAnimation(int animation, bool loop = false);
+		void ApplyDamage(int damage);
+		[[nodiscard]] int GetCurrentHP() const { return _currentState.currentHP; }
+		[[nodiscard]] bool IsDead() const { return _currentState.currentHP <= 0; }
+		[[nodiscard]] const BattleCharacterState& GetState() const { return _currentState; }
 	};
 }

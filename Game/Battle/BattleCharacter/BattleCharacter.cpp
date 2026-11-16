@@ -21,4 +21,22 @@ namespace Game {
 
 		_sprite->Play(0);
 	}
+
+	void BattleCharacter::PlayAnimation(int animation, bool loop) {
+		if (_sprite) {
+			_sprite->Play(animation, loop);
+		}
+	}
+
+	void BattleCharacter::ApplyDamage(int damage) {
+		const int appliedDamage = damage > 0 ? damage : 0;
+		_currentState.currentHP = _currentState.currentHP > appliedDamage
+			? _currentState.currentHP - appliedDamage : 0;
+		if (IsDead()) {
+			PlayAnimation(3);
+		}
+		else {
+			PlayAnimation(2);
+		}
+	}
 }

@@ -3,6 +3,6 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
-  <Project Path="../Novot/Novot.vcxproj" />
+  <Project Path="../Novot/Novot.vcxproj" Id="6a2f267e-1288-4db9-b9ff-023707f5d108" />
   <Project Path="OnBoard.vcxproj" />
 </Solution>

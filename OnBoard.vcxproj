@@ -74,6 +74,11 @@
     <Import Project="..\Novot\PropertySheet.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>..\Novot\ThirdParty\Lua\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -149,6 +154,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Game\Battle\BattleBase.cpp" />
+    <ClCompile Include="Game\Battle\BattleAttack.cpp" />
     <ClCompile Include="Game\Battle\BattleCharacter\BattleCharacter.cpp" />
     <ClCompile Include="Game\Battle\BattleCharacter\Plea.cpp" />
     <ClCompile Include="Game\Battle\BattleCharacter\Reko.cpp" />
@@ -159,6 +165,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Game\Battle\BattleBase.h" />
+    <ClInclude Include="Game\Battle\BattleAttack.h" />
+    <ClInclude Include="Game\Battle\SkillInfo.h" />
     <ClInclude Include="Game\Battle\BattleCharacter\BattleCharacter.h" />
     <ClInclude Include="Game\Battle\BattleCharacter\Plea.h" />
     <ClInclude Include="Game\Battle\BattleCharacter\Reko.h" />
