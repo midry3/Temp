@@ -5,7 +5,7 @@ namespace Game {
 	void BattleUI::_Load() {
 		AnimatedUI::_Load();
 		SetInTime(0.5);
-		SetOutTime(0.5);
+		SetOutTime(0.2);
 
 		_outlineBuffer = OutLineShader::CreateConstantBuffer();
 

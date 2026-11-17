@@ -3,6 +3,8 @@
 
 namespace Game {
 	void BattleBase::_Load() {
+	_background = CreateScene<BattleBackground>();
+
 		_battleUI = CreateScene<BattleUI>();
 		_battleUI->SetUIMode(true)
 			;//->Disable();
@@ -17,6 +19,9 @@ namespace Game {
 
 		_battleUI->AtkPressed += [this]() {
 			_battleUI->Out();
+			if (not _allies.empty()) {
+				_skillSelect->SetSkills(_allies.front()->GetSkills());
+			}
 			_skillSelect->In();
 			};
 	}
@@ -29,7 +34,7 @@ namespace Game {
 			_attack->Completed().Connect([this]() {
 				_attack->Disable();
 				_battleUI->In();
-			}, true);
+			});
 		}
 		_attack->Start(_allies.front(), _enemies.front(), skill);
 	}

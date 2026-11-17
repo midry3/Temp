@@ -15,10 +15,22 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Game\Board\BoardBase.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\Board\BoardTile.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\Board\BoardUnit.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
     <ClCompile Include="main.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="Game\Battle\BattleBase.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\Battle\BattleBackground.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="Game\Battle\TestBattle.cpp">
@@ -39,9 +51,30 @@
     <ClCompile Include="Game\Battle\SkillSelect.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="Game\Battle\BattleAttack.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\TestScene.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Game\Board\BoardBase.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\Board\BoardTile.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\Board\BoardTypes.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\Board\BoardUnit.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
     <ClInclude Include="Game\Battle\BattleBase.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\Battle\BattleBackground.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Game\Battle\BattleCharacter\BattleCharacter.h">
@@ -62,8 +95,34 @@
     <ClInclude Include="Game\Battle\SkillSelect.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="Game\Battle\BattleAttack.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\Battle\SkillInfo.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\TestScene.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Shader\BlurInShader.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Shader\BlurOutShader.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Shader\ConcentrationLineShader.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
+    <None Include="Assets\board\default.lua" />
     <None Include="Assets\chara\plea\idle.png.anim" />
+    <None Include="Assets\chara\plea\attack\fire.lua" />
+    <None Include="Assets\chara\plea\attack_front.png.anim" />
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="Shader\BlurInShader.hlsl" />
+    <FxCompile Include="Shader\BlurOutShader.hlsl" />
+    <FxCompile Include="Shader\ConcentrationLineShader.hlsl" />
   </ItemGroup>
 </Project>

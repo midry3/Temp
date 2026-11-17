@@ -1,4 +1,5 @@
 #include <Novot.h>
+#include "Game/Board/BoardBase.h"
 #include "Game/Battle/TestBattle.h"
 
 void Novot::Setup() {

@@ -1,27 +1,87 @@
 #include "SkillSelect.h"
 #include <Scene/Container/Grid/GridContainer.h>
+#include <format>
 
 namespace Game {
+	namespace {
+		std::string GetPrimaryAttributeDescription(const std::string& attribute) {
+			if (attribute == "physical") return "物理: 武器や肉体による攻撃";
+			if (attribute == "special") return "特殊: 魔法や特殊能力による攻撃";
+			return "第一属性: 不明";
+		}
+
+		std::string GetSecondaryAttributeDescription(const std::string& attribute) {
+			if (attribute == "fire") return "火: 炎や熱を操る属性";
+			if (attribute == "water") return "水: 水流や冷気を操る属性";
+			if (attribute == "nature") return "自然: 植物や大地の力を操る属性";
+			return "第二属性: 不明";
+		}
+	}
+
 	void SkillSelect::_Load() {
 		AnimatedUI::_Load();
 		SetInTime(0.5);
 		SetOutTime(0.5);
 		_outlineBuffer = OutLineShader::CreateConstantBuffer();
-		_skills = {
-			{ "Attack", "physical", "battle/attack.lua" },
-			{ "Fire", "fire", "battle/fire.lua" },
-			{ "Ice", "ice", "battle/ice.lua" },
-			{ "Heal", "holy", "battle/heal.lua" }
-		};
 
-		const auto& buttonGrid = CreateScene<GridContainer>();
-		buttonGrid->SetMatrixSize({ 1, 4 })
+		const auto& descriptionPanel = CreateScene<ColorRect>();
+		descriptionPanel->SetSize({ 380, 500 })
+			->SetColor({ 30, 30, 30 })
+			->SetAlpha(230)
+			->SetPosition({ 800, 100 });
+
+		_skillNameLabel = CreateScene<TextLabel>();
+		_skillNameLabel->BeginSetting()
+			->SetFontSize(28)
+			->EndSetting()
+			->SetPosition({ 825, 125 });
+
+		_primaryAttributeLabel = CreateScene<TextLabel>();
+		_primaryAttributeLabel->BeginSetting()
+			->SetFontSize(20)
+			->EndSetting()
+			->SetPosition({ 825, 200 });
+
+		_secondaryAttributeLabel = CreateScene<TextLabel>();
+		_secondaryAttributeLabel->BeginSetting()
+			->SetFontSize(20)
+			->EndSetting()
+			->SetPosition({ 825, 275 });
+
+		_buttonGrid = CreateScene<GridContainer>();
+		_buttonGrid->SetMatrixSize({ 1, 1 })
 			->SetSpace({ 0, 20 })
 			->SetSize({ 200, 500 })
 			->SetPosition({ 100, 100 });
 
-		for (int i = 0; i < 4; i++) {
-			const auto& skillButton = buttonGrid->CreateScene<TextureButton>();
+		RebuildButtons();
+
+		_outlineBuffer.param->glowColor[0] = 0.8f;
+		_outlineBuffer.param->glowColor[1] = 0.6f;
+		_outlineBuffer.param->glowColor[2] = 0.0f;
+		_outlineBuffer.param->glowColor[3] = 1.0f;
+		_outlineBuffer.param->outlineWidth = 2.0f;
+		_outlineBuffer.param->textureSize[0] = 98.0f;
+		_outlineBuffer.param->textureSize[1] = 48.0f;
+		_outlineBuffer.param->time = 0.0f;
+	}
+
+	void SkillSelect::SetSkills(const std::vector<SkillInfo>& skills) {
+		_skills = skills;
+		if (_buttonGrid) RebuildButtons();
+	}
+
+	void SkillSelect::RebuildButtons() {
+		if (not _buttonGrid) return;
+		while (_buttonGrid->GetChildSceneCount() > 0) {
+			_buttonGrid->DeleteScene(_buttonGrid->GetChildSceneCount() - 1);
+		}
+		_buttonGrid->SetMatrixSize({
+			1, _skills.empty() ? 1.0 : static_cast<double>(_skills.size())
+			});
+
+		for (size_t i = 0; i < _skills.size(); i++) {
+			const auto& skillButton = _buttonGrid->CreateScene<TextureButton>();
 			skillButton->SetTexture(LoadAsset<Texture>("ui/skill.png"))
 				->SetScale(2)
 				->SetPixelShader<OutLineShader>()
@@ -40,16 +100,17 @@ namespace Game {
 						};
 				}
 				};
+			skillButton->Entered += [this, i](const MouseEvent&) {
+				UpdateDescription(_skills.at(i));
+				};
 			SetButtonAnimation(skillButton);
 		}
-		_outlineBuffer.param->glowColor[0] = 0.8f;
-		_outlineBuffer.param->glowColor[1] = 0.6f;
-		_outlineBuffer.param->glowColor[2] = 0.0f;
-		_outlineBuffer.param->glowColor[3] = 1.0f;
-		_outlineBuffer.param->outlineWidth = 2.0f;
-		_outlineBuffer.param->textureSize[0] = 98.0f;
-		_outlineBuffer.param->textureSize[1] = 48.0f;
-		_outlineBuffer.param->time = 0.0f;
+	}
+
+	void SkillSelect::UpdateDescription(const SkillInfo& skill) {
+		_skillNameLabel->SetText(std::format("技名: {}", skill.name));
+		_primaryAttributeLabel->SetText(GetPrimaryAttributeDescription(skill.primaryAttribute));
+		_secondaryAttributeLabel->SetText(GetSecondaryAttributeDescription(skill.secondaryAttribute));
 	}
 
 	void SkillSelect::_Update(float dt) {

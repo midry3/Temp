@@ -153,7 +153,11 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Game\Board\BoardBase.cpp" />
+    <ClCompile Include="Game\Board\BoardTile.cpp" />
+    <ClCompile Include="Game\Board\BoardUnit.cpp" />
     <ClCompile Include="Game\Battle\BattleBase.cpp" />
+    <ClCompile Include="Game\Battle\BattleBackground.cpp" />
     <ClCompile Include="Game\Battle\BattleAttack.cpp" />
     <ClCompile Include="Game\Battle\BattleCharacter\BattleCharacter.cpp" />
     <ClCompile Include="Game\Battle\BattleCharacter\Plea.cpp" />
@@ -161,10 +165,16 @@
     <ClCompile Include="Game\Battle\BattleUI.cpp" />
     <ClCompile Include="Game\Battle\SkillSelect.cpp" />
     <ClCompile Include="Game\Battle\TestBattle.cpp" />
+    <ClCompile Include="Game\TestScene.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Game\Board\BoardBase.h" />
+    <ClInclude Include="Game\Board\BoardTile.h" />
+    <ClInclude Include="Game\Board\BoardTypes.h" />
+    <ClInclude Include="Game\Board\BoardUnit.h" />
     <ClInclude Include="Game\Battle\BattleBase.h" />
+    <ClInclude Include="Game\Battle\BattleBackground.h" />
     <ClInclude Include="Game\Battle\BattleAttack.h" />
     <ClInclude Include="Game\Battle\SkillInfo.h" />
     <ClInclude Include="Game\Battle\BattleCharacter\BattleCharacter.h" />
@@ -173,9 +183,36 @@
     <ClInclude Include="Game\Battle\BattleUI.h" />
     <ClInclude Include="Game\Battle\SkillSelect.h" />
     <ClInclude Include="Game\Battle\TestBattle.h" />
+    <ClInclude Include="Game\TestScene.h" />
+    <ClInclude Include="Shader\BlurInShader.h" />
+    <ClInclude Include="Shader\BlurOutShader.h" />
+    <ClInclude Include="Shader\ConcentrationLineShader.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Assets\board\default.lua" />
+    <None Include="Assets\chara\plea\attack\fire.lua" />
+    <None Include="Assets\chara\plea\attack_front.png.anim" />
     <None Include="Assets\chara\plea\idle.png.anim" />
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="Shader\BlurInShader.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+    </FxCompile>
+    <FxCompile Include="Shader\BlurOutShader.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+    </FxCompile>
+    <FxCompile Include="Shader\ConcentrationLineShader.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+    </FxCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -4,12 +4,13 @@
 #include "BattleUI.h"
 #include "SkillSelect.h"
 #include "BattleAttack.h"
+#include "BattleBackground.h"
 
 namespace Game {
 	class BattleBase : public Scene {
 	private:
 		static constexpr int
-			ALLIES_X = 300,
+			ALLIES_X = 100,
 			ENEMIES_X = 1000,
 			CHARACTER_Y = 280,
 			CHARACTER_GRID_HEIGHT = 500;
@@ -18,6 +19,7 @@ namespace Game {
 		SharedPtr<BattleUI> _battleUI;
 		SharedPtr<SkillSelect> _skillSelect;
 		SharedPtr<BattleAttack> _attack;
+		SharedPtr<BattleBackground> _background;
 
 		void _Load() override;
 		void PutCharacters();

@@ -4,7 +4,8 @@
 namespace Game {
 	struct SkillInfo {
 		std::string name;
-		std::string attribute;
+		std::string primaryAttribute;
+		std::string secondaryAttribute;
 		std::string directionFile;
 	};
 }
