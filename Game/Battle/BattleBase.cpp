@@ -3,7 +3,7 @@
 
 namespace Game {
 	void BattleBase::_Load() {
-	_background = CreateScene<BattleBackground>();
+		_background = CreateScene<BattleBackground>();
 
 		_battleUI = CreateScene<BattleUI>();
 		_battleUI->SetUIMode(true)
@@ -15,7 +15,7 @@ namespace Game {
 
 		_skillSelect->SkillSelected += [this](const SkillInfo& skill) {
 			StartAttack(skill);
-		};
+			};
 
 		_battleUI->AtkPressed += [this]() {
 			_battleUI->Out();
@@ -24,6 +24,22 @@ namespace Game {
 			}
 			_skillSelect->In();
 			};
+
+		_state[Opening].Entered += [this]() {
+			CreateTimer(1.0, [this]() {
+				_state >> Command;
+			});
+			};
+		_state[Command].Entered += [this]() {
+			_battleUI->In();
+			for (const auto& ally : _allies) {
+				ally->PlayAnimation(0, true);
+			}
+			for (const auto& enemy : _enemies) {
+				enemy->PlayAnimation(0, true);
+			};
+			};
+		_state >> Opening;
 	}
 
 	void BattleBase::StartAttack(const SkillInfo& skill) {
@@ -33,9 +49,10 @@ namespace Game {
 			_attack = CreateScene<BattleAttack>();
 			_attack->Completed().Connect([this]() {
 				_attack->Disable();
-				_battleUI->In();
-			});
+				_state >> Command;
+				});
 		}
+		_state >> Direction;
 		_attack->Start(_allies.front(), _enemies.front(), skill);
 	}
 
@@ -55,4 +72,4 @@ namespace Game {
 			enemiesGrid->AddScene(enemy);
 		}
 	}
-}
+};

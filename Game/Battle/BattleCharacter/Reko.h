@@ -5,6 +5,7 @@ namespace Game {
 	namespace RekoAnimation {
 		enum {
 			BATTLE_CHARACTER_REQUIRED_ANIMATION,
+			AttackBeam
 		};
 	}
 
@@ -16,6 +17,7 @@ namespace Game {
 			DEFAULT_ATK = 10,
 			DEFAULT_DEF = 5,
 			DEFAULT_SPEED = 10;
+		SharedPtr<AnimatedSprite2D> _alphaAnim;
 	protected:
 		void _Load() override;
 	};

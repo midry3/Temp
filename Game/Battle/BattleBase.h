@@ -5,15 +5,24 @@
 #include "SkillSelect.h"
 #include "BattleAttack.h"
 #include "BattleBackground.h"
+#include <Event/StateMachine.h>
 
 namespace Game {
 	class BattleBase : public Scene {
 	private:
+		enum State {
+			Opening,
+			Command,
+			Direction,
+		};
+
 		static constexpr int
 			ALLIES_X = 100,
 			ENEMIES_X = 1000,
 			CHARACTER_Y = 280,
 			CHARACTER_GRID_HEIGHT = 500;
+
+		StateMachine _state;
 	protected:
 		std::vector<SharedPtr<BattleCharacter>> _allies, _enemies;
 		SharedPtr<BattleUI> _battleUI;

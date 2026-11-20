@@ -3,6 +3,9 @@
 namespace Game {
 	void BattleCharacter::_Load() {
 		_sprite = CreateScene<AnimatedSprite2D>();
+		_sprite->AnimationFinished.Connect([this](int animation) {
+			AnimationFinished.Emit(animation);
+		});
 	}
 
 	void BattleCharacter::Initialize() {
@@ -22,10 +25,14 @@ namespace Game {
 		_sprite->Play(0);
 	}
 
-	void BattleCharacter::PlayAnimation(int animation, bool loop) {
+	void BattleCharacter::PlayAnimation(int animation, std::optional<bool> loop, bool reverse) {
 		if (_sprite) {
-			_sprite->Play(animation, loop);
+			_sprite->Play(animation, loop, reverse);
 		}
+	}
+
+	Vector2D* BattleCharacter::GetAnimationPositionPointer() {
+		return _sprite ? _sprite->GetPositionPointer() : nullptr;
 	}
 
 	void BattleCharacter::ApplyDamage(int damage) {

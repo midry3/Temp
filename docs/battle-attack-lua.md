@@ -7,7 +7,18 @@
 attack = {
     duration = 1.0,
     actions = {
-        { time = 0.0, type = "animation", target = "actor", animation = 1 },
+        { time = 0.0,         type = "animation", target = "actor", animation = 1 },
+        { time = 0.1, type = "position_tween", target = "actor",
+        position = { x = 120, y = 0 }, duration = 0.25,
+        easing = "easeoutquad", restore = true },
+        { time = 0.2, type = "animation", target = "actor", animation = 1,
+        after = {
+            position = { x = 0, y = -24 },
+            offset = { x = 8, y = 0 },
+            duration = 0.2,
+            easing = "easeoutquad"
+        }
+        },
         {
             time = 0.5,
             type = "effect",
@@ -42,13 +53,21 @@ attack = {
 | フィールド | 型 | 対応する `type` | 説明 |
 | --- | --- | --- | --- |
 | `time` | number | すべて | 演出開始から実行するまでの時間。秒単位。 |
-| `type` | string | すべて | `animation`、`damage`、`effect`、`blur_in`、`blur_out`、`concentration_lines`、`screen_shake`、`time_scale` のいずれか。 |
+| `type` | string | すべて | `animation`、`position`、`position_tween`、`damage`、`effect`、`pickup`、`blur_in`、`blur_out`、`concentration_lines`、`screen_shake`、`time_scale` のいずれか。 |
 | `target` | string | `animation`、`damage` | 対象。`actor` は攻撃者、`target` は攻撃対象を表します。 |
 | `animation` | integer | `animation` | 対象に再生するアニメーション番号。 |
+| `reverse` | boolean | `animation` | `true` の場合は逆再生します。既定値は `false` です。 |
+| `loop` | boolean | `animation` | ループ再生するか指定します。省略時は `.anim` の `loop` 設定を使用します。 |
+| `position` | Vector2D | `position`、`position_tween` | 対象の `AnimatedSprite2D` に設定するローカル座標。 |
+| `reset` | boolean | `position`、`position_tween` | `true` の場合、攻撃演出開始時の初期位置へ戻します。`position_tween` では戻してからTweenを開始します。 |
+| `restore` | boolean | `position_tween` | `true` の場合、指定位置へのTween完了後、同じ時間をかけて初期位置へ戻します。 |
+| `easing` | string | `position_tween` | Tweenのイージング。`linear`、`easeinquad`、`easeoutquad`、`easeinoutquad`、`easeincubic`、`easeoutcubic`、`easeinoutcubic` が指定できます。既定値は `linear` です。 |
+| `after` | table | `animation` | アニメーション終了時に実行する位置変更。`position`、`offset`、`duration`、`easing`を指定できます。 |
 | `amount` | integer | `damage` | 与えるダメージ量。0 未満の場合は 0 として扱われます。 |
 | `effect` | string | `effect` | 再生する Effekseer エフェクトのアセットパス。 |
-| `offset` | Vector2D | `effect` | 攻撃者のグローバル座標に加算する位置オフセット。`{ x = 0, y = 0 }` が既定値です。 |
-| `duration` | number | `blur_in`、`blur_out`、`concentration_lines`、`screen_shake`、`time_scale` | 効果の長さ。秒単位。 |
+| `textures` | string[] | `pickup` | ランダムに1つ選ぶテクスチャのアセットパス配列。 |
+| `offset` | Vector2D | `effect`、`pickup` | 攻撃者またはPickupの基準座標に加算する位置オフセット。`{ x = 0, y = 0 }` が既定値です。 |
+| `duration` | number | `pickup`、`blur_in`、`blur_out`、`concentration_lines`、`screen_shake`、`time_scale` | Pickupの表示時間または効果の長さ。秒単位。 |
 | `strength` | number | `blur_in`、`blur_out`、`concentration_lines`、`screen_shake` | ぼかし、集中線、振動の強さ。ぼかしと集中線の既定値は `2.5`、指定可能範囲は `0` から `8` です。画面振動はピクセル単位で指定します。 |
 | `frequency` | number | `screen_shake` | 1秒あたりの振動回数。既定値は `30` です。 |
 | `center` | Vector2D | `blur_in`、`blur_out`、`concentration_lines` | フォーカスの中心座標。画面座標のピクセル単位。省略時は画面中央です。 |
@@ -57,6 +76,37 @@ attack = {
 
 `effect` アクションの `EfekseerEmitter2D` は、常に攻撃者のグローバル座標で
 再生されます。`offset` を指定した場合は、その値を攻撃者の座標へ加算します。
+
+`pickup` アクションは `Pickup` シーンを配置します。`textures` 配列からランダムに
+テクスチャを1つ選び、`duration` 秒だけ表示します。`position` を指定した場合は
+そのグローバル座標、省略時は `target` が示すキャラクターのグローバル座標に配置します。
+`offset` を指定した場合は、配置座標へ加算します。
+
+```lua
+{
+    time = 0.4,
+    type = "pickup",
+    target = "actor",
+    position = { x = 900, y = 500 },
+    offset = { x = 20, y = -10 },
+    duration = 1.5,
+    textures = {
+        "goods/pickup_star.png",
+        "goods/pickup_coin.png"
+    }
+}
+```
+
+`position` は対象キャラクターの `AnimatedSprite2D` のローカル位置を即時に変更します。
+`position_tween` は指定した `duration` 秒をかけて変更します。`reset = true` は
+攻撃演出開始時の位置へ戻す指示です。`restore = true` を指定した場合は、移動完了後に
+同じ時間をかけて初期位置へ戻ります。
+
+`animation` の `after` を指定すると、対象アニメーションの終了時に位置を変更します。
+`after.position` は絶対座標、`after.offset` は現在位置への相対加算です。両方を指定した
+場合は、`after.position + after.offset` が移動先になります。`after.duration` を指定すると
+Tweenで移動し、省略または `0` 以下の場合は即時に移動します。ループ再生中のアニメーションは
+終了しないため、`after` は実行されません。
 
 `blur_in` は画面を徐々にぼかし、`blur_out` は画面のぼかしを徐々に解除します。
 どちらも `duration` 秒で変化します。指定した `center` の近くは鮮明なまま、

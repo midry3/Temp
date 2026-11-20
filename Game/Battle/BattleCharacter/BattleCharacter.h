@@ -2,6 +2,7 @@
 #include <Scene.h>
 #include <Scene/Texture/AnimatedSprite2D.h>
 #include "../SkillInfo.h"
+#include <optional>
 
 #define BATTLE_CHARACTER_REQUIRED_ANIMATION Idle, Attack, Damage, Death
 
@@ -40,8 +41,9 @@ namespace Game
 		BattleCharacterStats _stats;
 		BattleCharacterState _currentState;
 		std::vector<SkillInfo> _skills;
-		SharedPtr<AnimatedSprite2D> _sprite;
 	protected:
+		SharedPtr<AnimatedSprite2D> _sprite;
+
 		void _Load() override;
 
 		void Initialize();
@@ -50,7 +52,9 @@ namespace Game
 		void SetState(const BattleCharacterState state) { _currentState = state; }
 		void SetSkills(const std::vector<SkillInfo>& skills) { _skills = skills; }
 	public:
-		void PlayAnimation(int animation, bool loop = false);
+		Signal<int> AnimationFinished;
+		void PlayAnimation(int animation, std::optional<bool> loop = std::nullopt, bool reverse = false);
+		[[nodiscard]] Vector2D* GetAnimationPositionPointer();
 		void ApplyDamage(int damage);
 		[[nodiscard]] int GetCurrentHP() const { return _currentState.currentHP; }
 		[[nodiscard]] bool IsDead() const { return _currentState.currentHP <= 0; }

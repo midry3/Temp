@@ -8,6 +8,7 @@ void Novot::Setup() {
 
 int Novot::Main() {
 	PropertyManager.SetWindowSize({1280, 720});
+	PropertyManager.SetFPS(60);
 
 	return Novot::StartGame();
 }

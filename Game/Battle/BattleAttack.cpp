@@ -1,7 +1,11 @@
 #include "BattleAttack.h"
 #include "../../Shader/BlurOutShader.h"
+#include "../Goods/Pickup.h"
 #include <Asset/AssetManager.h>
 #include <Effekseer/EffekseerEmitter.h>
+#include <Animation/Tween.h>
+#include <Animation/EasingFunction.h>
+#include <Math/Utils.h>
 #include <Novot.h>
 #include <GameState.h>
 #include <lua.hpp>
@@ -72,6 +76,42 @@ namespace Game {
 			lua_pop(state, 1);
 			return result;
 		}
+
+		bool ReadBool(lua_State* state, int index, const char* field, bool fallback = false) {
+			lua_getfield(state, index, field);
+			const bool result = lua_isboolean(state, -1)
+				? lua_toboolean(state, -1) != 0 : fallback;
+			lua_pop(state, 1);
+			return result;
+		}
+
+		std::optional<bool> ReadOptionalBool(lua_State* state, int index, const char* field) {
+			lua_getfield(state, index, field);
+			std::optional<bool> result;
+			if (lua_isboolean(state, -1)) {
+				result = lua_toboolean(state, -1) != 0;
+			}
+			lua_pop(state, 1);
+			return result;
+		}
+
+		std::vector<std::string> ReadStringArray(
+			lua_State* state, int index, const char* field) {
+			std::vector<std::string> result;
+			lua_getfield(state, index, field);
+			if (lua_istable(state, -1)) {
+				const auto count = static_cast<int>(lua_rawlen(state, -1));
+				for (int i = 1; i <= count; ++i) {
+					lua_rawgeti(state, -1, i);
+					if (const char* value = lua_tostring(state, -1)) {
+						result.emplace_back(value);
+					}
+					lua_pop(state, 1);
+				}
+			}
+			lua_pop(state, 1);
+			return result;
+		}
 	}
 
 	void BattleAttack::Start(const SharedPtr<BattleCharacter>& actor,
@@ -83,8 +123,14 @@ namespace Game {
 		}
 		_actor = actor;
 		_target = target;
+		StopAnimationFinishedConnections();
+		_actorInitialAnimationPosition = _actor
+			? *(_actor->GetAnimationPositionPointer()) : Vector2D();
+		_targetInitialAnimationPosition = _target
+			? *(_target->GetAnimationPositionPointer()) : Vector2D();
 		_actions.clear();
 		_effects.clear();
+		StopPickups();
 		StopBlur();
 		StopConcentrationLines();
 		StopShake();
@@ -136,9 +182,29 @@ namespace Game {
 					action.target = ReadString(state, -1, "target");
 					action.value = ReadString(state, -1, "value");
 					action.effect = ReadString(state, -1, "effect");
+					action.pickupTextures = ReadStringArray(state, -1, "textures");
 					action.amount = static_cast<int>(ReadNumber(state, -1, "amount"));
 					action.animation = static_cast<int>(ReadNumber(state, -1, "animation", -1));
+					action.reverse = ReadBool(state, -1, "reverse");
+					action.loop = ReadOptionalBool(state, -1, "loop");
 					action.offset = ReadVector(state, -1, "offset");
+					action.position = ReadVector(state, -1, "position");
+					action.hasPosition = HasTable(state, -1, "position");
+					action.resetPosition = ReadBool(state, -1, "reset");
+					action.restorePosition = ReadBool(state, -1, "restore");
+					action.easing = ReadString(state, -1, "easing");
+					if (action.easing.empty()) action.easing = "linear";
+					lua_getfield(state, -1, "after");
+					if (lua_istable(state, -1)) {
+						action.afterPosition = ReadVector(state, -1, "position");
+						action.afterOffset = ReadVector(state, -1, "offset");
+						action.hasAfterPosition = HasTable(state, -1, "position");
+						action.hasAfterOffset = HasTable(state, -1, "offset");
+						action.afterDuration = ReadNumber(state, -1, "duration");
+						action.afterEasing = ReadString(state, -1, "easing");
+						if (action.afterEasing.empty()) action.afterEasing = "linear";
+					}
+					lua_pop(state, 1);
 					action.duration = ReadNumber(state, -1, "duration");
 					action.scale = ReadNumber(state, -1, "scale", 0.5);
 					action.strength = ReadNumber(state, -1, "strength", 2.5);
@@ -168,7 +234,36 @@ namespace Game {
 			if (auto target = ResolveTarget(action.target)) target->ApplyDamage(action.amount);
 		}
 		else if (action.type == "animation") {
-			if (auto target = ResolveTarget(action.target)) target->PlayAnimation(action.animation);
+			if (auto target = ResolveTarget(action.target)) {
+				target->PlayAnimation(action.animation, action.loop, action.reverse);
+				if (action.hasAfterPosition || action.hasAfterOffset) {
+					RegisterAnimationFinishedAction(target, action.animation, action);
+				}
+			}
+		}
+		else if (action.type == "position") {
+			if (auto target = ResolveTarget(action.target)) {
+				const auto& initialPosition = target == _actor
+					? _actorInitialAnimationPosition : _targetInitialAnimationPosition;
+				if (action.resetPosition) {
+					*target->GetAnimationPositionPointer() = initialPosition;
+				}
+				else if (action.hasPosition) {
+					*target->GetAnimationPositionPointer() = action.position;
+				}
+			}
+		}
+		else if (action.type == "position_tween") {
+			if (auto target = ResolveTarget(action.target)) {
+				const auto& initialPosition = target == _actor
+					? _actorInitialAnimationPosition : _targetInitialAnimationPosition;
+				if (action.resetPosition) {
+					*target->GetAnimationPositionPointer() = initialPosition;
+				}
+				if (action.hasPosition) {
+					StartPositionTween(target, initialPosition, action);
+				}
+			}
 		}
 		else if (action.type == "effect" && not action.effect.empty()) {
 			auto effect = CreateScene<EffekseerEmitter2D>();
@@ -177,6 +272,25 @@ namespace Game {
 			effect->Play();
 			_effects.push_back(effect);
 		}
+		else if (action.type == "pickup" && not action.pickupTextures.empty()) {
+			const int textureIndex = GetRandomInt(0, static_cast<int>(action.pickupTextures.size()));
+			auto pickup = CreateScene<Pickup>();
+			pickup->SetPicture(action.pickupTextures[textureIndex]);
+			Vector2D displayPosition = action.hasPosition
+				? action.position : Vector2D();
+			if (not action.hasPosition) {
+				if (auto target = ResolveTarget(action.target)) {
+					displayPosition = target->GetGlobalPosition();
+				}
+			}
+			pickup->SetGlobalPosition(displayPosition + action.offset);
+			_pickups.push_back(pickup);
+			CreateTimer(Max(action.duration, 0.0), [this, pickup]() {
+				pickup->Free();
+				std::erase(_pickups, pickup);
+			});
+		}
+
 		else if (action.type == "blur_in") {
 			StartBlur(true, action.duration, action.strength, action.blurCenter,
 				action.focusRadius, action.hasBlurCenter);
@@ -197,6 +311,59 @@ namespace Game {
 		}
 	}
 
+	void BattleAttack::RegisterAnimationFinishedAction(
+		const SharedPtr<BattleCharacter>& target, int animation, const Action& action) {
+		auto handled = std::make_shared<bool>(false);
+		const int id = target->AnimationFinished.Connect(
+			[this, target, animation, action, handled](int finishedAnimation) {
+				if (*handled || finishedAnimation != animation) return;
+				*handled = true;
+				ApplyAfterAnimationPosition(target, action);
+			});
+		_animationFinishedConnections.push_back({ target, id });
+	}
+
+	void BattleAttack::StopAnimationFinishedConnections() {
+		for (const auto& connection : _animationFinishedConnections) {
+			if (connection.target && connection.id != -1) {
+				connection.target->AnimationFinished.Disconnect(connection.id);
+			}
+		}
+		_animationFinishedConnections.clear();
+	}
+
+	void BattleAttack::ApplyAfterAnimationPosition(
+		const SharedPtr<BattleCharacter>& target, const Action& action) {
+		auto position = target->GetAnimationPositionPointer();
+		Vector2D destination = action.hasAfterPosition ? action.afterPosition : *position;
+		if (action.hasAfterOffset) destination += action.afterOffset;
+		if (action.afterDuration <= 0.0) {
+			*position = destination;
+			return;
+		}
+		CreateTweenGroup()->CreateTween(position, destination, action.afterDuration,
+			Easing::GetEasingFunction(action.afterEasing));
+	}
+
+	void BattleAttack::StartPositionTween(const SharedPtr<BattleCharacter>& target,
+		const Vector2D& initialPosition, const Action& action) {
+		auto tweenGroup = CreateTweenGroup();
+		auto position = target->GetAnimationPositionPointer();
+		tweenGroup->CreateTween(position, action.position, action.duration,
+			Easing::GetEasingFunction(action.easing));
+		if (action.restorePosition) {
+			tweenGroup->CreateTween(position, initialPosition, action.duration,
+				Easing::GetEasingFunction(action.easing));
+		}
+	}
+
+	void BattleAttack::StopPickups() {
+		for (const auto& pickup : _pickups) {
+			if (pickup) pickup->Free();
+		}
+		_pickups.clear();
+	}
+
 	void BattleAttack::_Update(float dt) {
 		if (_finished) return;
 		_elapsed += dt;
@@ -211,7 +378,9 @@ namespace Game {
 		}
 		if (_elapsed >= _duration) {
 			_finished = true;
+			StopAnimationFinishedConnections();
 			StopEffects();
+			StopPickups();
 			StopBlur();
 			StopConcentrationLines();
 			StopShake();

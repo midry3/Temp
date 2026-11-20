@@ -153,6 +153,8 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Game\Battle\BattleCharacter\Gou.cpp" />
+    <ClCompile Include="Game\Battle\BattleCharacter\Zon.cpp" />
     <ClCompile Include="Game\Board\BoardBase.cpp" />
     <ClCompile Include="Game\Board\BoardTile.cpp" />
     <ClCompile Include="Game\Board\BoardUnit.cpp" />
@@ -165,10 +167,13 @@
     <ClCompile Include="Game\Battle\BattleUI.cpp" />
     <ClCompile Include="Game\Battle\SkillSelect.cpp" />
     <ClCompile Include="Game\Battle\TestBattle.cpp" />
+    <ClCompile Include="Game\Goods\Pickup.cpp" />
     <ClCompile Include="Game\TestScene.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Game\Battle\BattleCharacter\Gou.h" />
+    <ClInclude Include="Game\Battle\BattleCharacter\Zon.h" />
     <ClInclude Include="Game\Board\BoardBase.h" />
     <ClInclude Include="Game\Board\BoardTile.h" />
     <ClInclude Include="Game\Board\BoardTypes.h" />
@@ -183,6 +188,7 @@
     <ClInclude Include="Game\Battle\BattleUI.h" />
     <ClInclude Include="Game\Battle\SkillSelect.h" />
     <ClInclude Include="Game\Battle\TestBattle.h" />
+    <ClInclude Include="Game\Goods\Pickup.h" />
     <ClInclude Include="Game\TestScene.h" />
     <ClInclude Include="Shader\BlurInShader.h" />
     <ClInclude Include="Shader\BlurOutShader.h" />
@@ -190,9 +196,26 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\board\default.lua" />
+    <None Include="Assets\chara\gou\attack.png.anim" />
+    <None Include="Assets\chara\gou\attack\swing.lua" />
+    <None Include="Assets\chara\gou\attack_prepare.png.anim" />
+    <None Include="Assets\chara\gou\attack_prepare2.png.anim" />
+    <None Include="Assets\chara\gou\idle.png.anim" />
     <None Include="Assets\chara\plea\attack\fire.lua" />
     <None Include="Assets\chara\plea\attack_front.png.anim" />
     <None Include="Assets\chara\plea\idle.png.anim" />
+    <None Include="Assets\chara\reko\alpha_beam.png.anim" />
+    <None Include="Assets\chara\reko\attack.png.anim" />
+    <None Include="Assets\chara\reko\attack\beam.lua" />
+    <None Include="Assets\chara\reko\alpha_idle.png.anim" />
+    <None Include="Assets\chara\reko\idle.png.anim" />
+    <None Include="Assets\chara\zon\attack\bomb.lua" />
+    <None Include="Assets\chara\zon\attack\gun_shot.lua" />
+    <None Include="Assets\chara\zon\attack\supply.lua" />
+    <None Include="Assets\chara\zon\gun_prepare.png.anim" />
+    <None Include="Assets\chara\zon\gun_shot.png.anim" />
+    <None Include="Assets\chara\zon\idle.png.anim" />
+    <None Include="Assets\chara\zon\pick.png.anim" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shader\BlurInShader.hlsl">

@@ -5,10 +5,12 @@
 #include <vector>
 #include "BattleCharacter/BattleCharacter.h"
 #include "SkillInfo.h"
+#include <optional>
 
 class EffekseerEmitter2D;
 
 namespace Game {
+	class Pickup;
 	class BattleAttack : public LogicScene {
 	private:
 		struct Action {
@@ -17,9 +19,23 @@ namespace Game {
 			std::string target;
 			std::string value;
 			std::string effect;
+			std::vector<std::string> pickupTextures;
 			int amount = 0;
 			int animation = -1;
+			bool reverse = false;
+			std::optional<bool> loop;
 			Vector2D offset;
+			Vector2D position;
+			bool hasPosition = false;
+			bool resetPosition = false;
+			bool restorePosition = false;
+			std::string easing = "linear";
+			Vector2D afterPosition;
+			Vector2D afterOffset;
+			bool hasAfterPosition = false;
+			bool hasAfterOffset = false;
+			double afterDuration = 0.0;
+			std::string afterEasing = "linear";
 			double duration = 0.0;
 			double scale = 0.5;
 			double strength = 2.5;
@@ -31,8 +47,16 @@ namespace Game {
 		};
 		SharedPtr<BattleCharacter> _actor;
 		SharedPtr<BattleCharacter> _target;
+		Vector2D _actorInitialAnimationPosition;
+		Vector2D _targetInitialAnimationPosition;
 		std::vector<Action> _actions;
 		std::vector<SharedPtr<EffekseerEmitter2D>> _effects;
+		std::vector<SharedPtr<Pickup>> _pickups;
+		struct AnimationFinishedConnection {
+			SharedPtr<BattleCharacter> target;
+			int id = -1;
+		};
+		std::vector<AnimationFinishedConnection> _animationFinishedConnections;
 		double _elapsed = 0.0;
 		double _duration = 0.0;
 		bool _finished = false;
@@ -59,6 +83,13 @@ namespace Game {
 
 		bool LoadTimeline(const std::string& file);
 		void Execute(Action& action);
+		void RegisterAnimationFinishedAction(const SharedPtr<BattleCharacter>& target,
+			int animation, const Action& action);
+		void StopAnimationFinishedConnections();
+		void ApplyAfterAnimationPosition(const SharedPtr<BattleCharacter>& target,
+			const Action& action);
+		void StartPositionTween(const SharedPtr<BattleCharacter>& target, const Vector2D& initialPosition,
+			const Action& action);
 		void StartBlur(bool blurIn, double duration, double strength,
 			const Vector2D& center, double focusRadius, bool hasCenter);
 		void UpdateBlur(float dt);
@@ -73,6 +104,7 @@ namespace Game {
 		void StartTimeScale(double duration, double scale);
 		void StopTimeScale();
 		void StopEffects();
+		void StopPickups();
 		SharedPtr<BattleCharacter> ResolveTarget(const std::string& target) const;
 	protected:
 		void _Update(float dt) override;

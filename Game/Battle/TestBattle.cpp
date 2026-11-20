@@ -1,6 +1,8 @@
 #include "TestBattle.h"
 #include "BattleCharacter/Plea.h"
 #include "BattleCharacter/Reko.h"
+#include "BattleCharacter/Zon.h"
+#include "BattleCharacter/Gou.h"
 
 namespace Game {
 	void TestBattle::_Load() {
