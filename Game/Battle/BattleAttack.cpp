@@ -112,6 +112,26 @@ namespace Game {
 			lua_pop(state, 1);
 			return result;
 		}
+
+		std::vector<std::pair<double, int>> ReadEffectTriggers(
+			lua_State* state, int index) {
+			std::vector<std::pair<double, int>> result;
+			lua_getfield(state, index, "triggers");
+			if (lua_istable(state, -1)) {
+				const auto count = static_cast<int>(lua_rawlen(state, -1));
+				for (int i = 1; i <= count; ++i) {
+					lua_rawgeti(state, -1, i);
+					if (lua_istable(state, -1)) {
+						const double time = ReadNumber(state, -1, "time");
+						const int trigger = static_cast<int>(ReadNumber(state, -1, "trigger", -1));
+						if (trigger >= 0) result.emplace_back(time, trigger);
+					}
+					lua_pop(state, 1);
+				}
+			}
+			lua_pop(state, 1);
+			return result;
+		}
 	}
 
 	void BattleAttack::Start(const SharedPtr<BattleCharacter>& actor,
@@ -130,6 +150,7 @@ namespace Game {
 			? *(_target->GetAnimationPositionPointer()) : Vector2D();
 		_actions.clear();
 		_effects.clear();
+		_effectTriggers.clear();
 		StopPickups();
 		StopBlur();
 		StopConcentrationLines();
@@ -148,6 +169,17 @@ namespace Game {
 				effect->Stop();
 				effect->Disable();
 			}
+		}
+		_effectTriggers.clear();
+	}
+
+	void BattleAttack::UpdateEffectTriggers() {
+		for (auto& trigger : _effectTriggers) {
+			if (trigger.executed || _elapsed < trigger.time) continue;
+			if (trigger.effect) {
+				trigger.effect->SendTrigger(trigger.index);
+			}
+			trigger.executed = true;
 		}
 	}
 
@@ -183,6 +215,9 @@ namespace Game {
 					action.value = ReadString(state, -1, "value");
 					action.effect = ReadString(state, -1, "effect");
 					action.pickupTextures = ReadStringArray(state, -1, "textures");
+					action.trigger = static_cast<int>(ReadNumber(state, -1, "trigger", -1));
+					action.triggerTime = ReadNumber(state, -1, "triggerTime");
+					action.triggers = ReadEffectTriggers(state, -1);
 					action.amount = static_cast<int>(ReadNumber(state, -1, "amount"));
 					action.animation = static_cast<int>(ReadNumber(state, -1, "animation", -1));
 					action.reverse = ReadBool(state, -1, "reverse");
@@ -271,6 +306,22 @@ namespace Game {
 			if (_actor) effect->SetGlobalPosition(_actor->GetGlobalPosition() + action.offset);
 			effect->Play();
 			_effects.push_back(effect);
+			if (action.trigger >= 0) {
+				_effectTriggers.push_back({
+					effect,
+					action.time + Max(action.triggerTime, 0.0),
+					action.trigger,
+					false
+				});
+			}
+			for (const auto& [relativeTime, trigger] : action.triggers) {
+				_effectTriggers.push_back({
+					effect,
+					action.time + Max(relativeTime, 0.0),
+					trigger,
+					false
+				});
+			}
 		}
 		else if (action.type == "pickup" && not action.pickupTextures.empty()) {
 			const int textureIndex = GetRandomInt(0, static_cast<int>(action.pickupTextures.size()));
@@ -367,6 +418,7 @@ namespace Game {
 	void BattleAttack::_Update(float dt) {
 		if (_finished) return;
 		_elapsed += dt;
+		UpdateEffectTriggers();
 		UpdateBlur(dt);
 		UpdateConcentrationLines(dt);
 		UpdateShake(dt);

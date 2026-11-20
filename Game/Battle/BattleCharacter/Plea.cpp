@@ -12,6 +12,7 @@ namespace Game {
 				{ PleaAnimation::Damage, "chara/plea/plea_damage.png" },
 				{ PleaAnimation::Death, "chara/plea/plea_death.png" }
 				*/
+				{ PleaAnimation::Chanting, "chara/plea/chanting.png" }
 			}
 			});
 		SetStats({
@@ -19,8 +20,8 @@ namespace Game {
 			});
 		SetSkills({
 			{ "爆破魔法", "special", "fire", "chara/plea/attack/fire.lua" },
-			{ "Fire", "special", "fire", "battle/fire.lua" },
-			{ "Ice", "special", "water", "battle/ice.lua" },
+			{ "流星魔法", "special", "fire", "chara/plea/attack/shooting_star.lua" },
+			{ "二重詠唱", "special", "water", "chara/plea/attack/chanting.lua" },
 			{ "Heal", "special", "nature", "battle/heal.lua" }
 			});
 

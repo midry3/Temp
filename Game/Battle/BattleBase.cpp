@@ -22,7 +22,9 @@ namespace Game {
 			if (not _allies.empty()) {
 				_skillSelect->SetSkills(_allies.front()->GetSkills());
 			}
-			_skillSelect->In();
+			CreateTimer(0.5, [this]() {
+				_skillSelect->In();
+			});
 			};
 
 		_state[Opening].Entered += [this]() {

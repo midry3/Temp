@@ -36,6 +36,9 @@ namespace Game {
 			bool hasAfterOffset = false;
 			double afterDuration = 0.0;
 			std::string afterEasing = "linear";
+			int trigger = -1;
+			double triggerTime = 0.0;
+			std::vector<std::pair<double, int>> triggers;
 			double duration = 0.0;
 			double scale = 0.5;
 			double strength = 2.5;
@@ -51,6 +54,13 @@ namespace Game {
 		Vector2D _targetInitialAnimationPosition;
 		std::vector<Action> _actions;
 		std::vector<SharedPtr<EffekseerEmitter2D>> _effects;
+		struct EffectTrigger {
+			SharedPtr<EffekseerEmitter2D> effect;
+			double time = 0.0;
+			int index = 0;
+			bool executed = false;
+		};
+		std::vector<EffectTrigger> _effectTriggers;
 		std::vector<SharedPtr<Pickup>> _pickups;
 		struct AnimationFinishedConnection {
 			SharedPtr<BattleCharacter> target;
@@ -104,6 +114,7 @@ namespace Game {
 		void StartTimeScale(double duration, double scale);
 		void StopTimeScale();
 		void StopEffects();
+		void UpdateEffectTriggers();
 		void StopPickups();
 		SharedPtr<BattleCharacter> ResolveTarget(const std::string& target) const;
 	protected:

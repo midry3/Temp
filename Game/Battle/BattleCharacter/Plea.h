@@ -5,6 +5,7 @@ namespace Game {
 	namespace PleaAnimation {
 		enum {
 			BATTLE_CHARACTER_REQUIRED_ANIMATION,
+			Chanting
 		};
 	}
 

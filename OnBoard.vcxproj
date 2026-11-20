@@ -201,8 +201,11 @@
     <None Include="Assets\chara\gou\attack_prepare.png.anim" />
     <None Include="Assets\chara\gou\attack_prepare2.png.anim" />
     <None Include="Assets\chara\gou\idle.png.anim" />
+    <None Include="Assets\chara\plea\attack\chanting.lua" />
     <None Include="Assets\chara\plea\attack\fire.lua" />
+    <None Include="Assets\chara\plea\attack\shooting_star.lua" />
     <None Include="Assets\chara\plea\attack_front.png.anim" />
+    <None Include="Assets\chara\plea\chanting.png.anim" />
     <None Include="Assets\chara\plea\idle.png.anim" />
     <None Include="Assets\chara\reko\alpha_beam.png.anim" />
     <None Include="Assets\chara\reko\attack.png.anim" />

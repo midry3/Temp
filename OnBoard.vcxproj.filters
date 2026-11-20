@@ -154,6 +154,9 @@
     <None Include="Assets\chara\zon\attack\bomb.lua" />
     <None Include="Assets\chara\zon\pick.png.anim" />
     <None Include="Assets\chara\zon\attack\supply.lua" />
+    <None Include="Assets\chara\plea\attack\chanting.lua" />
+    <None Include="Assets\chara\plea\chanting.png.anim" />
+    <None Include="Assets\chara\plea\attack\shooting_star.lua" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shader\BlurInShader.hlsl" />

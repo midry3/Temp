@@ -65,6 +65,9 @@ attack = {
 | `after` | table | `animation` | アニメーション終了時に実行する位置変更。`position`、`offset`、`duration`、`easing`を指定できます。 |
 | `amount` | integer | `damage` | 与えるダメージ量。0 未満の場合は 0 として扱われます。 |
 | `effect` | string | `effect` | 再生する Effekseer エフェクトのアセットパス。 |
+| `trigger` | integer | `effect` | エフェクト再生中に送信するEffekseerトリガー番号。 |
+| `triggerTime` | number | `effect` | 単一`trigger`を送信するエフェクト再生からの相対時刻。既定値は `0` 秒です。 |
+| `triggers` | table[] | `effect` | 複数トリガーの `{ time = 相対秒, trigger = 番号 }` 配列。 |
 | `textures` | string[] | `pickup` | ランダムに1つ選ぶテクスチャのアセットパス配列。 |
 | `offset` | Vector2D | `effect`、`pickup` | 攻撃者またはPickupの基準座標に加算する位置オフセット。`{ x = 0, y = 0 }` が既定値です。 |
 | `duration` | number | `pickup`、`blur_in`、`blur_out`、`concentration_lines`、`screen_shake`、`time_scale` | Pickupの表示時間または効果の長さ。秒単位。 |
@@ -76,6 +79,28 @@ attack = {
 
 `effect` アクションの `EfekseerEmitter2D` は、常に攻撃者のグローバル座標で
 再生されます。`offset` を指定した場合は、その値を攻撃者の座標へ加算します。
+
+エフェクトへトリガーを送る場合は、エフェクト再生時刻からの相対秒で指定します。
+
+```lua
+{
+    time = 0.5,
+    type = "effect",
+    effect = "chara/reko/effect/beam.efk",
+    trigger = 0,
+    triggerTime = 0.3
+}
+
+{
+    time = 0.5,
+    type = "effect",
+    effect = "chara/reko/effect/beam.efk",
+    triggers = {
+        { time = 0.2, trigger = 0 },
+        { time = 0.8, trigger = 1 }
+    }
+}
+```
 
 `pickup` アクションは `Pickup` シーンを配置します。`textures` 配列からランダムに
 テクスチャを1つ選び、`duration` 秒だけ表示します。`position` を指定した場合は
