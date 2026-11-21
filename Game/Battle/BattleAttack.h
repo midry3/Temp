@@ -11,6 +11,20 @@ class EffekseerEmitter2D;
 
 namespace Game {
 	class Pickup;
+
+	namespace {
+		class TimeScaleController : public Scene {
+		private:
+			double _remaining = 0.0;
+			float _previousScale = 1.0f;
+		protected:
+			void _Update(float dt) override;
+		public:
+			void Start(double duration, double scale);
+			void Stop();
+		};
+	};
+
 	class BattleAttack : public LogicScene {
 	private:
 		struct Action {
@@ -88,7 +102,7 @@ namespace Game {
 		double _shakeDuration = 0.0;
 		double _shakeStrength = 0.0;
 		double _shakeFrequency = 30.0;
-		SharedPtr<Scene> _timeScaleController;
+		SharedPtr<TimeScaleController> _timeScaleController;
 		Signal<> _completed;
 
 		bool LoadTimeline(const std::string& file);

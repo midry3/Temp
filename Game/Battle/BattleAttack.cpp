@@ -15,34 +15,29 @@
 
 namespace Game {
 	namespace {
-		class TimeScaleController : public Scene {
-		private:
-			double _remaining = 0.0;
-			float _previousScale = 1.0f;
-		protected:
-			void _Update(float dt) override {
-				_remaining -= dt;
-				if (_remaining <= 0.0) {
-					GameState.SetTimeScale(_previousScale);
-					Disable();
-				}
-			}
-		public:
-			void Start(double duration, double scale) {
-				_previousScale = GameState.GetTimeScale();
-				_remaining = Max(duration, 0.0);
-				GameState.SetTimeScale(static_cast<float>(scale));
-				if (_remaining <= 0.0) {
-					GameState.SetTimeScale(_previousScale);
-					Disable();
-				}
-			}
-			void Stop() {
+		void TimeScaleController::_Update(float dt) {
+			_remaining -= dt;
+			if (_remaining <= 0.0) {
 				GameState.SetTimeScale(_previousScale);
-				_remaining = 0.0;
 				Disable();
 			}
-		};
+		}
+
+		void TimeScaleController::Start(double duration, double scale) {
+			_previousScale = GameState.GetTimeScale();
+			_remaining = Max(duration, 0.0);
+			GameState.SetTimeScale(static_cast<float>(scale));
+			if (_remaining <= 0.0) {
+				GameState.SetTimeScale(_previousScale);
+				Disable();
+			}
+		}
+
+		void TimeScaleController::Stop() {
+			GameState.SetTimeScale(_previousScale);
+			_remaining = 0.0;
+			Disable();
+		}
 
 		std::string ReadString(lua_State* state, int index, const char* field) {
 			lua_getfield(state, index, field);
@@ -610,8 +605,8 @@ namespace Game {
 	}
 
 	void BattleAttack::StopTimeScale() {
-		if (auto controller = std::dynamic_pointer_cast<TimeScaleController>(_timeScaleController)) {
-			controller->Stop();
+		if (_timeScaleController) {
+			_timeScaleController->Stop();
 		}
 		_timeScaleController.reset();
 	}
