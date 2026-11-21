@@ -14,5 +14,7 @@ namespace Game {
 	public:
 		void SetIdle();
 		void SetBeam();
+		void SetSwordPrepare(bool reversed = false);
+		void SetSwordAttack(bool reversed = false);
 	};
 }

@@ -2,7 +2,7 @@
 #include <LogicScene.h>
 #include "../../Shader/BlurInShader.h"
 #include "../../Shader/ConcentrationLineShader.h"
-#include "../../Shader/ScreenFlashShader.h"
+#include <Scene/Shape/ColorRect.h>
 #include <vector>
 #include "BattleCharacter/BattleCharacter.h"
 #include "SkillInfo.h"
@@ -65,6 +65,7 @@ namespace Game {
 			Vector2D blurCenter;
 			double focusRadius = 180.0;
 			bool hasBlurCenter = false;
+			bool flashUnderEffects = false;
 			bool executed = false;
 		};
 		SharedPtr<BattleCharacter> _actor;
@@ -112,9 +113,8 @@ namespace Game {
 		double _flashFadeIn = 0.0;
 		double _flashHoldTime = 0.0;
 		double _flashFadeOut = 0.0;
-		int _flashBufferHandle = -1;
-		int _flashShaderId = -1;
-		BattleScreenFlashShaderParam* _flashBuffer = nullptr;
+		float _flashOpacity = 1.0f;
+		SharedPtr<ColorRect> _flashRect;
 		SharedPtr<TimeScaleController> _timeScaleController;
 		Signal<> _completed;
 
@@ -139,7 +139,7 @@ namespace Game {
 		void UpdateShake(float dt);
 		void StopShake();
 		void StartFlash(const float color[4], double fadeIn,
-			double holdTime, double fadeOut);
+			double holdTime, double fadeOut, bool underEffects);
 		void UpdateFlash(float dt);
 		void StopFlash();
 		void StartTimeScale(double duration, double scale);

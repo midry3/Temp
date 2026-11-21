@@ -146,6 +146,9 @@
     <ClInclude Include="Game\Battle\BattleCharacter\RekoAlpha.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="Game\Board\TestBoard.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\board\default.lua" />
@@ -177,6 +180,8 @@
     <None Include="Assets\chara\reko\pc_open.png.anim" />
     <None Include="Assets\chara\reko\pc.png.anim" />
     <None Include="Assets\chara\reko\attack\sword.lua" />
+    <None Include="Assets\chara\reko\alpha_sword_prepare.png.anim" />
+    <None Include="Assets\chara\reko\alpha_sword_attack.png.anim" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shader\BlurInShader.hlsl" />

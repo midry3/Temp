@@ -75,6 +75,7 @@ attack = {
 | `fadeIn` | number | `screen_flash` | 発光へ徐々に変化する時間。秒単位。省略時は `0` 秒です。 |
 | `hold` | number | `screen_flash` | 最大発光を維持する時間。省略時は `duration` の値を使用します。 |
 | `fadeOut` | number | `screen_flash` | 通常表示へ戻る時間。秒単位。省略時は `0` 秒です。 |
+| `underEffects` | boolean | `screen_flash` | `true` の場合、Effekseerエフェクトをフラッシュより手前に描画します。省略時は `false` です。 |
 | `strength` | number | `blur_in`、`blur_out`、`concentration_lines`、`screen_shake` | ぼかし、集中線、振動の強さ。ぼかしと集中線の既定値は `2.5`、指定可能範囲は `0` から `8` です。画面振動はピクセル単位で指定します。 |
 | `frequency` | number | `screen_shake` | 1秒あたりの振動回数。既定値は `30` です。 |
 | `center` | Vector2D | `blur_in`、`blur_out`、`concentration_lines` | フォーカスの中心座標。画面座標のピクセル単位。省略時は画面中央です。 |
@@ -84,7 +85,8 @@ attack = {
 `effect` アクションの `EfekseerEmitter2D` は、常に攻撃者のグローバル座標で
 再生されます。`offset` を指定した場合は、その値を攻撃者の座標へ加算します。
 
-`screen_flash` アクションは画面全体を指定色へ徐々にブレンドします。
+`screen_flash` アクションは画面全体を指定色の矩形で覆います。`underEffects = true` を指定すると、
+攻撃演出中のEffekseerエフェクトをフラッシュより前面に表示できます。
 
 ```lua
 {
@@ -93,7 +95,8 @@ attack = {
     color = { r = 255, g = 255, b = 255, a = 255 },
     fadeIn = 0.1,
     hold = 0.2,
-    fadeOut = 0.3
+    fadeOut = 0.3,
+    underEffects = true
 }
 ```
 

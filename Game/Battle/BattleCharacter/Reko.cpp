@@ -16,6 +16,12 @@ namespace Game {
 			else if (animation == RekoAnimation::OpenPC && not _sprite->IsReversed()) {
 				_sprite->Play(RekoAnimation::UsingPC, true);
 			}
+			else if (animation == RekoAnimation::SwordPrepare) {
+				_alphaAnim->SetSwordPrepare(_sprite->IsReversed());
+			}
+			else if (animation == RekoAnimation::SwordAttack) {
+				_alphaAnim->SetSwordAttack(_sprite->IsReversed());
+			}
 			else {
 				_alphaAnim->SetIdle();
 			}
@@ -32,7 +38,9 @@ namespace Game {
 				*/
 				{ RekoAnimation::AttackBeam, "chara/reko/attack.png" },
 				{ RekoAnimation::OpenPC, "chara/reko/pc_open.png" },
-				{ RekoAnimation::UsingPC, "chara/reko/pc.png" }
+				{ RekoAnimation::UsingPC, "chara/reko/pc.png" },
+				{ RekoAnimation::SwordPrepare, "chara/reko/idle.png" },
+				{ RekoAnimation::SwordAttack, "chara/reko/attack.png" },
 			}
 			});
 		SetStats({

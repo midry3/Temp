@@ -292,6 +292,7 @@ namespace Game {
 						{ "fadeIn", "fadein", "fade_in" });
 					action.fadeOut = ReadFirstNumber(state, -1,
 						{ "fadeOut", "fadeout", "fade_out" });
+					action.flashUnderEffects = ReadBool(state, -1, "underEffects");
 					action.holdTime = ReadFirstNumber(state, -1,
 						{ "hold", "holdTime", "hold_time",
 						  "glowTime", "glow_time" }, action.duration);
@@ -421,7 +422,7 @@ namespace Game {
 			|| action.type == "flash"
 			|| action.type == "white_flash") {
 			StartFlash(action.flashColor, action.fadeIn,
-				action.holdTime, action.fadeOut);
+				action.holdTime, action.fadeOut, action.flashUnderEffects);
 		}
 	}
 
@@ -667,36 +668,27 @@ namespace Game {
 	}
 
 	void BattleAttack::StartFlash(const float color[4],
-		double fadeIn, double holdTime, double fadeOut) {
+		double fadeIn, double holdTime, double fadeOut, bool underEffects) {
 		StopFlash();
 		_flashActive = true;
 		_flashElapsed = 0.0;
 		_flashFadeIn = Max(fadeIn, 0.0);
 		_flashHoldTime = Max(holdTime, 0.0);
 		_flashFadeOut = Max(fadeOut, 0.0);
-		_flashBufferHandle = CoreBackend::Shader::CreateBuffer(
-			sizeof(BattleScreenFlashShaderParam));
-		_flashBuffer = static_cast<BattleScreenFlashShaderParam*>(
-			CoreBackend::Shader::Buffer(_flashBufferHandle));
-		_flashBuffer->color[0] = color[0];
-		_flashBuffer->color[1] = color[1];
-		_flashBuffer->color[2] = color[2];
-		_flashBuffer->color[3] = color[3];
-		_flashBuffer->progress = 0.0f;
-		_flashBuffer->padding[0] = 0.0f;
-		_flashBuffer->padding[1] = 0.0f;
-		_flashBuffer->padding[2] = 0.0f;
-		_flashShaderId = Novot::AddScreenPixelShader(
-			std::make_shared<ScreenFlashShader>());
-		Novot::SetConstantBufferToScreenPixelShader(
-			_flashShaderId, _flashBufferHandle,
-			NOVOT_CONSTANT_BUFFER_SLOT_START);
-		CoreBackend::Shader::UpdateConstantBuffer(_flashBufferHandle);
+		_flashOpacity = color[3];
+		const auto windowSize = PropertyManager.GetSettingWindowSize();
+		_flashRect = CreateScene<ColorRect>();
+		_flashRect->SetSize(windowSize)
+			->SetColor(Vector3D(color[0] * 255.0f, color[1] * 255.0f,
+				color[2] * 255.0f))
+			->SetPosition({ 0.0, 0.0 })
+			->SetUIMode(not underEffects)
+			->IgnoreCamera();
 		UpdateFlash(0.0f);
 	}
 
 	void BattleAttack::UpdateFlash(float dt) {
-		if (not _flashActive or _flashBuffer == nullptr) return;
+		if (not _flashActive or not _flashRect) return;
 		_flashElapsed += dt;
 
 		double progress = 1.0;
@@ -715,8 +707,9 @@ namespace Game {
 			}
 		}
 
-		_flashBuffer->progress = static_cast<float>(progress);
-		CoreBackend::Shader::UpdateConstantBuffer(_flashBufferHandle);
+		const int alpha = static_cast<int>(Clamp(
+			progress * _flashOpacity * 255.0, 0.0, 255.0));
+		_flashRect->SetAlpha(alpha);
 
 		const double totalTime =
 			_flashFadeIn + _flashHoldTime + _flashFadeOut;
@@ -726,17 +719,14 @@ namespace Game {
 	}
 
 	void BattleAttack::StopFlash() {
-		if (_flashShaderId != -1) {
-			Novot::RemoveScreenPixelShader(_flashShaderId);
-		}
+		if (_flashRect) _flashRect->Free();
 		_flashActive = false;
 		_flashElapsed = 0.0;
 		_flashFadeIn = 0.0;
 		_flashHoldTime = 0.0;
 		_flashFadeOut = 0.0;
-		_flashBuffer = nullptr;
-		_flashBufferHandle = -1;
-		_flashShaderId = -1;
+		_flashOpacity = 1.0f;
+		_flashRect.reset();
 	}
 
 	void BattleAttack::StartTimeScale(double duration, double scale) {

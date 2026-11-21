@@ -192,6 +192,7 @@
     <ClInclude Include="Game\Battle\BattleUI.h" />
     <ClInclude Include="Game\Battle\SkillSelect.h" />
     <ClInclude Include="Game\Battle\TestBattle.h" />
+    <ClInclude Include="Game\Board\TestBoard.h" />
     <ClInclude Include="Game\Goods\Pickup.h" />
     <ClInclude Include="Game\TestScene.h" />
     <ClInclude Include="Shader\BlurInShader.h" />
@@ -214,6 +215,8 @@
     <None Include="Assets\chara\plea\chanting.png.anim" />
     <None Include="Assets\chara\plea\idle.png.anim" />
     <None Include="Assets\chara\reko\alpha_beam.png.anim" />
+    <None Include="Assets\chara\reko\alpha_sword_attack.png.anim" />
+    <None Include="Assets\chara\reko\alpha_sword_prepare.png.anim" />
     <None Include="Assets\chara\reko\attack.png.anim" />
     <None Include="Assets\chara\reko\attack\beam.lua" />
     <None Include="Assets\chara\reko\alpha_idle.png.anim" />

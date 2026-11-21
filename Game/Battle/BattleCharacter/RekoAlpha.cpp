@@ -14,4 +14,18 @@ namespace Game {
 			torso->Play(1);
 		}
 	}
+
+	void RekoAlpha::SetSwordPrepare(bool reversed) {
+		for (const auto& torso : GetParts(RekoAlphaPartGroup::Torso)) {
+			torso->AddAnimation(2, LoadAsset<SpriteSheet>("chara/reko/alpha_sword_prepare.png"));
+			torso->Play(2, false, reversed);
+		}
+	}
+
+	void RekoAlpha::SetSwordAttack(bool reversed) {
+		for (const auto& torso : GetParts(RekoAlphaPartGroup::Torso)) {
+			torso->AddAnimation(3, LoadAsset<SpriteSheet>("chara/reko/alpha_sword_attack.png"));
+			torso->Play(3, false, reversed);
+		}
+	}
 }

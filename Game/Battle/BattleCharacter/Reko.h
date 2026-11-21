@@ -8,7 +8,9 @@ namespace Game {
 			BATTLE_CHARACTER_REQUIRED_ANIMATION,
 			AttackBeam,
 			OpenPC,
-			UsingPC
+			UsingPC,
+			SwordPrepare,
+			SwordAttack
 		};
 	}
 
