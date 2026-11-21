@@ -66,6 +66,12 @@
     <ClCompile Include="Game\Goods\Pickup.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="Game\Battle\BattleCharacter\CompositeSprite.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\Battle\BattleCharacter\RekoAlpha.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Game\Board\BoardBase.h">
@@ -131,6 +137,15 @@
     <ClInclude Include="Game\Goods\Pickup.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="Shader\ScreenFlashShader.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\Battle\BattleCharacter\CompositeSprite.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\Battle\BattleCharacter\RekoAlpha.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\board\default.lua" />
@@ -157,10 +172,16 @@
     <None Include="Assets\chara\plea\attack\chanting.lua" />
     <None Include="Assets\chara\plea\chanting.png.anim" />
     <None Include="Assets\chara\plea\attack\shooting_star.lua" />
+    <None Include="Assets\chara\plea\attack\teleport.lua" />
+    <None Include="Assets\chara\reko\attack\security_update.lua" />
+    <None Include="Assets\chara\reko\pc_open.png.anim" />
+    <None Include="Assets\chara\reko\pc.png.anim" />
+    <None Include="Assets\chara\reko\attack\sword.lua" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shader\BlurInShader.hlsl" />
     <FxCompile Include="Shader\BlurOutShader.hlsl" />
     <FxCompile Include="Shader\ConcentrationLineShader.hlsl" />
+    <FxCompile Include="Shader\ScreenFlashShader.hlsl" />
   </ItemGroup>
 </Project>

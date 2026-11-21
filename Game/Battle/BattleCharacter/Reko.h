@@ -1,11 +1,14 @@
 #pragma once
 #include "BattleCharacter.h"
+#include "RekoAlpha.h"
 
 namespace Game {
 	namespace RekoAnimation {
 		enum {
 			BATTLE_CHARACTER_REQUIRED_ANIMATION,
-			AttackBeam
+			AttackBeam,
+			OpenPC,
+			UsingPC
 		};
 	}
 
@@ -17,7 +20,7 @@ namespace Game {
 			DEFAULT_ATK = 10,
 			DEFAULT_DEF = 5,
 			DEFAULT_SPEED = 10;
-		SharedPtr<AnimatedSprite2D> _alphaAnim;
+		SharedPtr<RekoAlpha> _alphaAnim;
 	protected:
 		void _Load() override;
 	};

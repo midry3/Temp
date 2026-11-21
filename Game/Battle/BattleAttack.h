@@ -2,6 +2,7 @@
 #include <LogicScene.h>
 #include "../../Shader/BlurInShader.h"
 #include "../../Shader/ConcentrationLineShader.h"
+#include "../../Shader/ScreenFlashShader.h"
 #include <vector>
 #include "BattleCharacter/BattleCharacter.h"
 #include "SkillInfo.h"
@@ -54,6 +55,10 @@ namespace Game {
 			double triggerTime = 0.0;
 			std::vector<std::pair<double, int>> triggers;
 			double duration = 0.0;
+			double fadeIn = 0.0;
+			double fadeOut = 0.0;
+			double holdTime = 0.0;
+			float flashColor[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
 			double scale = 0.5;
 			double strength = 2.5;
 			double frequency = 30.0;
@@ -102,6 +107,14 @@ namespace Game {
 		double _shakeDuration = 0.0;
 		double _shakeStrength = 0.0;
 		double _shakeFrequency = 30.0;
+		bool _flashActive = false;
+		double _flashElapsed = 0.0;
+		double _flashFadeIn = 0.0;
+		double _flashHoldTime = 0.0;
+		double _flashFadeOut = 0.0;
+		int _flashBufferHandle = -1;
+		int _flashShaderId = -1;
+		BattleScreenFlashShaderParam* _flashBuffer = nullptr;
 		SharedPtr<TimeScaleController> _timeScaleController;
 		Signal<> _completed;
 
@@ -125,6 +138,10 @@ namespace Game {
 		void StartShake(double duration, double strength, double frequency);
 		void UpdateShake(float dt);
 		void StopShake();
+		void StartFlash(const float color[4], double fadeIn,
+			double holdTime, double fadeOut);
+		void UpdateFlash(float dt);
+		void StopFlash();
 		void StartTimeScale(double duration, double scale);
 		void StopTimeScale();
 		void StopEffects();

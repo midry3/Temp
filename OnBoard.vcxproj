@@ -164,6 +164,8 @@
     <ClCompile Include="Game\Battle\BattleCharacter\BattleCharacter.cpp" />
     <ClCompile Include="Game\Battle\BattleCharacter\Plea.cpp" />
     <ClCompile Include="Game\Battle\BattleCharacter\Reko.cpp" />
+    <ClCompile Include="Game\Battle\BattleCharacter\CompositeSprite.cpp" />
+    <ClCompile Include="Game\Battle\BattleCharacter\RekoAlpha.cpp" />
     <ClCompile Include="Game\Battle\BattleUI.cpp" />
     <ClCompile Include="Game\Battle\SkillSelect.cpp" />
     <ClCompile Include="Game\Battle\TestBattle.cpp" />
@@ -185,6 +187,8 @@
     <ClInclude Include="Game\Battle\BattleCharacter\BattleCharacter.h" />
     <ClInclude Include="Game\Battle\BattleCharacter\Plea.h" />
     <ClInclude Include="Game\Battle\BattleCharacter\Reko.h" />
+    <ClInclude Include="Game\Battle\BattleCharacter\CompositeSprite.h" />
+    <ClInclude Include="Game\Battle\BattleCharacter\RekoAlpha.h" />
     <ClInclude Include="Game\Battle\BattleUI.h" />
     <ClInclude Include="Game\Battle\SkillSelect.h" />
     <ClInclude Include="Game\Battle\TestBattle.h" />
@@ -193,6 +197,7 @@
     <ClInclude Include="Shader\BlurInShader.h" />
     <ClInclude Include="Shader\BlurOutShader.h" />
     <ClInclude Include="Shader\ConcentrationLineShader.h" />
+    <ClInclude Include="Shader\ScreenFlashShader.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\board\default.lua" />
@@ -204,6 +209,7 @@
     <None Include="Assets\chara\plea\attack\chanting.lua" />
     <None Include="Assets\chara\plea\attack\fire.lua" />
     <None Include="Assets\chara\plea\attack\shooting_star.lua" />
+    <None Include="Assets\chara\plea\attack\teleport.lua" />
     <None Include="Assets\chara\plea\attack_front.png.anim" />
     <None Include="Assets\chara\plea\chanting.png.anim" />
     <None Include="Assets\chara\plea\idle.png.anim" />
@@ -211,7 +217,11 @@
     <None Include="Assets\chara\reko\attack.png.anim" />
     <None Include="Assets\chara\reko\attack\beam.lua" />
     <None Include="Assets\chara\reko\alpha_idle.png.anim" />
+    <None Include="Assets\chara\reko\attack\security_update.lua" />
+    <None Include="Assets\chara\reko\attack\sword.lua" />
     <None Include="Assets\chara\reko\idle.png.anim" />
+    <None Include="Assets\chara\reko\pc.png.anim" />
+    <None Include="Assets\chara\reko\pc_open.png.anim" />
     <None Include="Assets\chara\zon\attack\bomb.lua" />
     <None Include="Assets\chara\zon\attack\gun_shot.lua" />
     <None Include="Assets\chara\zon\attack\supply.lua" />
@@ -234,6 +244,12 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
     </FxCompile>
     <FxCompile Include="Shader\ConcentrationLineShader.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+    </FxCompile>
+    <FxCompile Include="Shader\ScreenFlashShader.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>

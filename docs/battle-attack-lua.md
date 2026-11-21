@@ -53,7 +53,7 @@ attack = {
 | フィールド | 型 | 対応する `type` | 説明 |
 | --- | --- | --- | --- |
 | `time` | number | すべて | 演出開始から実行するまでの時間。秒単位。 |
-| `type` | string | すべて | `animation`、`position`、`position_tween`、`damage`、`effect`、`pickup`、`blur_in`、`blur_out`、`concentration_lines`、`screen_shake`、`time_scale` のいずれか。 |
+| `type` | string | すべて | `animation`、`position`、`position_tween`、`damage`、`effect`、`pickup`、`screen_flash`、`blur_in`、`blur_out`、`concentration_lines`、`screen_shake`、`time_scale` のいずれか。 |
 | `target` | string | `animation`、`damage` | 対象。`actor` は攻撃者、`target` は攻撃対象を表します。 |
 | `animation` | integer | `animation` | 対象に再生するアニメーション番号。 |
 | `reverse` | boolean | `animation` | `true` の場合は逆再生します。既定値は `false` です。 |
@@ -71,6 +71,10 @@ attack = {
 | `textures` | string[] | `pickup` | ランダムに1つ選ぶテクスチャのアセットパス配列。 |
 | `offset` | Vector2D | `effect`、`pickup` | 攻撃者またはPickupの基準座標に加算する位置オフセット。`{ x = 0, y = 0 }` が既定値です。 |
 | `duration` | number | `pickup`、`blur_in`、`blur_out`、`concentration_lines`、`screen_shake`、`time_scale` | Pickupの表示時間または効果の長さ。秒単位。 |
+| `color` | table | `screen_flash` | 発光色。`{ r = 255, g = 255, b = 255, a = 255 }`形式。省略時は白です。0から1の値も指定できます。 |
+| `fadeIn` | number | `screen_flash` | 発光へ徐々に変化する時間。秒単位。省略時は `0` 秒です。 |
+| `hold` | number | `screen_flash` | 最大発光を維持する時間。省略時は `duration` の値を使用します。 |
+| `fadeOut` | number | `screen_flash` | 通常表示へ戻る時間。秒単位。省略時は `0` 秒です。 |
 | `strength` | number | `blur_in`、`blur_out`、`concentration_lines`、`screen_shake` | ぼかし、集中線、振動の強さ。ぼかしと集中線の既定値は `2.5`、指定可能範囲は `0` から `8` です。画面振動はピクセル単位で指定します。 |
 | `frequency` | number | `screen_shake` | 1秒あたりの振動回数。既定値は `30` です。 |
 | `center` | Vector2D | `blur_in`、`blur_out`、`concentration_lines` | フォーカスの中心座標。画面座標のピクセル単位。省略時は画面中央です。 |
@@ -79,6 +83,19 @@ attack = {
 
 `effect` アクションの `EfekseerEmitter2D` は、常に攻撃者のグローバル座標で
 再生されます。`offset` を指定した場合は、その値を攻撃者の座標へ加算します。
+
+`screen_flash` アクションは画面全体を指定色へ徐々にブレンドします。
+
+```lua
+{
+    time = 0.8,
+    type = "screen_flash",
+    color = { r = 255, g = 255, b = 255, a = 255 },
+    fadeIn = 0.1,
+    hold = 0.2,
+    fadeOut = 0.3
+}
+```
 
 エフェクトへトリガーを送る場合は、エフェクト再生時刻からの相対秒で指定します。
 

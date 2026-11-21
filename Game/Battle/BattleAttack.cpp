@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <cmath>
 #include <iostream>
+#include <initializer_list>
 
 namespace Game {
 	namespace {
@@ -127,6 +128,56 @@ namespace Game {
 			lua_pop(state, 1);
 			return result;
 		}
+
+		double ReadFirstNumber(lua_State* state, int index,
+			std::initializer_list<const char*> fields, double fallback = 0.0) {
+			for (const char* field : fields) {
+				lua_getfield(state, index, field);
+				if (lua_isnumber(state, -1)) {
+					const double result = lua_tonumber(state, -1);
+					lua_pop(state, 1);
+					return result;
+				}
+				lua_pop(state, 1);
+			}
+			return fallback;
+		}
+
+		bool ReadColor(lua_State* state, int index,
+			const char* field, float result[4]) {
+			lua_getfield(state, index, field);
+			if (not lua_istable(state, -1)) {
+				lua_pop(state, 1);
+				return false;
+			}
+			auto readChannel = [state](int tableIndex, const char* channel, float fallback) {
+				lua_getfield(state, tableIndex, channel);
+				const float value = lua_isnumber(state, -1)
+					? static_cast<float>(lua_tonumber(state, -1)) : fallback;
+				lua_pop(state, 1);
+				return value;
+			};
+			result[0] = readChannel(lua_gettop(state), "r", 255.0f);
+			result[1] = readChannel(lua_gettop(state), "g", 255.0f);
+			result[2] = readChannel(lua_gettop(state), "b", 255.0f);
+			result[3] = readChannel(lua_gettop(state), "a", 255.0f);
+			lua_pop(state, 1);
+
+			const bool normalized = result[0] <= 1.0f
+				&& result[1] <= 1.0f
+				&& result[2] <= 1.0f
+				&& result[3] <= 1.0f;
+			if (not normalized) {
+				result[0] /= 255.0f;
+				result[1] /= 255.0f;
+				result[2] /= 255.0f;
+				result[3] /= 255.0f;
+			}
+			for (int i = 0; i < 4; ++i) {
+				result[i] = Clamp(result[i], 0.0f, 1.0f);
+			}
+			return true;
+		}
 	}
 
 	void BattleAttack::Start(const SharedPtr<BattleCharacter>& actor,
@@ -151,6 +202,7 @@ namespace Game {
 		StopConcentrationLines();
 		StopShake();
 		StopTimeScale();
+		StopFlash();
 		_elapsed = 0.0;
 		_duration = 0.0;
 		_finished = false;
@@ -236,6 +288,16 @@ namespace Game {
 					}
 					lua_pop(state, 1);
 					action.duration = ReadNumber(state, -1, "duration");
+					action.fadeIn = ReadFirstNumber(state, -1,
+						{ "fadeIn", "fadein", "fade_in" });
+					action.fadeOut = ReadFirstNumber(state, -1,
+						{ "fadeOut", "fadeout", "fade_out" });
+					action.holdTime = ReadFirstNumber(state, -1,
+						{ "hold", "holdTime", "hold_time",
+						  "glowTime", "glow_time" }, action.duration);
+					if (not ReadColor(state, -1, "color", action.flashColor)) {
+						ReadColor(state, -1, "glowColor", action.flashColor);
+					}
 					action.scale = ReadNumber(state, -1, "scale", 0.5);
 					action.strength = ReadNumber(state, -1, "strength", 2.5);
 					action.frequency = ReadNumber(state, -1, "frequency", 30.0);
@@ -355,6 +417,12 @@ namespace Game {
 		else if (action.type == "time_scale") {
 			StartTimeScale(action.duration, action.scale);
 		}
+		else if (action.type == "screen_flash"
+			|| action.type == "flash"
+			|| action.type == "white_flash") {
+			StartFlash(action.flashColor, action.fadeIn,
+				action.holdTime, action.fadeOut);
+		}
 	}
 
 	void BattleAttack::RegisterAnimationFinishedAction(
@@ -414,6 +482,7 @@ namespace Game {
 		if (_finished) return;
 		_elapsed += dt;
 		UpdateEffectTriggers();
+		UpdateFlash(dt);
 		UpdateBlur(dt);
 		UpdateConcentrationLines(dt);
 		UpdateShake(dt);
@@ -432,6 +501,7 @@ namespace Game {
 			StopConcentrationLines();
 			StopShake();
 			StopTimeScale();
+			StopFlash();
 			_completed.Emit();
 		}
 	}
@@ -594,6 +664,79 @@ namespace Game {
 		_shakeActive = false;
 		_shakeElapsed = 0.0;
 		_shakeDuration = 0.0;
+	}
+
+	void BattleAttack::StartFlash(const float color[4],
+		double fadeIn, double holdTime, double fadeOut) {
+		StopFlash();
+		_flashActive = true;
+		_flashElapsed = 0.0;
+		_flashFadeIn = Max(fadeIn, 0.0);
+		_flashHoldTime = Max(holdTime, 0.0);
+		_flashFadeOut = Max(fadeOut, 0.0);
+		_flashBufferHandle = CoreBackend::Shader::CreateBuffer(
+			sizeof(BattleScreenFlashShaderParam));
+		_flashBuffer = static_cast<BattleScreenFlashShaderParam*>(
+			CoreBackend::Shader::Buffer(_flashBufferHandle));
+		_flashBuffer->color[0] = color[0];
+		_flashBuffer->color[1] = color[1];
+		_flashBuffer->color[2] = color[2];
+		_flashBuffer->color[3] = color[3];
+		_flashBuffer->progress = 0.0f;
+		_flashBuffer->padding[0] = 0.0f;
+		_flashBuffer->padding[1] = 0.0f;
+		_flashBuffer->padding[2] = 0.0f;
+		_flashShaderId = Novot::AddScreenPixelShader(
+			std::make_shared<ScreenFlashShader>());
+		Novot::SetConstantBufferToScreenPixelShader(
+			_flashShaderId, _flashBufferHandle,
+			NOVOT_CONSTANT_BUFFER_SLOT_START);
+		CoreBackend::Shader::UpdateConstantBuffer(_flashBufferHandle);
+		UpdateFlash(0.0f);
+	}
+
+	void BattleAttack::UpdateFlash(float dt) {
+		if (not _flashActive or _flashBuffer == nullptr) return;
+		_flashElapsed += dt;
+
+		double progress = 1.0;
+		if (_flashElapsed < _flashFadeIn) {
+			progress = _flashFadeIn <= 0.0
+				? 1.0
+				: Clamp(_flashElapsed / _flashFadeIn, 0.0, 1.0);
+		}
+		else {
+			const double fadeOutElapsed =
+				_flashElapsed - _flashFadeIn - _flashHoldTime;
+			if (fadeOutElapsed > 0.0) {
+				progress = _flashFadeOut <= 0.0
+					? 0.0
+					: Clamp(1.0 - fadeOutElapsed / _flashFadeOut, 0.0, 1.0);
+			}
+		}
+
+		_flashBuffer->progress = static_cast<float>(progress);
+		CoreBackend::Shader::UpdateConstantBuffer(_flashBufferHandle);
+
+		const double totalTime =
+			_flashFadeIn + _flashHoldTime + _flashFadeOut;
+		if (_flashElapsed >= totalTime) {
+			StopFlash();
+		}
+	}
+
+	void BattleAttack::StopFlash() {
+		if (_flashShaderId != -1) {
+			Novot::RemoveScreenPixelShader(_flashShaderId);
+		}
+		_flashActive = false;
+		_flashElapsed = 0.0;
+		_flashFadeIn = 0.0;
+		_flashHoldTime = 0.0;
+		_flashFadeOut = 0.0;
+		_flashBuffer = nullptr;
+		_flashBufferHandle = -1;
+		_flashShaderId = -1;
 	}
 
 	void BattleAttack::StartTimeScale(double duration, double scale) {

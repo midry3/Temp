@@ -8,7 +8,7 @@ namespace Game {
 	void TestBattle::_Load() {
 		BattleBase::_Load();
 
-		_allies.push_back(MakeShared<Plea>());
+		_allies.push_back(MakeShared<Reko>());
 
 		_enemies.push_back(MakeShared<Reko>());
 		PutCharacters();

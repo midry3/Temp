@@ -22,7 +22,7 @@ namespace Game {
 			{ "爆破魔法", "special", "fire", "chara/plea/attack/fire.lua" },
 			{ "流星魔法", "special", "fire", "chara/plea/attack/shooting_star.lua" },
 			{ "二重詠唱", "special", "water", "chara/plea/attack/chanting.lua" },
-			{ "Heal", "special", "nature", "battle/heal.lua" }
+			{ "転送魔法", "special", "nature", "chara/plea/attack/teleport.lua" }
 			});
 
 		Initialize();
