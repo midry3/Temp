@@ -1,6 +1,22 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
+    <ClCompile Include="Game\Board\MapEditor.cpp"><Filter>ソース ファイル</Filter></ClCompile>
+    <ClCompile Include="Game\Battle\BattleCharacter\BattleCharacterFactory.cpp"><Filter>ソース ファイル</Filter></ClCompile>
+    <ClCompile Include="ThirdParty\imgui-1.92.9b\imgui.cpp"><Filter>ソース ファイル</Filter></ClCompile>
+    <ClCompile Include="ThirdParty\imgui-1.92.9b\imgui_draw.cpp"><Filter>ソース ファイル</Filter></ClCompile>
+    <ClCompile Include="ThirdParty\imgui-1.92.9b\imgui_tables.cpp"><Filter>ソース ファイル</Filter></ClCompile>
+    <ClCompile Include="ThirdParty\imgui-1.92.9b\imgui_widgets.cpp"><Filter>ソース ファイル</Filter></ClCompile>
+    <ClCompile Include="ThirdParty\imgui-1.92.9b\backends\imgui_impl_dx11.cpp"><Filter>ソース ファイル</Filter></ClCompile>
+    <ClCompile Include="ThirdParty\imgui-1.92.9b\backends\imgui_impl_win32.cpp"><Filter>ソース ファイル</Filter></ClCompile>
+    <ClInclude Include="Game\Board\MapEditor.h"><Filter>ヘッダー ファイル</Filter></ClInclude>
+    <ClInclude Include="Game\Battle\BattleCharacter\BattleCharacterFactory.h"><Filter>ヘッダー ファイル</Filter></ClInclude>
+    <ClInclude Include="ThirdParty\imgui-1.92.9b\imgui.h"><Filter>ヘッダー ファイル</Filter></ClInclude>
+    <ClInclude Include="ThirdParty\imgui-1.92.9b\imconfig.h"><Filter>ヘッダー ファイル</Filter></ClInclude>
+    <ClInclude Include="ThirdParty\imgui-1.92.9b\backends\imgui_impl_dx11.h"><Filter>ヘッダー ファイル</Filter></ClInclude>
+    <ClInclude Include="ThirdParty\imgui-1.92.9b\backends\imgui_impl_win32.h"><Filter>ヘッダー ファイル</Filter></ClInclude>
+  </ItemGroup>
+  <ItemGroup>
     <Filter Include="ソース ファイル">
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>

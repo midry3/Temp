@@ -6,7 +6,11 @@
 #include "BoardTile.h"
 #include "BoardUnit.h"
 
+class Sprite2D;
+
 namespace Game {
+	class BattleCharacter;
+
 	class BoardBase : public Scene {
 	private:
 		int _width = 0;
@@ -15,12 +19,14 @@ namespace Game {
 		Vector2D _boardPosition;
 		std::vector<SharedPtr<BoardTile>> _tiles;
 		std::vector<SharedPtr<BoardUnit>> _units;
+		std::vector<SharedPtr<Sprite2D>> _objects;
 		std::set<std::string> _movedAllies;
 		SharedPtr<BoardUnit> _selectedUnit;
 		int _turn = 1;
 
 		bool LoadBoard(const std::string& file);
-		void BuildTiles(const std::map<BoardTerrain, std::string>& textures, const std::vector<std::string>& terrainNames);
+		void BuildTiles(const std::map<BoardTerrain, std::string>& textures, const std::vector<BoardTileData>& tiles);
+		void BuildObjects(const std::vector<BoardObjectData>& objects);
 		void BuildUnits(const std::vector<BoardUnitData>& units);
 		void SelectUnit(const SharedPtr<BoardUnit>& unit);
 		void SelectTile(int x, int y);
@@ -42,6 +48,7 @@ namespace Game {
 
 	public:
 		void EndTurn();
+		[[nodiscard]] SharedPtr<BattleCharacter> CreateBattleCharacterForUnit(const BoardUnit& unit) const;
 		[[nodiscard]] int GetTurn() const { return _turn; }
 	};
 }

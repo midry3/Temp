@@ -1,5 +1,6 @@
 #pragma once
 #include <Scene/Button/Button.h>
+#include <Scene/Text/TextLabel.h>
 #include "BoardTypes.h"
 
 class Sprite2D;
@@ -10,6 +11,7 @@ namespace Game {
 	private:
 		BoardUnitData _data;
 		SharedPtr<Sprite2D> _sprite;
+		SharedPtr<TextLabel> _nameLabel;
 
 	protected:
 		void _Load() override;

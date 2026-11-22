@@ -11,10 +11,16 @@ namespace Game {
 	void BoardTile::SetTile(BoardTerrain terrain, const SharedPtr<Texture>& texture, const Vector2D& size) {
 		_terrain = terrain;
 		SetArea({ Vector2D(0, 0), Vector2D(size.x, 0), size, Vector2D(0, size.y) });
-		_sprite->SetTexture(texture);
-		const auto textureSize = _sprite->GetRawSize();
-		if (not (textureSize.x <= 0) && not (textureSize.y <= 0)) {
-			_sprite->SetScale({ size.x / textureSize.x, size.y / textureSize.y });
+		if (texture) {
+			_sprite->SetTexture(texture);
+			_sprite->Show();
+			const auto textureSize = _sprite->GetRawSize();
+			if (not (textureSize.x <= 0) && not (textureSize.y <= 0)) {
+				_sprite->SetScale({ size.x / textureSize.x, size.y / textureSize.y });
+			}
+		}
+		else {
+			_sprite->Hide();
 		}
 		UpdateColor();
 	}

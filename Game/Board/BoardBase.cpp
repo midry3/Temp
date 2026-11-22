@@ -1,5 +1,7 @@
 #include "BoardBase.h"
+#include "../Battle/BattleCharacter/BattleCharacterFactory.h"
 #include <Asset/AssetManager.h>
+#include <Scene/Texture/Sprite2D.h>
 #include <lua.hpp>
 #include <algorithm>
 #include <iostream>
@@ -21,11 +23,25 @@ namespace Game {
 			return result;
 		}
 
+		double ReadNumber(lua_State* state, int table, const char* key, double fallback = 0.0) {
+			lua_getfield(state, table, key);
+			const double result = lua_isnumber(state, -1) ? lua_tonumber(state, -1) : fallback;
+			lua_pop(state, 1);
+			return result;
+		}
+
+		bool ReadBool(lua_State* state, int table, const char* key, bool fallback = false) {
+			lua_getfield(state, table, key);
+			const bool result = lua_isboolean(state, -1) ? lua_toboolean(state, -1) != 0 : fallback;
+			lua_pop(state, 1);
+			return result;
+		}
+
 		void ReadPosition(lua_State* state, int table, double& x, double& y) {
 			lua_getfield(state, table, "position");
 			if (lua_istable(state, -1)) {
-				x = static_cast<double>(ReadInteger(state, -1, "x", static_cast<int>(x)));
-				y = static_cast<double>(ReadInteger(state, -1, "y", static_cast<int>(y)));
+				x = ReadNumber(state, -1, "x", x);
+				y = ReadNumber(state, -1, "y", y);
 			}
 			lua_pop(state, 1);
 		}
@@ -46,6 +62,7 @@ namespace Game {
 			if (value == "orthogonal_unlimited") return BoardMoveType::OrthogonalUnlimited;
 			return BoardMoveType::Adjacent;
 		}
+
 	}
 
 	void BoardBase::_Load() {
@@ -91,22 +108,47 @@ namespace Game {
 		}
 		lua_pop(state, 1);
 
-		std::vector<std::string> terrainNames;
+		std::vector<BoardTileData> tiles;
 		lua_getfield(state, -1, "tiles");
 		if (lua_istable(state, -1)) {
 			const int count = static_cast<int>(lua_rawlen(state, -1));
 			for (int index = 1; index <= count; index++) {
 				lua_rawgeti(state, -1, index);
 				if (lua_isstring(state, -1)) {
-					terrainNames.emplace_back(lua_tostring(state, -1));
+					const auto terrain = ParseTerrain(lua_tostring(state, -1));
+					const auto texture = textures.find(terrain);
+					tiles.push_back({ terrain, texture == textures.end() ? "" : texture->second });
 				}
 				else if (lua_istable(state, -1)) {
-					terrainNames.push_back(ReadString(state, -1, "terrain", "normal"));
-					const auto texture = ReadString(state, -1, "texture");
-					if (not texture.empty()) textures[ParseTerrain(terrainNames.back())] = texture;
+					const auto terrainName = ReadString(state, -1, "terrain", "normal");
+					auto terrain = ParseTerrain(terrainName);
+					const bool passable = ReadBool(state, -1, "passable", terrain != BoardTerrain::Disabled);
+					if (not passable) terrain = BoardTerrain::Disabled;
+					else if (terrain == BoardTerrain::Disabled) terrain = BoardTerrain::Normal;
+					const auto explicitTexture = ReadString(state, -1, "texture");
+					const auto texture = textures.find(terrain);
+					tiles.push_back({ terrain, explicitTexture.empty()
+						? (texture == textures.end() ? "" : texture->second) : explicitTexture });
 				}
 				else {
-					terrainNames.emplace_back("normal");
+					const auto texture = textures.find(BoardTerrain::Normal);
+					tiles.push_back({ BoardTerrain::Normal, texture == textures.end() ? "" : texture->second });
+				}
+				lua_pop(state, 1);
+			}
+		}
+		lua_pop(state, 1);
+
+		std::vector<BoardObjectData> objects;
+		lua_getfield(state, -1, "objects");
+		if (lua_istable(state, -1)) {
+			const int count = static_cast<int>(lua_rawlen(state, -1));
+			for (int index = 1; index <= count; ++index) {
+				lua_rawgeti(state, -1, index);
+				if (lua_istable(state, -1)) {
+					objects.push_back({ ReadString(state, -1, "texture"),
+						ReadInteger(state, -1, "x"), ReadInteger(state, -1, "y"),
+						ReadInteger(state, -1, "width", 1), ReadInteger(state, -1, "height", 1) });
 				}
 				lua_pop(state, 1);
 			}
@@ -122,9 +164,11 @@ namespace Game {
 				if (lua_istable(state, -1)) {
 					BoardUnitData unit;
 					unit.id = ReadString(state, -1, "id");
+					unit.displayName = ReadString(state, -1, "displayName");
+					unit.characterType = ParseBoardCharacterType(ReadString(state, -1, "character", "plea"));
 					unit.team = ParseTeam(ReadString(state, -1, "team", "ally"));
 					unit.moveType = ParseMoveType(ReadString(state, -1, "move", "adjacent"));
-					unit.texture = ReadString(state, -1, "texture");
+					unit.texture = ReadString(state, -1, "icon", ReadString(state, -1, "texture"));
 					unit.x = ReadInteger(state, -1, "x");
 					unit.y = ReadInteger(state, -1, "y");
 					units.push_back(unit);
@@ -136,22 +180,24 @@ namespace Game {
 		lua_pop(state, 1);
 		lua_close(state);
 
-		BuildTiles(textures, terrainNames);
+		BuildTiles(textures, tiles);
+		BuildObjects(objects);
 		BuildUnits(units);
 		return true;
 	}
 
-	void BoardBase::BuildTiles(const std::map<BoardTerrain, std::string>& textures, const std::vector<std::string>& terrainNames) {
-		const auto defaultTexture = textures.at(BoardTerrain::Normal);
+	void BoardBase::BuildTiles(const std::map<BoardTerrain, std::string>& textures, const std::vector<BoardTileData>& tiles) {
+		const auto defaultIt = textures.find(BoardTerrain::Normal);
+		const auto defaultTexture = defaultIt == textures.end() ? std::string() : defaultIt->second;
 		for (int y = 0; y < _height; y++) {
 			for (int x = 0; x < _width; x++) {
 				const auto index = GetTileIndex(x, y);
-				const auto terrainName = index < static_cast<int>(terrainNames.size()) ? terrainNames[index] : "normal";
-				const auto terrain = ParseTerrain(terrainName);
-				const auto textureIt = textures.find(terrain);
-				const auto texturePath = textureIt == textures.end() ? defaultTexture : textureIt->second;
+				const auto tileData = index < static_cast<int>(tiles.size())
+					? tiles[index] : BoardTileData{};
+				const auto terrain = tileData.terrain;
+				const auto texturePath = tileData.texture.empty() ? defaultTexture : tileData.texture;
 				const auto& tile = CreateScene<BoardTile>();
-				tile->SetTile(terrain, LoadAsset<Texture>(texturePath), _tileSize);
+				tile->SetTile(terrain, texturePath.empty() ? nullptr : LoadAsset<Texture>(texturePath), _tileSize);
 				tile->SetPosition(GetTilePosition(x, y));
 				_tiles.push_back(tile);
 				tile->LeftPressed += [this, x, y](const MouseEvent& event) {
@@ -164,13 +210,25 @@ namespace Game {
 		}
 	}
 
+	void BoardBase::BuildObjects(const std::vector<BoardObjectData>& objects) {
+		for (const auto& data : objects) {
+			if (data.texture.empty()) continue;
+			const auto& sprite = CreateScene<Sprite2D>();
+			sprite->SetTexture(LoadAsset<Texture>(data.texture));
+			const auto textureSize = sprite->GetRawSize();
+			const Vector2D targetSize(_tileSize.x * data.width, _tileSize.y * data.height);
+			if (not (textureSize.x <= 0.0) && not (textureSize.y <= 0.0)) {
+				sprite->SetScale({ targetSize.x / textureSize.x, targetSize.y / textureSize.y });
+			}
+			sprite->SetPosition(GetTilePosition(data.x, data.y));
+			_objects.push_back(sprite);
+		}
+	}
+
 	void BoardBase::BuildUnits(const std::vector<BoardUnitData>& units) {
 		for (const auto& data : units) {
-			const auto texturePath = data.texture.empty()
-				? (data.team == BoardTeam::Ally ? "chara/plea/idle.png" : "chara/reko/idle.png")
-				: data.texture;
 			const auto& unit = CreateScene<BoardUnit>();
-			unit->SetUnit(data, LoadAsset<Texture>(texturePath), _tileSize);
+			unit->SetUnit(data, data.texture.empty() ? nullptr : LoadAsset<Texture>(data.texture), _tileSize);
 			unit->SetPosition(GetTilePosition(data.x, data.y));
 			unit->LeftPressed += [this, unit](const MouseEvent& event) {
 				if (event.just) SelectUnit(unit);
@@ -304,5 +362,9 @@ namespace Game {
 		MoveEnemies();
 		_movedAllies.clear();
 		_turn++;
+	}
+
+	SharedPtr<BattleCharacter> BoardBase::CreateBattleCharacterForUnit(const BoardUnit& unit) const {
+		return CreateBattleCharacter(unit.GetData().characterType);
 	}
 }

@@ -20,8 +20,30 @@ namespace Game {
 		OrthogonalUnlimited
 	};
 
+	enum class BoardCharacterType {
+		Plea,
+		Reko,
+		Zon,
+		Gou
+	};
+
+	struct BoardTileData {
+		BoardTerrain terrain = BoardTerrain::Normal;
+		std::string texture;
+	};
+
+	struct BoardObjectData {
+		std::string texture;
+		int x = 0;
+		int y = 0;
+		int width = 1;
+		int height = 1;
+	};
+
 	struct BoardUnitData {
 		std::string id;
+		std::string displayName;
+		BoardCharacterType characterType = BoardCharacterType::Plea;
 		BoardTeam team = BoardTeam::Ally;
 		BoardMoveType moveType = BoardMoveType::Adjacent;
 		std::string texture;
