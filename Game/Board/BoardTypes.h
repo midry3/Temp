@@ -38,6 +38,8 @@ namespace Game {
 		int y = 0;
 		int width = 1;
 		int height = 1;
+		double scaleX = 1.0;
+		double scaleY = 1.0;
 	};
 
 	struct BoardUnitData {

@@ -29,6 +29,8 @@ namespace Game {
 		int y = 0;
 		int width = 1;
 		int height = 1;
+		double scaleX = 1.0;
+		double scaleY = 1.0;
 	};
 
 	struct MapEditorCharacterData {
@@ -76,6 +78,10 @@ namespace Game {
 		bool _tilePassable = true;
 		int _objectWidth = 1;
 		int _objectHeight = 1;
+		float _objectScale = 1.0f;
+		float _objectScaleX = 1.0f;
+		float _objectScaleY = 1.0f;
+		bool _objectScaleUniform = true;
 		int _selectedX = -1;
 		int _selectedY = -1;
 		int _selectedCharacter = 0;
@@ -98,6 +104,8 @@ namespace Game {
 		int _characterTeam = 0;
 		int _catalogSelection = -1;
 		bool _leftMouseDown = false;
+		int _lastPaintX = -1;
+		int _lastPaintY = -1;
 
 		bool LoadMap(const std::string& path);
 		bool SaveMap();
@@ -111,6 +119,8 @@ namespace Game {
 		ID3D11ShaderResourceView* GetOrCreateThumbnail(const std::string& assetPath, int* outWidth, int* outHeight);
 		void ApplySelectedAssetToTool();
 		void HandleViewportInput();
+		bool PaintTileAt(int x, int y);
+		bool PaintLine(int x0, int y0, int x1, int y1);
 		void PlaceAt(int x, int y);
 		void SelectAt(int x, int y);
 		Vector2D TilePosition(int x, int y) const;

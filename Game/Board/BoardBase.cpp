@@ -146,9 +146,16 @@ namespace Game {
 			for (int index = 1; index <= count; ++index) {
 				lua_rawgeti(state, -1, index);
 				if (lua_istable(state, -1)) {
-					objects.push_back({ ReadString(state, -1, "texture"),
-						ReadInteger(state, -1, "x"), ReadInteger(state, -1, "y"),
-						ReadInteger(state, -1, "width", 1), ReadInteger(state, -1, "height", 1) });
+					const double scaleVal = ReadNumber(state, -1, "scale", 1.0);
+					objects.push_back({
+						ReadString(state, -1, "texture"),
+						ReadInteger(state, -1, "x"),
+						ReadInteger(state, -1, "y"),
+						ReadInteger(state, -1, "width", 1),
+						ReadInteger(state, -1, "height", 1),
+						ReadNumber(state, -1, "scaleX", scaleVal),
+						ReadNumber(state, -1, "scaleY", scaleVal)
+					});
 				}
 				lua_pop(state, 1);
 			}
@@ -215,11 +222,7 @@ namespace Game {
 			if (data.texture.empty()) continue;
 			const auto& sprite = CreateScene<Sprite2D>();
 			sprite->SetTexture(LoadAsset<Texture>(data.texture));
-			const auto textureSize = sprite->GetRawSize();
-			const Vector2D targetSize(_tileSize.x * data.width, _tileSize.y * data.height);
-			if (not (textureSize.x <= 0.0) && not (textureSize.y <= 0.0)) {
-				sprite->SetScale({ targetSize.x / textureSize.x, targetSize.y / textureSize.y });
-			}
+			sprite->SetScale({ data.scaleX, data.scaleY });
 			sprite->SetPosition(GetTilePosition(data.x, data.y));
 			_objects.push_back(sprite);
 		}

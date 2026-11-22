@@ -88,7 +88,15 @@ namespace Game {
 		if (not ImGui::GetCurrentContext()) {
 			IMGUI_CHECKVERSION();
 			ImGui::CreateContext();
-			ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+			auto& io = ImGui::GetIO();
+			io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+
+			const auto fontPath = AssetManager.ResolvePath("font/JF-Dot-jiskan16.ttf");
+			std::error_code error;
+			if (std::filesystem::exists(fontPath, error)) {
+				io.Fonts->AddFontFromFileTTF(fontPath.string().c_str(), 16.0f, nullptr, io.Fonts->GetGlyphRangesJapanese());
+			}
+
 			ImGui_ImplWin32_Init(DxLib::GetMainWindowHandle());
 			ImGui_ImplDX11_Init(
 				static_cast<ID3D11Device*>(const_cast<void*>(DxLib::GetUseDirect3D11Device())),
@@ -101,7 +109,7 @@ namespace Game {
 		RefreshAssetFiles();
 		if (not LoadMap(_mapPath)) {
 			_tiles.resize(_width * _height);
-			_status = "Could not load board/default.lua; create or select a valid Lua map file.";
+			_status = "board/default.lua を読み込めませんでした。有効なLuaマップファイルを選択してください。";
 			RebuildTileSprites();
 		}
 		CopyToBuffer(_mapPathInput, _mapPath);
@@ -174,6 +182,25 @@ namespace Game {
 			&& hoveredX == _selectedX && hoveredY == _selectedY;
 		if (not (hoveredX < 0) && not (hoveredY < 0) && not hoverMatchesSelection) {
 			drawTileHighlight(hoveredX, hoveredY, 50);
+		}
+		if (not (_selectedObject < 0) && _selectedObject < static_cast<int>(_objects.size())) {
+			const auto& object = _objects[_selectedObject];
+			const auto pos = TilePosition(object.x, object.y);
+			double objW = static_cast<double>(_tileSize);
+			double objH = static_cast<double>(_tileSize);
+			if (_selectedObject < static_cast<int>(_objectSprites.size()) && _objectSprites[_selectedObject]) {
+				const auto rawSize = _objectSprites[_selectedObject]->GetRawSize();
+				if (0.0 < rawSize.x && 0.0 < rawSize.y) {
+					objW = rawSize.x * object.scaleX;
+					objH = rawSize.y * object.scaleY;
+				}
+			}
+			const auto topLeft = Camera.WorldToScreen(pos);
+			const auto bottomRight = Camera.WorldToScreen(pos + Vector2D(objW, objH));
+			drawList->AddRect(
+				ImVec2(static_cast<float>(topLeft.x), static_cast<float>(topLeft.y)),
+				ImVec2(static_cast<float>(bottomRight.x), static_cast<float>(bottomRight.y)),
+				IM_COL32(0, 220, 255, 220), 0.0f, 0, 2.0f);
 		}
 		ImGui::Render();
 	}
@@ -257,12 +284,15 @@ namespace Game {
 			for (int index = 1; index <= count; ++index) {
 				lua_rawgeti(state, -1, index);
 				if (lua_istable(state, -1)) {
+					const double scaleVal = ReadNumber(state, -1, "scale", 1.0);
 					_objects.push_back({
 						ReadString(state, -1, "texture"),
 						ReadInteger(state, -1, "x"),
 						ReadInteger(state, -1, "y"),
 						ReadInteger(state, -1, "width", 1),
-						ReadInteger(state, -1, "height", 1)
+						ReadInteger(state, -1, "height", 1),
+						ReadNumber(state, -1, "scaleX", scaleVal),
+						ReadNumber(state, -1, "scaleY", scaleVal)
 					});
 				}
 				lua_pop(state, 1);
@@ -370,7 +400,8 @@ namespace Game {
 		for (const auto& object : _objects) {
 			output << "        { texture = \"" << EscapeLua(object.texture) << "\", x = " << object.x
 				<< ", y = " << object.y << ", width = " << object.width
-				<< ", height = " << object.height << " },\n";
+				<< ", height = " << object.height
+				<< ", scaleX = " << object.scaleX << ", scaleY = " << object.scaleY << " },\n";
 		}
 		output << "    },\n    units = {\n";
 		for (const auto& character : _characters) {
@@ -383,11 +414,11 @@ namespace Game {
 		}
 		output << "    }\n}\n";
 		if (not output.good()) {
-			_status = "Map file write failed.";
+			_status = "マップファイルの書き込みに失敗しました。";
 			return false;
 		}
 		_isDirty = false;
-		_status = "Saved " + outputPath.filename().string();
+		_status = "保存しました: " + outputPath.filename().string();
 		return true;
 	}
 
@@ -449,11 +480,7 @@ namespace Game {
 			if (object.texture.empty()) continue;
 			const auto& sprite = CreateScene<Sprite2D>();
 			sprite->SetTexture(LoadAsset<Texture>(object.texture));
-			const auto textureSize = sprite->GetRawSize();
-			const Vector2D targetSize(_tileSize * object.width, _tileSize * object.height);
-			if (not (textureSize.x <= 0.0) && not (textureSize.y <= 0.0)) {
-				sprite->SetScale({ targetSize.x / textureSize.x, targetSize.y / textureSize.y });
-			}
+			sprite->SetScale({ object.scaleX, object.scaleY });
 			sprite->SetPosition(TilePosition(object.x, object.y));
 			_objectSprites.push_back(sprite);
 		}
@@ -487,21 +514,21 @@ namespace Game {
 	void MapEditor::UpdateEditorUI() {
 		ImGui::SetNextWindowPos(ImVec2(900.0f, 12.0f), ImGuiCond_FirstUseEver);
 		ImGui::SetNextWindowSize(ImVec2(360.0f, 690.0f), ImGuiCond_FirstUseEver);
-		if (ImGui::Begin("Board Map Editor")) {
-			ImGui::InputText("Lua map file", _mapPathInput.data(), _mapPathInput.size());
-			if (ImGui::Button("Load")) {
-				if (LoadMap(_mapPathInput.data())) _status = "Map loaded.";
-				else _status = "Could not load map file.";
+		if (ImGui::Begin("マップエディタ")) {
+			ImGui::InputText("Luaマップファイル", _mapPathInput.data(), _mapPathInput.size());
+			if (ImGui::Button("読み込み")) {
+				if (LoadMap(_mapPathInput.data())) _status = "マップを読み込みました。";
+				else _status = "マップファイルを読み込めませんでした。";
 			}
 			ImGui::SameLine();
-			if (ImGui::Button("Save")) {
+			if (ImGui::Button("保存")) {
 				_mapPath = _mapPathInput.data();
 				SaveMap();
 			}
 			ImGui::SameLine();
-			ImGui::TextUnformatted(_isDirty ? "Modified" : "Saved");
+			ImGui::TextUnformatted(_isDirty ? "未保存" : "保存済み");
 			float boardPosition[2] = { static_cast<float>(_boardPosition.x), static_cast<float>(_boardPosition.y) };
-			if (ImGui::InputFloat2("Board position", boardPosition)) {
+			if (ImGui::InputFloat2("盤面位置", boardPosition)) {
 				_boardPosition = { boardPosition[0], boardPosition[1] };
 				_isDirty = true;
 				RebuildTileSprites();
@@ -510,11 +537,11 @@ namespace Game {
 			}
 			int width = _width;
 			int height = _height;
-			const bool widthChanged = ImGui::InputInt("Tiles wide", &width);
-			const bool heightChanged = ImGui::InputInt("Tiles high", &height);
+			const bool widthChanged = ImGui::InputInt("タイル幅", &width);
+			const bool heightChanged = ImGui::InputInt("タイル高", &height);
 			if (widthChanged || heightChanged) ResizeMap(width, height);
 			int tileSize = _tileSize;
-			if (ImGui::InputInt("Tile size", &tileSize)) {
+			if (ImGui::InputInt("タイルサイズ", &tileSize)) {
 				_tileSize = Clamp(tileSize, 8, 512);
 				_isDirty = true;
 				RebuildTileSprites();
@@ -522,64 +549,82 @@ namespace Game {
 				RebuildCharacterSprites();
 			}
 			ImGui::Separator();
-			const char* tools[] = { "Select tile", "Paint tile", "Place object", "Place character" };
+			const char* tools[] = { "タイル選択", "タイル配置", "オブジェクト配置", "キャラクター配置" };
 			int selectedTool = static_cast<int>(_tool);
-			if (ImGui::Combo("Tool", &selectedTool, tools, 4)) _tool = static_cast<MapEditorTool>(selectedTool);
+			if (ImGui::Combo("ツール", &selectedTool, tools, 4)) _tool = static_cast<MapEditorTool>(selectedTool);
 			if (not (_selectedX < 0) && not (_selectedY < 0)) {
-				ImGui::Text("Selected tile: %d, %d", _selectedX, _selectedY);
+				ImGui::Text("選択タイル: %d, %d", _selectedX, _selectedY);
 				auto& tile = _tiles[_selectedY * _width + _selectedX];
-				if (ImGui::InputText("Tile texture", _tileTextureInput.data(), _tileTextureInput.size(), ImGuiInputTextFlags_EnterReturnsTrue)) {
+				if (ImGui::InputText("タイルテクスチャ", _tileTextureInput.data(), _tileTextureInput.size(), ImGuiInputTextFlags_EnterReturnsTrue)) {
 					tile.texture = _tileTextureInput.data();
 					_isDirty = true;
 					RebuildTileSprites();
 				}
-				if (ImGui::Checkbox("Passable", &tile.passable)) {
+				if (ImGui::Checkbox("通行可能", &tile.passable)) {
 					_tilePassable = tile.passable;
 					_isDirty = true;
 					RebuildTileSprites();
 				}
 			}
-			ImGui::SeparatorText("Tile brush");
-			ImGui::InputText("Brush texture", _tileBrushInput.data(), _tileBrushInput.size());
-			ImGui::Checkbox("Brush passable", &_tilePassable);
-			if (ImGui::InputText("New tile default texture", _defaultTextureInput.data(), _defaultTextureInput.size(), ImGuiInputTextFlags_EnterReturnsTrue)) {
+			ImGui::SeparatorText("タイルブラシ");
+			ImGui::InputText("ブラシテクスチャ", _tileBrushInput.data(), _tileBrushInput.size());
+			ImGui::Checkbox("ブラシ通行可能", &_tilePassable);
+			if (ImGui::InputText("デフォルトタイルテクスチャ", _defaultTextureInput.data(), _defaultTextureInput.size(), ImGuiInputTextFlags_EnterReturnsTrue)) {
 				_defaultTileTexture = _defaultTextureInput.data();
 				_isDirty = true;
 			}
-			ImGui::SeparatorText("Objects spanning tiles");
-			ImGui::InputText("Object texture", _objectTextureInput.data(), _objectTextureInput.size());
-			ImGui::InputInt("Object tile width", &_objectWidth);
-			ImGui::InputInt("Object tile height", &_objectHeight);
-			_objectWidth = Clamp(_objectWidth, 1, 256);
-			_objectHeight = Clamp(_objectHeight, 1, 256);
+			ImGui::SeparatorText("オブジェクト設定");
+			ImGui::InputText("オブジェクトテクスチャ", _objectTextureInput.data(), _objectTextureInput.size());
+			ImGui::Checkbox("縦横比固定", &_objectScaleUniform);
+			if (_objectScaleUniform) {
+				ImGui::DragFloat("配置スケール", &_objectScale, 0.05f, 0.05f, 20.0f, "%.2fx");
+				_objectScale = static_cast<float>(Clamp(static_cast<double>(_objectScale), 0.05, 50.0));
+			}
+			else {
+				float scaleInput[2] = { _objectScaleX, _objectScaleY };
+				if (ImGui::DragFloat2("配置スケール (X, Y)", scaleInput, 0.05f, 0.05f, 20.0f, "%.2f")) {
+					_objectScaleX = static_cast<float>(Clamp(static_cast<double>(scaleInput[0]), 0.05, 50.0));
+					_objectScaleY = static_cast<float>(Clamp(static_cast<double>(scaleInput[1]), 0.05, 50.0));
+				}
+			}
 			if (not (_selectedObject < 0) && _selectedObject < static_cast<int>(_objects.size())) {
 				auto& object = _objects[_selectedObject];
-				ImGui::Text("Selected object: %d", _selectedObject + 1);
-				if (ImGui::InputText("Selected object texture", _objectTextureInput.data(), _objectTextureInput.size())) {
+				ImGui::Text("選択中オブジェクト: %d (タイル: %d, %d)", _selectedObject + 1, object.x, object.y);
+				if (ImGui::InputText("選択中テクスチャ", _objectTextureInput.data(), _objectTextureInput.size())) {
 					object.texture = _objectTextureInput.data();
 					_isDirty = true;
 					RebuildObjectSprites();
 				}
-				int objectWidth = object.width;
-				int objectHeight = object.height;
-				if (ImGui::InputInt("Selected width", &objectWidth)) {
-					object.width = Clamp(objectWidth, 1, _width - object.x);
+				float selUniform = static_cast<float>(object.scaleX);
+				if (ImGui::DragFloat("選択中スケール", &selUniform, 0.05f, 0.05f, 20.0f, "%.2fx")) {
+					const double clamped = Clamp(static_cast<double>(selUniform), 0.01, 50.0);
+					object.scaleX = clamped;
+					object.scaleY = clamped;
 					_isDirty = true;
 					RebuildObjectSprites();
 				}
-				if (ImGui::InputInt("Selected height", &objectHeight)) {
-					object.height = Clamp(objectHeight, 1, _height - object.y);
+				float selScaleInput[2] = { static_cast<float>(object.scaleX), static_cast<float>(object.scaleY) };
+				if (ImGui::DragFloat2("選択中スケール (X, Y)", selScaleInput, 0.05f, 0.05f, 20.0f, "%.2f")) {
+					object.scaleX = Clamp(static_cast<double>(selScaleInput[0]), 0.01, 50.0);
+					object.scaleY = Clamp(static_cast<double>(selScaleInput[1]), 0.01, 50.0);
 					_isDirty = true;
 					RebuildObjectSprites();
 				}
-				if (ImGui::Button("Delete selected object")) {
+				if (ImGui::Button("スケールリセット (1.0x)")) {
+					object.scaleX = 1.0;
+					object.scaleY = 1.0;
+					_isDirty = true;
+					RebuildObjectSprites();
+				}
+				ImGui::SameLine();
+				if (ImGui::Button("選択オブジェクトを削除")) {
 					_objects.erase(_objects.begin() + _selectedObject);
 					_selectedObject = -1;
 					_isDirty = true;
 					RebuildObjectSprites();
 				}
 			}
-			ImGui::SeparatorText("Characters");
+			ImGui::SeparatorText("キャラクター");
 			if (not _characterCatalog.empty()) {
 				std::vector<std::string> names;
 				std::vector<const char*> labels;
@@ -588,7 +633,7 @@ namespace Game {
 				}
 				for (const auto& name : names) labels.push_back(name.c_str());
 				_selectedCharacter = Clamp(_selectedCharacter, 0, static_cast<int>(labels.size()) - 1);
-				if (ImGui::Combo("Character", &_selectedCharacter, labels.data(), static_cast<int>(labels.size()))) {
+				if (ImGui::Combo("種類", &_selectedCharacter, labels.data(), static_cast<int>(labels.size()))) {
 					_catalogSelection = -1;
 				}
 				if (_catalogSelection != _selectedCharacter) {
@@ -597,7 +642,7 @@ namespace Game {
 					_catalogSelection = _selectedCharacter;
 				}
 				auto& characterInfo = _characterCatalog[_selectedCharacter];
-				if (ImGui::InputText("Display name", _characterNameInput.data(), _characterNameInput.size())) {
+				if (ImGui::InputText("表示名", _characterNameInput.data(), _characterNameInput.size())) {
 					characterInfo.displayName = _characterNameInput.data();
 					for (auto& placed : _characters) {
 						if (placed.type == characterInfo.type) placed.displayName = characterInfo.displayName;
@@ -605,7 +650,7 @@ namespace Game {
 					_isDirty = true;
 					RebuildCharacterSprites();
 				}
-				if (ImGui::InputText("Character icon", _characterIconInput.data(), _characterIconInput.size(), ImGuiInputTextFlags_EnterReturnsTrue)) {
+				if (ImGui::InputText("アイコン", _characterIconInput.data(), _characterIconInput.size(), ImGuiInputTextFlags_EnterReturnsTrue)) {
 					characterInfo.icon = _characterIconInput.data();
 					for (auto& placed : _characters) {
 						if (placed.type == characterInfo.type) placed.icon = characterInfo.icon;
@@ -613,32 +658,32 @@ namespace Game {
 					_isDirty = true;
 					RebuildCharacterSprites();
 				}
-				ImGui::RadioButton("Ally", &_characterTeam, 0);
+				ImGui::RadioButton("味方", &_characterTeam, 0);
 				ImGui::SameLine();
-				ImGui::RadioButton("Enemy", &_characterTeam, 1);
-				if (ImGui::Button("Remove last character")) {
+				ImGui::RadioButton("敵", &_characterTeam, 1);
+				if (ImGui::Button("直前のキャラクターを削除")) {
 					if (not _characters.empty()) {
 						_characters.pop_back();
 						_isDirty = true;
 						RebuildCharacterSprites();
 					}
 				}
-				ImGui::TextWrapped("Select Place character, then click a tile. Placing an ally type again moves its initial position. Enemies can be repeated.");
+				ImGui::TextWrapped("「キャラクター配置」ツールを選択後、タイルをクリックして配置します。同種の味方を再配置すると初期位置が移動します。敵は複数配置可能です。");
 			}
 			ImGui::Separator();
-			ImGui::TextWrapped("Right mouse drag: pan | Mouse wheel: zoom at cursor");
+			ImGui::TextWrapped("右ドラッグ: パン移動 | ホイール: ズーム | タイル配置: 左ドラッグで連続配置");
 			if (not _status.empty()) ImGui::TextWrapped("%s", _status.c_str());
 		}
 		ImGui::End();
 
 		ImGui::SetNextWindowPos(ImVec2(12.0f, 12.0f), ImGuiCond_FirstUseEver);
 		ImGui::SetNextWindowSize(ImVec2(480.0f, 720.0f), ImGuiCond_FirstUseEver);
-		if (ImGui::Begin("Asset Explorer")) {
-			ImGui::TextUnformatted("Assets/ (PNG textures)");
-			ImGui::InputText("Search", _assetSearch.data(), _assetSearch.size());
+		if (ImGui::Begin("アセットエクスプローラー")) {
+			ImGui::TextUnformatted("Assets/ (PNGテクスチャ)");
+			ImGui::InputText("検索", _assetSearch.data(), _assetSearch.size());
 			ImGui::SameLine();
-			if (ImGui::Button("Refresh")) RefreshAssetFiles();
-			ImGui::SliderFloat("Icon size", &_thumbnailSize, 48.0f, 160.0f, "%.0f px");
+			if (ImGui::Button("更新")) RefreshAssetFiles();
+			ImGui::SliderFloat("アイコンサイズ", &_thumbnailSize, 48.0f, 160.0f, "%.0f px");
 
 			const std::string search = _assetSearch.data();
 			std::vector<std::string> visibleAssets;
@@ -647,7 +692,7 @@ namespace Game {
 				if (not search.empty() && assetPath.find(search) == std::string::npos) continue;
 				visibleAssets.push_back(assetPath);
 			}
-			ImGui::TextDisabled("Items: %zu", visibleAssets.size());
+			ImGui::TextDisabled("項目数: %zu", visibleAssets.size());
 
 			ImGui::BeginChild("AssetGrid", ImVec2(0.0f, -96.0f), ImGuiChildFlags_Borders);
 			const float availWidth = ImGui::GetContentRegionAvail().x;
@@ -719,7 +764,7 @@ namespace Game {
 					drawList->AddImage(reinterpret_cast<ImTextureID>(srv), imgMin, imgMax);
 				}
 				else if (isVisible) {
-					const char* const placeholder = "No Image";
+					const char* const placeholder = "画像なし";
 					const ImVec2 phSize = ImGui::CalcTextSize(placeholder);
 					const ImVec2 phPos(thumbMin.x + (_thumbnailSize - phSize.x) * 0.5f, thumbMin.y + (_thumbnailSize - phSize.y) * 0.5f);
 					drawList->AddText(phPos, IM_COL32(140, 140, 140, 255), placeholder);
@@ -749,9 +794,9 @@ namespace Game {
 					ImGui::BeginTooltip();
 					ImGui::Text("%s", filename.c_str());
 					ImGui::Separator();
-					ImGui::Text("Path: Assets/%s", assetPath.c_str());
+					ImGui::Text("パス: Assets/%s", assetPath.c_str());
 					if (0 < texW && 0 < texH) {
-						ImGui::Text("Dimensions: %d x %d px", texW, texH);
+						ImGui::Text("サイズ: %d x %d px", texW, texH);
 					}
 					if (srv != nullptr) {
 						const float previewBase = 128.0f;
@@ -783,7 +828,7 @@ namespace Game {
 			ImGui::EndChild();
 
 			if (_selectedAssetPath.empty()) {
-				ImGui::TextDisabled("Select a PNG texture.");
+				ImGui::TextDisabled("PNGテクスチャを選択してください。");
 			}
 			else {
 				int selW = 0;
@@ -800,14 +845,14 @@ namespace Game {
 				}
 				ImGui::EndGroup();
 
-				if (ImGui::Button("Use for tile brush")) {
+				if (ImGui::Button("タイルブラシに設定")) {
 					CopyToBuffer(_tileBrushInput, _selectedAssetPath);
-					_status = "Selected tile brush texture.";
+					_status = "タイルブラシのテクスチャを設定しました。";
 				}
 				ImGui::SameLine();
-				if (ImGui::Button("Use for object")) {
+				if (ImGui::Button("オブジェクトに設定")) {
 					CopyToBuffer(_objectTextureInput, _selectedAssetPath);
-					_status = "Selected object texture.";
+					_status = "オブジェクトのテクスチャを設定しました。";
 				}
 			}
 		}
@@ -899,11 +944,11 @@ namespace Game {
 		if (_selectedAssetPath.empty()) return;
 		if (_tool == MapEditorTool::PaintTile) {
 			CopyToBuffer(_tileBrushInput, _selectedAssetPath);
-			_status = "Selected tile brush texture.";
+			_status = "タイルブラシのテクスチャを設定しました。";
 		}
 		else if (_tool == MapEditorTool::PlaceObject) {
 			CopyToBuffer(_objectTextureInput, _selectedAssetPath);
-			_status = "Selected object texture.";
+			_status = "オブジェクトのテクスチャを設定しました。";
 		}
 	}
 
@@ -934,36 +979,105 @@ namespace Game {
 		const bool leftDown = (GetMouseInput() & MOUSE_INPUT_LEFT) != 0;
 		const bool leftPressed = leftDown && not _leftMouseDown;
 		_leftMouseDown = leftDown;
-		if (not leftPressed) return;
+		if (not leftDown) {
+			_lastPaintX = -1;
+			_lastPaintY = -1;
+			return;
+		}
 		const auto world = Camera.ScreenToWorld(screen);
 		const int x = static_cast<int>(std::floor((world.x - _boardPosition.x) / _tileSize));
 		const int y = static_cast<int>(std::floor((world.y - _boardPosition.y) / _tileSize));
+		if (_tool == MapEditorTool::PaintTile) {
+			if (not (x < 0) && not (y < 0) && x < _width && y < _height) {
+				if (leftPressed || _lastPaintX != x || _lastPaintY != y) {
+					bool changed = false;
+					if (not (_lastPaintX < 0) && not (_lastPaintY < 0)) {
+						changed = PaintLine(_lastPaintX, _lastPaintY, x, y);
+					}
+					else {
+						changed = PaintTileAt(x, y);
+					}
+					_lastPaintX = x;
+					_lastPaintY = y;
+					_selectedX = x;
+					_selectedY = y;
+					if (changed) {
+						_isDirty = true;
+						RebuildTileSprites();
+					}
+				}
+			}
+			return;
+		}
+		if (not leftPressed) return;
 		if (x < 0 || y < 0 || not (x < _width) || not (y < _height)) return;
 		if (_tool == MapEditorTool::Select) SelectAt(x, y);
 		else PlaceAt(x, y);
 	}
 
+	bool MapEditor::PaintTileAt(int x, int y) {
+		if (x < 0 || y < 0 || not (x < _width) || not (y < _height)) return false;
+		auto& tile = _tiles[y * _width + x];
+		const std::string brushTexture = _tileBrushInput.data();
+		if (tile.texture == brushTexture && tile.passable == _tilePassable) return false;
+		tile.texture = brushTexture;
+		tile.passable = _tilePassable;
+		return true;
+	}
+
+	bool MapEditor::PaintLine(int x0, int y0, int x1, int y1) {
+		bool anyChanged = false;
+		const int dx = std::abs(x1 - x0);
+		const int dy = std::abs(y1 - y0);
+		const int sx = x0 < x1 ? 1 : -1;
+		const int sy = y0 < y1 ? 1 : -1;
+		int err = dx - dy;
+		int curX = x0;
+		int curY = y0;
+		while (true) {
+			if (PaintTileAt(curX, curY)) anyChanged = true;
+			if (curX == x1 && curY == y1) break;
+			const int e2 = 2 * err;
+			if (not (e2 < -dy)) {
+				err -= dy;
+				curX += sx;
+			}
+			if (e2 < dx || e2 == dx) {
+				err += dx;
+				curY += sy;
+			}
+		}
+		return anyChanged;
+	}
+
 	void MapEditor::PlaceAt(int x, int y) {
 		if (_tool == MapEditorTool::PaintTile) {
-			auto& tile = _tiles[y * _width + x];
-			tile.texture = _tileBrushInput.data();
-			tile.passable = _tilePassable;
-			_selectedX = x;
-			_selectedY = y;
-			_isDirty = true;
-			RebuildTileSprites();
+			if (PaintTileAt(x, y)) {
+				_selectedX = x;
+				_selectedY = y;
+				_isDirty = true;
+				RebuildTileSprites();
+			}
 			return;
 		}
 		if (_tool == MapEditorTool::PlaceObject) {
 			if (_objectTextureInput[0] == '\0') {
-				_status = "Set an object texture before placing it.";
+				_status = "配置するオブジェクトのテクスチャを指定してください。";
 				return;
 			}
-			_objects.push_back({ _objectTextureInput.data(), x, y,
-				Min(_objectWidth, _width - x), Min(_objectHeight, _height - y) });
+			const double sX = _objectScaleUniform ? static_cast<double>(_objectScale) : static_cast<double>(_objectScaleX);
+			const double sY = _objectScaleUniform ? static_cast<double>(_objectScale) : static_cast<double>(_objectScaleY);
+			_objects.push_back({
+				_objectTextureInput.data(),
+				x, y,
+				1, 1,
+				Clamp(sX, 0.01, 50.0),
+				Clamp(sY, 0.01, 50.0)
+			});
 			_selectedObject = static_cast<int>(_objects.size()) - 1;
 			_isDirty = true;
 			RebuildObjectSprites();
+			_status = "オブジェクトを配置しました。";
 			return;
 		}
 		if (_tool == MapEditorTool::PlaceCharacter && not (_selectedCharacter < 0)
@@ -1006,8 +1120,8 @@ namespace Game {
 			_isDirty = true;
 			RebuildCharacterSprites();
 			_status = team == BoardTeam::Ally
-				? "Ally initial position set."
-				: "Enemy placed.";
+				? "味方の初期位置を設定しました。"
+				: "敵を配置しました。";
 		}
 	}
 
@@ -1021,8 +1135,17 @@ namespace Game {
 			const auto& object = _objects[index];
 			const auto left = _boardPosition.x + object.x * _tileSize;
 			const auto top = _boardPosition.y + object.y * _tileSize;
-			if (not (world.x < left) && world.x < left + object.width * _tileSize
-				&& not (world.y < top) && world.y < top + object.height * _tileSize) {
+			double objWidth = static_cast<double>(_tileSize);
+			double objHeight = static_cast<double>(_tileSize);
+			if (index < static_cast<int>(_objectSprites.size()) && _objectSprites[index]) {
+				const auto rawSize = _objectSprites[index]->GetRawSize();
+				if (0.0 < rawSize.x && 0.0 < rawSize.y) {
+					objWidth = rawSize.x * object.scaleX;
+					objHeight = rawSize.y * object.scaleY;
+				}
+			}
+			if (not (world.x < left) && world.x < left + objWidth
+				&& not (world.y < top) && world.y < top + objHeight) {
 				_selectedObject = index;
 				CopyToBuffer(_objectTextureInput, object.texture);
 				break;
