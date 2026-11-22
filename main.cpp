@@ -1,10 +1,13 @@
 #include <Novot.h>
 #include "Game/Board/MapEditor.h"
 #include "Game/Battle/TestBattle.h"
+#include "Game/Board/TestBoard.h"
 #include <imgui.h>
 #include <imgui_impl_win32.h>
 #include <Windows.h>
 #include <DxLib.h>
+
+#include "Game/Board/Map/Map1.h"
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
@@ -18,7 +21,7 @@ namespace {
 
 void NovotSetup() {
 	SetHookWinProc(MapEditorWndProc);
-	SceneManager.SetCurrentScene<Game::MapEditor>();
+	SceneManager.SetCurrentScene<Game::Map1>();
 }
 
 int NovotMain() {

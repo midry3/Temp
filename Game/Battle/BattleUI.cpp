@@ -44,11 +44,21 @@ namespace Game {
 	void BattleUI::SetButtonAnimation(const SharedPtr<TextureButton>& button) {
 		button->Entered += [button](const MouseEvent& e) {
 			button->KillAllTweenGroups();
-			const auto& tg = button->CreateTweenGroup();
 			const auto& sprite = button->GetSprite();
-			tg->CreateTween(&sprite->rotation, PI / 12, 0.1)->From(0.0);
-			tg->CreateTween(&sprite->rotation, -PI / 12, 0.1);
-			tg->CreateTween(&sprite->rotation, 0, 0.05);
+			const auto& tg = button->CreateTweenGroup();
+			tg->CreateTween(&sprite->scale, Vec2{1.2, 1.2}, 0.15);
+
+			const auto& tg2 = button->CreateTweenGroup();
+			tg2->CreateTween(&sprite->offset, Vec2{ -5, -5 }, 0.15);
+			};
+		button->Exited += [button](const MouseEvent& e) {
+			button->KillAllTweenGroups();
+			const auto& sprite = button->GetSprite();
+			const auto& tg = button->CreateTweenGroup();
+			tg->CreateTween(&sprite->scale, Vec2D_1, 0.15);
+
+			const auto& tg2 = button->CreateTweenGroup();
+			tg2->CreateTween(&sprite->offset, Vec2D_0, 0.15);
 			};
 	}
 }

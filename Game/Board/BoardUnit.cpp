@@ -1,5 +1,6 @@
 #include "BoardUnit.h"
 #include <Scene/Texture/Sprite2D.h>
+#include <cmath>
 
 namespace Game {
 	void BoardUnit::_Load() {
@@ -7,6 +8,16 @@ namespace Game {
 		_sprite = CreateScene<Sprite2D>();
 		_nameLabel = CreateScene<TextLabel>();
 		_nameLabel->SetFontSize(14)->SetForegroundColor({ 20, 20, 20 });
+	}
+
+	void BoardUnit::_Update(float dt) {
+		Button::_Update(dt);
+		if (not _intentHint) return;
+		_hintTime += dt;
+		if (_sprite) {
+			const auto pulse = (std::sin(_hintTime * 6.0) + 1.0) / 2.0;
+			_sprite->SetModulate(Vector3D(255, 60, 60) * pulse + Vector3D(255, 255, 255) * (1.0 - pulse));
+		}
 	}
 
 	void BoardUnit::SetUnit(const BoardUnitData& data, const SharedPtr<Texture>& texture, const Vector2D& tileSize) {
@@ -29,6 +40,14 @@ namespace Game {
 			const auto scale = Min(tileSize.x / textureSize.x, tileSize.y / textureSize.y) * 0.8;
 			_sprite->SetScale(scale);
 			_sprite->SetPosition(tileSize * 0.1);
+		}
+	}
+
+	void BoardUnit::SetIntentHint(bool hint) {
+		_intentHint = hint;
+		_hintTime = 0.0;
+		if (not _intentHint && _sprite) {
+			_sprite->SetModulate({ 255, 255, 255 });
 		}
 	}
 }

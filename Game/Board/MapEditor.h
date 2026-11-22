@@ -109,6 +109,8 @@ namespace Game {
 
 		bool LoadMap(const std::string& path);
 		bool SaveMap();
+		void SaveLastOpenedMapPath(const std::string& path);
+		[[nodiscard]] std::string LoadLastOpenedMapPath() const;
 		void ResizeMap(int width, int height);
 		void RebuildTileSprites();
 		void RebuildObjectSprites();

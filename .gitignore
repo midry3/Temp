@@ -2,3 +2,5 @@
 x64/
 OnBoard/
 Assets/
+_Tools/*
+!_Tools/.gitkeep

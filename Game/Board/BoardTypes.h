@@ -24,7 +24,14 @@ namespace Game {
 		Plea,
 		Reko,
 		Zon,
-		Gou
+		Gou,
+		Slime
+	};
+
+	struct BoardOffset {
+		int dx = 0;
+		int dy = 0;
+		bool operator==(const BoardOffset& other) const = default;
 	};
 
 	struct BoardTileData {

@@ -121,11 +121,11 @@ namespace Game {
 	void SkillSelect::SetButtonAnimation(const SharedPtr<TextureButton>& button) {
 		button->Entered += [button](const MouseEvent& e) {
 			button->KillAllTweenGroups();
-			const auto& tg = button->CreateTweenGroup();
 			const auto& sprite = button->GetSprite();
-			tg->CreateTween(&sprite->rotation, PI / 12, 0.1)->From(0.0);
-			tg->CreateTween(&sprite->rotation, -PI / 12, 0.1);
-			tg->CreateTween(&sprite->rotation, 0, 0.05);
+
+			const auto& tg = button->CreateTweenGroup();
+			tg->CreateTween(&sprite->offset.y, -30.0, 0.1)->From(0.0);
+			tg->CreateTween(&sprite->offset.y, 0.0, 0.1);
 			};
 	}
 }

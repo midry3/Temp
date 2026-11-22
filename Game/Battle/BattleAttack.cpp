@@ -302,6 +302,9 @@ namespace Game {
 					action.scale = ReadNumber(state, -1, "scale", 0.5);
 					action.strength = ReadNumber(state, -1, "strength", 2.5);
 					action.frequency = ReadNumber(state, -1, "frequency", 30.0);
+					action.width = ReadNumber(state, -1, "width", 16.0);
+					action.roundTrips = static_cast<int>(ReadNumber(state, -1, "roundTrips", 3));
+					action.durationPerTrip = ReadNumber(state, -1, "durationPerTrip", ReadNumber(state, -1, "duration", 0.16));
 					action.blurCenter = ReadVector(state, -1, "center");
 					action.hasBlurCenter = HasTable(state, -1, "center");
 					action.focusRadius = ReadNumber(state, -1, "focusRadius", 360.0);
@@ -417,6 +420,27 @@ namespace Game {
 		}
 		else if (action.type == "time_scale") {
 			StartTimeScale(action.duration, action.scale);
+		}
+		else if (action.type == "rustle") {
+			if (auto target = ResolveTarget(action.target)) {
+				auto tweenGroup = CreateTweenGroup();
+				const double w = action.width;
+				const int trips = action.roundTrips;
+				const double durationPerTrip = 0.0 < action.durationPerTrip ? action.durationPerTrip : 0.16;
+				if (not (trips < 1) && 0.0 < w && 0.0 < durationPerTrip) {
+					const double quarterTrip = durationPerTrip * 0.25;
+					const double halfTrip = durationPerTrip * 0.5;
+					for (int i = 0; i < trips; ++i) {
+						tweenGroup->CreateTween(&target->offset, Vector2D(w, 0.0), quarterTrip, Easing::Linear);
+						tweenGroup->CreateTween(&target->offset, Vector2D(-w, 0.0), halfTrip, Easing::Linear);
+						tweenGroup->CreateTween(&target->offset, Vector2D(0.0, 0.0), quarterTrip, Easing::Linear);
+					}
+					tweenGroup->CreateTween(&target->offset, Vector2D(0.0, 0.0), 0.001, Easing::Linear);
+				}
+				else {
+					target->offset = Vector2D(0.0, 0.0);
+				}
+			}
 		}
 		else if (action.type == "screen_flash"
 			|| action.type == "flash"

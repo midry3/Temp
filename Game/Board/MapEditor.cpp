@@ -107,10 +107,16 @@ namespace Game {
 		Camera.SetZoom(1.0);
 		CreateScene<MapEditorOverlay>()->SetUIMode(true)->IgnoreCamera();
 		RefreshAssetFiles();
-		if (not LoadMap(_mapPath)) {
-			_tiles.resize(_width * _height);
-			_status = "board/default.lua を読み込めませんでした。有効なLuaマップファイルを選択してください。";
-			RebuildTileSprites();
+		const std::string lastPath = LoadLastOpenedMapPath();
+		const std::string targetPath = lastPath.empty() ? _mapPath : lastPath;
+		if (not LoadMap(targetPath)) {
+			if (targetPath != _mapPath && LoadMap(_mapPath)) {
+			}
+			else {
+				_tiles.resize(_width * _height);
+				_status = "Luaマップファイルを読み込めませんでした。有効なLuaマップファイルを選択してください。";
+				RebuildTileSprites();
+			}
 		}
 		CopyToBuffer(_mapPathInput, _mapPath);
 		CopyToBuffer(_tileTextureInput, _tileTexture);
@@ -361,6 +367,7 @@ namespace Game {
 		RebuildTileSprites();
 		RebuildObjectSprites();
 		RebuildCharacterSprites();
+		SaveLastOpenedMapPath(path);
 		return true;
 	}
 
@@ -419,7 +426,41 @@ namespace Game {
 		}
 		_isDirty = false;
 		_status = "保存しました: " + outputPath.filename().string();
+		SaveLastOpenedMapPath(_mapPath);
 		return true;
+	}
+
+	void MapEditor::SaveLastOpenedMapPath(const std::string& path) {
+		if (path.empty()) return;
+		const std::filesystem::path configPath = "_Tools/last_map.txt";
+		std::error_code error;
+		std::filesystem::create_directories(configPath.parent_path(), error);
+		std::ofstream output(configPath);
+		if (output.is_open()) {
+			output << path;
+		}
+	}
+
+	std::string MapEditor::LoadLastOpenedMapPath() const {
+		const std::filesystem::path configPath = "_Tools/last_map.txt";
+		std::ifstream input(configPath);
+		if (not input.is_open()) {
+			// 旧パスからのフォールバック
+			const auto legacyPath = AssetManager.ResolvePath("board/last_map.txt");
+			input.open(legacyPath);
+		}
+		if (input.is_open()) {
+			std::string path;
+			if (std::getline(input, path)) {
+				while (not path.empty() && (path.back() == '\r' || path.back() == '\n' || path.back() == ' ')) {
+					path.pop_back();
+				}
+				if (not path.empty()) {
+					return path;
+				}
+			}
+		}
+		return "";
 	}
 
 	void MapEditor::ResizeMap(int width, int height) {

@@ -3,6 +3,7 @@
 #include "BattleCharacter/Reko.h"
 #include "BattleCharacter/Zon.h"
 #include "BattleCharacter/Gou.h"
+#include "BattleCharacter/Enemy/Slime.h"
 
 namespace Game {
 	void TestBattle::_Load() {
@@ -10,7 +11,7 @@ namespace Game {
 
 		_allies.push_back(MakeShared<Reko>());
 
-		_enemies.push_back(MakeShared<Reko>());
+		_enemies.push_back(MakeShared<Slime>());
 		PutCharacters();
 	}
 }

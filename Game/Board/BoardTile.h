@@ -12,6 +12,7 @@ namespace Game {
 		BoardTerrain _terrain = BoardTerrain::Normal;
 		bool _selected = false;
 		bool _moveHint = false;
+		bool _enemyTargetHint = false;
 		double _hintTime = 0.0;
 
 		void UpdateColor();
@@ -26,5 +27,7 @@ namespace Game {
 		[[nodiscard]] bool IsPassable() const { return _terrain != BoardTerrain::Disabled; }
 		void SetSelected(bool selected);
 		void SetMoveHint(bool moveHint);
+		void SetEnemyTargetHint(bool enemyTargetHint);
+		[[nodiscard]] bool HasEnemyTargetHint() const { return _enemyTargetHint; }
 	};
 }

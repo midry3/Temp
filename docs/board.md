@@ -19,7 +19,7 @@
 - `Save` は変更を Lua 盤面ファイルに書き出し、`Load` は指定したファイルを読み直します。
 
 キャラクターの `displayName` と `icon`、マップ上のタイル画像・通行可否、オブジェクト、敵味方の配置は Lua ファイルに保存されます。キャラクターのクラス対応は `BoardCharacterType` と
-`CreateBattleCharacter` に集約し、新しいクラスを追加するときは enum とファクトリーの対応を追加します。
+`CreateBattleCharacter` に集約し、新しいクラスを追加するときは enum とファクトリーの対応を追加します（詳細な手順は [add-character-and-skill.md](add-character-and-skill.md) を参照してください）。
 
 タイルは `tiles` 配列で従来どおり地形名文字列を使うほか、個別の画像と通行可否を持つテーブルを指定できます。
 
@@ -88,12 +88,54 @@ board = {
 | `range_two` | 周囲24マス相当（縦横2マス以内） |
 | `orthogonal_unlimited` | 障害物がない直線の縦横方向 |
 
-## 操作
+## ターン進行と操作
 
-味方ユニットをクリックして選択し、移動先のタイルをクリックします。
-選択中は移動可能なタイルが白く点滅します。右クリックすると選択をキャンセルできます。
-味方ユニットが全員1回移動するとターンが終了し、敵が`y`方向へ1マス移動します。
-敵ユニットが通行不可タイルや他ユニットに阻まれた場合はその場に留まります。
+盤面は **1ターン1キャラ移動制**（プレイヤー手番 → 敵手番 → プレイヤー手番... の交互進行）です。
 
-`BoardBase::EndTurn()` を呼ぶと、味方の未移動状態に関係なく敵を移動させて
-ターンを進められます。
+1. **プレイヤー手番**:
+   - 味方ユニットを左クリックして選択し、移動先のタイルをクリックして移動します。
+   - 選択中は移動可能なタイルが白く点滅します。右クリックすると選択をキャンセルできます。
+   - **相手の動きの予告**: プレイヤー手番中、次に動く敵のアイコンが**赤く点滅**し、その敵の移動予定先のマスも**赤く点滅**して表示されます。
+   - 味方1体が移動を完了すると、自動的に敵の手番へ移行します。
+2. **敵手番**:
+   - 予告されていた敵ユニットが予定マスへ移動します。
+   - 敵の移動アニメーション完了後、ターンが進み（_turn++）、再びプレイヤーの手番へ戻り、次の敵の動きが赤点滅で予告されます。
+3. **ターンのスキップ**:
+   - BoardBase::EndTurn() を呼ぶと、味方を移動させずに敵手番を実行してターンを進められます。
+
+## 敵の移動可能マスと移動決定ロジック
+
+敵の動きは「相対移動可能マス」と「移動先決定ロジック」に分離して設計されています。
+
+### 1. 相対移動可能マスの指定（Enemy側）
+各敵キャラクターのクラス（EnemyBattleCharacter 派生クラス）で GetRelativeMoveOffsets() をオーバーライドし、自身からの相対座標オフセット（BoardOffset）のリストを返します。
+
+```cpp
+// 例: Slime.cpp（上下左右4マス）
+std::vector<BoardOffset> Slime::GetRelativeMoveOffsets() const {
+    return {
+        { 0, -1 },
+        { -1, 0 }, { 1, 0 },
+        { 0, 1 }
+    };
+}
+```
+
+デフォルトの EnemyBattleCharacter::GetRelativeMoveOffsets() は周囲8マスです。
+
+### 2. 移動先を決定するロジック（Mapクラス側）
+BoardBase またはその派生Mapクラス（Map1 など）で移動先決定ロジックを記述します。
+仮想関数 DecideEnemyAction() のオーバーライド、または SetEnemyActionDecider() による関数の注入が可能です。
+
+Mapクラス側にはロジック記述用の便利なヘルパー関数が提供されています：
+- GetAllyUnits() / GetEnemyUnits(): 盤面上の味方・敵ユニット一覧を取得
+- GetUnitAt(int x, int y): 指定座標のユニットを取得
+- GetReachablePositions(const BoardUnit& unit, bool allowOccupiedByTarget): ユニットが移動可能なマス座標一覧を取得
+- FindNearestAlly(int x, int y) / FindNearestEnemy(int x, int y): 最も近いユニットを検索
+- GetManhattanDistance(int x1, int y1, int x2, int y2): マンハッタン距離を計算
+- CanMoveTo(const BoardUnit& unit, int x, int y, bool allowOccupiedByTarget): 移動可否を判定
+
+#### デフォルトロジックの動作
+1. **優先度1**: 移動可能マスにプレイヤー（味方）がいれば、そのマスに移動（突撃予定）
+2. **優先度2**: 最も近いプレイヤーとの距離が縮まるマスへ移動
+3. **優先度3**: 近づけない場合でも、空いている移動可能マスがあれば移動

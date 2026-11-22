@@ -62,6 +62,9 @@ namespace Game {
 			double scale = 0.5;
 			double strength = 2.5;
 			double frequency = 30.0;
+			double width = 16.0;
+			int roundTrips = 3;
+			double durationPerTrip = 0.16;
 			Vector2D blurCenter;
 			double focusRadius = 180.0;
 			bool hasBlurCenter = false;

@@ -164,6 +164,8 @@
     <ClCompile Include="Game\Battle\BattleBackground.cpp" />
     <ClCompile Include="Game\Battle\BattleAttack.cpp" />
     <ClCompile Include="Game\Battle\BattleCharacter\BattleCharacter.cpp" />
+    <ClCompile Include="Game\Battle\BattleCharacter\Enemy\EnemyBattleCharacter.cpp" />
+    <ClCompile Include="Game\Battle\BattleCharacter\Enemy\Slime.cpp" />
     <ClCompile Include="Game\Battle\BattleCharacter\Plea.cpp" />
     <ClCompile Include="Game\Battle\BattleCharacter\Reko.cpp" />
     <ClCompile Include="Game\Battle\BattleCharacter\CompositeSprite.cpp" />
@@ -190,6 +192,7 @@
     <ClInclude Include="Game\Board\BoardUnit.h" />
     <ClInclude Include="Game\Board\MapEditor.h" />
     <ClInclude Include="Game\Battle\BattleCharacter\BattleCharacterFactory.h" />
+    <ClInclude Include="Game\Board\Map\Map1.h" />
     <ClInclude Include="ThirdParty\imgui-1.92.9b\imgui.h" />
     <ClInclude Include="ThirdParty\imgui-1.92.9b\imconfig.h" />
     <ClInclude Include="ThirdParty\imgui-1.92.9b\backends\imgui_impl_dx11.h" />
@@ -199,6 +202,8 @@
     <ClInclude Include="Game\Battle\BattleAttack.h" />
     <ClInclude Include="Game\Battle\SkillInfo.h" />
     <ClInclude Include="Game\Battle\BattleCharacter\BattleCharacter.h" />
+    <ClInclude Include="Game\Battle\BattleCharacter\Enemy\EnemyBattleCharacter.h" />
+    <ClInclude Include="Game\Battle\BattleCharacter\Enemy\Slime.h" />
     <ClInclude Include="Game\Battle\BattleCharacter\Plea.h" />
     <ClInclude Include="Game\Battle\BattleCharacter\Reko.h" />
     <ClInclude Include="Game\Battle\BattleCharacter\CompositeSprite.h" />
@@ -216,6 +221,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\board\default.lua" />
+    <None Include="Assets\board\map1.lua" />
     <None Include="Assets\chara\gou\attack.png.anim" />
     <None Include="Assets\chara\gou\attack\swing.lua" />
     <None Include="Assets\chara\gou\attack_prepare.png.anim" />

@@ -1,9 +1,12 @@
 #include "BoardBase.h"
 #include "../Battle/BattleCharacter/BattleCharacterFactory.h"
+#include "../Battle/BattleCharacter/Enemy/EnemyBattleCharacter.h"
+#include <Animation/Tween.h>
 #include <Asset/AssetManager.h>
 #include <Scene/Texture/Sprite2D.h>
 #include <lua.hpp>
 #include <algorithm>
+#include <cmath>
 #include <iostream>
 
 namespace Game {
@@ -62,7 +65,6 @@ namespace Game {
 			if (value == "orthogonal_unlimited") return BoardMoveType::OrthogonalUnlimited;
 			return BoardMoveType::Adjacent;
 		}
-
 	}
 
 	void BoardBase::_Load() {
@@ -92,8 +94,11 @@ namespace Game {
 		_height = ReadInteger(state, -1, "height");
 		_tileSize.x = ReadInteger(state, -1, "tileSize", 64);
 		_tileSize.y = _tileSize.x;
-		ReadPosition(state, -1, _boardPosition.x, _boardPosition.y);
-		if (_width <= 0 || _height <= 0) {
+		double unusedX = 0.0;
+		double unusedY = 0.0;
+		ReadPosition(state, -1, unusedX, unusedY);
+		_boardPosition = Vector2D(0.0, 0.0);
+		if (not (0 < _width) || not (0 < _height)) {
 			lua_pop(state, 1);
 			lua_close(state);
 			return false;
@@ -187,10 +192,26 @@ namespace Game {
 		lua_pop(state, 1);
 		lua_close(state);
 
+		UpdateLayout();
 		BuildTiles(textures, tiles);
 		BuildObjects(objects);
 		BuildUnits(units);
+		UpdateEnemyIntentVisuals();
 		return true;
+	}
+
+	void BoardBase::UpdateLayout() {
+		const Vector2D size(static_cast<double>(_width) * _tileSize.x, static_cast<double>(_height) * _tileSize.y);
+		Vector2D window = PropertyManager.GetSettingWindowSize();
+		if (not (0.0 < window.x) || not (0.0 < window.y)) {
+			window = PropertyManager.GetRealWindowSize();
+		}
+		if (0.0 < size.x && 0.0 < size.y && 0.0 < window.x && 0.0 < window.y) {
+			const double scaleFactor = Min(window.x / size.x, window.y / size.y);
+			SetScale(scaleFactor);
+			const Vector2D offset = (window - size * scaleFactor) * 0.5;
+			SetPosition(offset);
+		}
 	}
 
 	void BoardBase::BuildTiles(const std::map<BoardTerrain, std::string>& textures, const std::vector<BoardTileData>& tiles) {
@@ -233,6 +254,12 @@ namespace Game {
 			const auto& unit = CreateScene<BoardUnit>();
 			unit->SetUnit(data, data.texture.empty() ? nullptr : LoadAsset<Texture>(data.texture), _tileSize);
 			unit->SetPosition(GetTilePosition(data.x, data.y));
+			if (not unit->IsAlly()) {
+				const auto battleChara = CreateBattleCharacterForUnit(*unit);
+				if (const auto enemyChara = std::dynamic_pointer_cast<EnemyBattleCharacter>(battleChara)) {
+					unit->SetRelativeMoveOffsets(enemyChara->GetRelativeMoveOffsets());
+				}
+			}
 			unit->LeftPressed += [this, unit](const MouseEvent& event) {
 				if (event.just) SelectUnit(unit);
 				};
@@ -244,8 +271,8 @@ namespace Game {
 	}
 
 	void BoardBase::SelectUnit(const SharedPtr<BoardUnit>& unit) {
+		if (_isEnemyTurn || _isAnimating) return;
 		if (not unit->IsAlly()) return;
-		if (_movedAllies.contains(unit->GetData().id)) return;
 		CancelSelection();
 		_selectedUnit = unit;
 		GetTile(unit->GetData().x, unit->GetData().y)->SetSelected(true);
@@ -253,10 +280,14 @@ namespace Game {
 	}
 
 	void BoardBase::SelectTile(int x, int y) {
+		if (_isEnemyTurn || _isAnimating) return;
 		if (not _selectedUnit) return;
-		if (MoveUnit(_selectedUnit, x, y)) {
+		const auto movingUnit = _selectedUnit;
+		if (IsMoveAllowed(*movingUnit, x, y, false)) {
 			CancelSelection();
-			EndTurnIfAlliesMoved();
+			MoveUnit(movingUnit, x, y, false, [this]() {
+				ExecuteEnemyTurn();
+			});
 		}
 	}
 
@@ -272,51 +303,295 @@ namespace Game {
 		if (not _selectedUnit) return;
 		for (int y = 0; y < _height; y++) {
 			for (int x = 0; x < _width; x++) {
-				GetTile(x, y)->SetMoveHint(IsMoveAllowed(*_selectedUnit, x, y));
+				GetTile(x, y)->SetMoveHint(IsMoveAllowed(*_selectedUnit, x, y, false));
 			}
 		}
 	}
 
-	void BoardBase::EndTurnIfAlliesMoved() {
-		for (const auto& unit : _units) {
-			if (unit->IsAlly() && not _movedAllies.contains(unit->GetData().id)) return;
+	void BoardBase::ClearEnemyIntentVisuals() {
+		for (const auto& enemy : GetEnemyUnits()) {
+			enemy->SetIntentHint(false);
 		}
-		MoveEnemies();
-		_movedAllies.clear();
+		for (const auto& tile : _tiles) {
+			tile->SetEnemyTargetHint(false);
+		}
+	}
+
+	void BoardBase::UpdateEnemyIntentVisuals() {
+		ClearEnemyIntentVisuals();
+		_nextEnemyAction.reset();
+		if (_isEnemyTurn) return;
+
+		_nextEnemyAction = DecideEnemyAction();
+		if (_nextEnemyAction.has_value()) {
+			if (_nextEnemyAction->enemy) {
+				_nextEnemyAction->enemy->SetIntentHint(true);
+			}
+			const auto targetTile = GetTile(_nextEnemyAction->targetX, _nextEnemyAction->targetY);
+			if (targetTile) {
+				targetTile->SetEnemyTargetHint(true);
+			}
+		}
+	}
+
+	void BoardBase::ExecuteEnemyTurn() {
+		_isEnemyTurn = true;
+		ClearEnemyIntentVisuals();
+
+		std::optional<BoardEnemyAction> action = _nextEnemyAction;
+		_nextEnemyAction.reset();
+
+		if (not action.has_value() || not action->enemy) {
+			action = DecideEnemyAction();
+		}
+
+		if (action.has_value() && action->enemy) {
+			if (CanMoveTo(*action->enemy, action->targetX, action->targetY, true)) {
+				MoveUnit(action->enemy, action->targetX, action->targetY, true, [this]() {
+					_turn++;
+					_isEnemyTurn = false;
+					UpdateEnemyIntentVisuals();
+				});
+				return;
+			}
+			const auto fallbackAction = DecideEnemyAction();
+			if (fallbackAction.has_value() && fallbackAction->enemy && CanMoveTo(*fallbackAction->enemy, fallbackAction->targetX, fallbackAction->targetY, true)) {
+				MoveUnit(fallbackAction->enemy, fallbackAction->targetX, fallbackAction->targetY, true, [this]() {
+					_turn++;
+					_isEnemyTurn = false;
+					UpdateEnemyIntentVisuals();
+				});
+				return;
+			}
+		}
+
 		_turn++;
+		_isEnemyTurn = false;
+		UpdateEnemyIntentVisuals();
 	}
 
-	void BoardBase::MoveEnemies() {
-		for (const auto& unit : _units) {
-			if (not unit->IsAlly()) {
-				const auto& data = unit->GetData();
-				MoveUnit(unit, data.x, data.y + 1);
-			}
-		}
+	void BoardBase::EndTurn() {
+		if (_isEnemyTurn || _isAnimating) return;
+		CancelSelection();
+		ExecuteEnemyTurn();
 	}
 
-	bool BoardBase::MoveUnit(const SharedPtr<BoardUnit>& unit, int x, int y) {
-		if (not IsMoveAllowed(*unit, x, y)) return false;
+	bool BoardBase::MoveUnit(const SharedPtr<BoardUnit>& unit, int x, int y, bool allowOccupiedByTarget, const std::function<void()>& onComplete) {
+		if (not IsMoveAllowed(*unit, x, y, allowOccupiedByTarget)) return false;
+		_isAnimating = true;
 		unit->SetBoardPosition(x, y);
-		unit->SetPosition(GetTilePosition(x, y));
-		if (unit->IsAlly()) _movedAllies.insert(unit->GetData().id);
+		const auto& targetPos = GetTilePosition(x, y);
+		const auto n = unit->position.Perpendicular().Normalized();
+		const auto midPos = unit->position + (targetPos - unit->position) * 0.7 - Sign(n.y) * n * 50.0;
+		const auto& tg = unit->CreateTweenGroup();
+		tg->CreateTween(&unit->position, midPos, 0.35, Easing::EaseOutCubic);
+		tg->CreateTween(&unit->position, targetPos, 0.35, Easing::EaseInCubic);
+
+		const auto& tg2 = unit->CreateTweenGroup();
+		tg2->CreateTween(&unit->scale, Vec2{ 0.8, 1.2 }, 0.35, Easing::EaseOutCubic);
+		tg2->CreateTween(&unit->scale, Vec2{ 1.2, 0.8 }, 0.35, Easing::EaseOutCubic);
+		tg2->CreateTween(&unit->scale, Vec2D_1, 0.15);
+
+		tg->OnComplete([this, onComplete]() {
+			_isAnimating = false;
+			if (onComplete) onComplete();
+		});
 		return true;
 	}
 
-	bool BoardBase::IsMoveAllowed(const BoardUnit& unit, int x, int y) const {
+	std::vector<SharedPtr<BoardUnit>> BoardBase::GetUnitsByTeam(BoardTeam team) const {
+		std::vector<SharedPtr<BoardUnit>> result;
+		for (const auto& unit : _units) {
+			if (unit->GetData().team == team) {
+				result.push_back(unit);
+			}
+		}
+		return result;
+	}
+
+	SharedPtr<BoardUnit> BoardBase::GetUnitAt(int x, int y) const {
+		for (const auto& unit : _units) {
+			if (unit->GetData().x == x && unit->GetData().y == y) {
+				return unit;
+			}
+		}
+		return nullptr;
+	}
+
+	std::vector<BoardOffset> BoardBase::GetEnemyMoveOffsets(const BoardUnit& unit) const {
+		const auto& offsets = unit.GetRelativeMoveOffsets();
+		if (not offsets.empty()) return offsets;
+
+		const auto battleChara = CreateBattleCharacterForUnit(unit);
+		if (const auto enemyChara = std::dynamic_pointer_cast<EnemyBattleCharacter>(battleChara)) {
+			const auto enemyOffsets = enemyChara->GetRelativeMoveOffsets();
+			if (not enemyOffsets.empty()) return enemyOffsets;
+		}
+
+		return {
+			{ -1, -1 }, { 0, -1 }, { 1, -1 },
+			{ -1,  0 },            { 1,  0 },
+			{ -1,  1 }, { 0,  1 }, { 1,  1 }
+		};
+	}
+
+	int BoardBase::GetManhattanDistance(int x1, int y1, int x2, int y2) const {
+		return std::abs(x1 - x2) + std::abs(y1 - y2);
+	}
+
+	SharedPtr<BoardUnit> BoardBase::FindNearestAlly(int x, int y) const {
+		SharedPtr<BoardUnit> nearest;
+		int minDistance = 999999;
+		for (const auto& ally : GetAllyUnits()) {
+			const int dist = GetManhattanDistance(x, y, ally->GetData().x, ally->GetData().y);
+			if (dist < minDistance) {
+				minDistance = dist;
+				nearest = ally;
+			}
+		}
+		return nearest;
+	}
+
+	SharedPtr<BoardUnit> BoardBase::FindNearestEnemy(int x, int y) const {
+		SharedPtr<BoardUnit> nearest;
+		int minDistance = 999999;
+		for (const auto& enemy : GetEnemyUnits()) {
+			const int dist = GetManhattanDistance(x, y, enemy->GetData().x, enemy->GetData().y);
+			if (dist < minDistance) {
+				minDistance = dist;
+				nearest = enemy;
+			}
+		}
+		return nearest;
+	}
+
+	std::vector<std::pair<int, int>> BoardBase::GetReachablePositions(const BoardUnit& unit, bool allowOccupiedByTarget) const {
+		std::vector<std::pair<int, int>> positions;
+		if (not unit.IsAlly()) {
+			const auto offsets = GetEnemyMoveOffsets(unit);
+			for (const auto& offset : offsets) {
+				const int targetX = unit.GetData().x + offset.dx;
+				const int targetY = unit.GetData().y + offset.dy;
+				if (CanMoveTo(unit, targetX, targetY, allowOccupiedByTarget)) {
+					positions.push_back({ targetX, targetY });
+				}
+			}
+			return positions;
+		}
+
+		for (int y = 0; y < _height; y++) {
+			for (int x = 0; x < _width; x++) {
+				if (CanMoveTo(unit, x, y, allowOccupiedByTarget)) {
+					positions.push_back({ x, y });
+				}
+			}
+		}
+		return positions;
+	}
+
+	std::optional<BoardEnemyAction> BoardBase::DecideEnemyAction() {
+		if (_customEnemyActionDecider) {
+			return _customEnemyActionDecider(*this);
+		}
+		const auto enemies = GetEnemyUnits();
+		if (enemies.empty()) return std::nullopt;
+
+		const auto allies = GetAllyUnits();
+		if (allies.empty()) return std::nullopt;
+
+		// 優先度1: 移動可能マスにプレイヤーがいればそのマスに移動する(予定)
+		for (const auto& enemy : enemies) {
+			const auto reachable = GetReachablePositions(*enemy, true);
+			for (const auto& [tx, ty] : reachable) {
+				const auto occupant = GetUnitAt(tx, ty);
+				if (occupant && occupant->IsAlly()) {
+					return BoardEnemyAction{ enemy, tx, ty };
+				}
+			}
+		}
+
+		// 優先度2: 最も近いプレイヤーに近づくように移動する
+		SharedPtr<BoardUnit> bestEnemy;
+		int bestDist = 999999;
+		std::pair<int, int> bestTarget = { -1, -1 };
+
+		for (const auto& enemy : enemies) {
+			const auto nearestAlly = FindNearestAlly(enemy->GetData().x, enemy->GetData().y);
+			if (not nearestAlly) continue;
+
+			const int currentDist = GetManhattanDistance(
+				enemy->GetData().x, enemy->GetData().y,
+				nearestAlly->GetData().x, nearestAlly->GetData().y
+			);
+
+			const auto reachable = GetReachablePositions(*enemy, false);
+			for (const auto& [tx, ty] : reachable) {
+				const int dist = GetManhattanDistance(
+					tx, ty,
+					nearestAlly->GetData().x, nearestAlly->GetData().y
+				);
+				if (dist < currentDist && dist < bestDist) {
+					bestDist = dist;
+					bestEnemy = enemy;
+					bestTarget = { tx, ty };
+				}
+			}
+		}
+
+		if (bestEnemy && not (bestTarget.first < 0)) {
+			return BoardEnemyAction{ bestEnemy, bestTarget.first, bestTarget.second };
+		}
+
+		// 優先度3: 近づけない場合でも、移動可能マスがあれば最初の敵を動かす
+		for (const auto& enemy : enemies) {
+			const auto reachable = GetReachablePositions(*enemy, false);
+			if (not reachable.empty()) {
+				return BoardEnemyAction{ enemy, reachable.front().first, reachable.front().second };
+			}
+		}
+
+		return std::nullopt;
+	}
+
+	bool BoardBase::IsMoveAllowed(const BoardUnit& unit, int x, int y, bool allowOccupiedByTarget) const {
 		if (not IsInside(x, y)) return false;
 		if (not GetTile(x, y)->IsPassable()) return false;
-		if (IsOccupied(x, y, &unit)) return false;
+
+		const auto occupant = GetUnitAt(x, y);
+		if (occupant && occupant.get() != &unit) {
+			if (allowOccupiedByTarget) {
+				if (unit.IsAlly() == occupant->IsAlly()) {
+					return false;
+				}
+			}
+			else {
+				return false;
+			}
+		}
+
 		const auto& data = unit.GetData();
 		const auto dx = x - data.x;
 		const auto dy = y - data.y;
 		if (dx == 0 && dy == 0) return false;
+
+		// 敵の場合は相対移動マス定義を判定
+		if (not unit.IsAlly()) {
+			const auto offsets = GetEnemyMoveOffsets(unit);
+			for (const auto& offset : offsets) {
+				if (offset.dx == dx && offset.dy == dy) {
+					return true;
+				}
+			}
+			return false;
+		}
+
+		// 味方の場合は既存の MoveType 判定
 		const auto absX = std::abs(dx);
 		const auto absY = std::abs(dy);
-		if (data.moveType == BoardMoveType::Adjacent) return absX <= 1 && absY <= 1;
-		if (data.moveType == BoardMoveType::RangeTwo) return absX <= 2 && absY <= 2;
+		if (data.moveType == BoardMoveType::Adjacent) return not (1 < absX) && not (1 < absY);
+		if (data.moveType == BoardMoveType::RangeTwo) return not (2 < absX) && not (2 < absY);
 		if (data.moveType == BoardMoveType::DiagonalUnlimited) {
-			if (dx == 0 || dy == 0) return absX <= 1 && absY <= 1;
+			if (dx == 0 || dy == 0) return not (1 < absX) && not (1 < absY);
 			if (absX != absY) return false;
 			return IsPathClear(data.x, data.y, x, y);
 		}
@@ -359,12 +634,6 @@ namespace Game {
 	SharedPtr<BoardTile> BoardBase::GetTile(int x, int y) const {
 		if (not IsInside(x, y)) return nullptr;
 		return _tiles.at(GetTileIndex(x, y));
-	}
-
-	void BoardBase::EndTurn() {
-		MoveEnemies();
-		_movedAllies.clear();
-		_turn++;
 	}
 
 	SharedPtr<BattleCharacter> BoardBase::CreateBattleCharacterForUnit(const BoardUnit& unit) const {

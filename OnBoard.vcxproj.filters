@@ -1,20 +1,48 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="Game\Board\MapEditor.cpp"><Filter>ソース ファイル</Filter></ClCompile>
-    <ClCompile Include="Game\Battle\BattleCharacter\BattleCharacterFactory.cpp"><Filter>ソース ファイル</Filter></ClCompile>
-    <ClCompile Include="ThirdParty\imgui-1.92.9b\imgui.cpp"><Filter>ソース ファイル</Filter></ClCompile>
-    <ClCompile Include="ThirdParty\imgui-1.92.9b\imgui_draw.cpp"><Filter>ソース ファイル</Filter></ClCompile>
-    <ClCompile Include="ThirdParty\imgui-1.92.9b\imgui_tables.cpp"><Filter>ソース ファイル</Filter></ClCompile>
-    <ClCompile Include="ThirdParty\imgui-1.92.9b\imgui_widgets.cpp"><Filter>ソース ファイル</Filter></ClCompile>
-    <ClCompile Include="ThirdParty\imgui-1.92.9b\backends\imgui_impl_dx11.cpp"><Filter>ソース ファイル</Filter></ClCompile>
-    <ClCompile Include="ThirdParty\imgui-1.92.9b\backends\imgui_impl_win32.cpp"><Filter>ソース ファイル</Filter></ClCompile>
-    <ClInclude Include="Game\Board\MapEditor.h"><Filter>ヘッダー ファイル</Filter></ClInclude>
-    <ClInclude Include="Game\Battle\BattleCharacter\BattleCharacterFactory.h"><Filter>ヘッダー ファイル</Filter></ClInclude>
-    <ClInclude Include="ThirdParty\imgui-1.92.9b\imgui.h"><Filter>ヘッダー ファイル</Filter></ClInclude>
-    <ClInclude Include="ThirdParty\imgui-1.92.9b\imconfig.h"><Filter>ヘッダー ファイル</Filter></ClInclude>
-    <ClInclude Include="ThirdParty\imgui-1.92.9b\backends\imgui_impl_dx11.h"><Filter>ヘッダー ファイル</Filter></ClInclude>
-    <ClInclude Include="ThirdParty\imgui-1.92.9b\backends\imgui_impl_win32.h"><Filter>ヘッダー ファイル</Filter></ClInclude>
+    <ClCompile Include="Game\Board\MapEditor.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\Battle\BattleCharacter\BattleCharacterFactory.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="ThirdParty\imgui-1.92.9b\imgui.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="ThirdParty\imgui-1.92.9b\imgui_draw.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="ThirdParty\imgui-1.92.9b\imgui_tables.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="ThirdParty\imgui-1.92.9b\imgui_widgets.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="ThirdParty\imgui-1.92.9b\backends\imgui_impl_dx11.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="ThirdParty\imgui-1.92.9b\backends\imgui_impl_win32.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClInclude Include="Game\Board\MapEditor.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\Battle\BattleCharacter\BattleCharacterFactory.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="ThirdParty\imgui-1.92.9b\imgui.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="ThirdParty\imgui-1.92.9b\imconfig.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="ThirdParty\imgui-1.92.9b\backends\imgui_impl_dx11.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="ThirdParty\imgui-1.92.9b\backends\imgui_impl_win32.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="ソース ファイル">
@@ -53,6 +81,12 @@
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="Game\Battle\BattleCharacter\BattleCharacter.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\Battle\BattleCharacter\Enemy\EnemyBattleCharacter.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\Battle\BattleCharacter\Enemy\Slime.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="Game\Battle\BattleCharacter\Plea.cpp">
@@ -111,6 +145,12 @@
     <ClInclude Include="Game\Battle\BattleCharacter\BattleCharacter.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="Game\Battle\BattleCharacter\Enemy\EnemyBattleCharacter.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\Battle\BattleCharacter\Enemy\Slime.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
     <ClInclude Include="Game\Battle\TestBattle.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
@@ -165,6 +205,9 @@
     <ClInclude Include="Game\Board\TestBoard.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="Game\Board\Map\Map1.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\board\default.lua" />
@@ -198,6 +241,7 @@
     <None Include="Assets\chara\reko\attack\sword.lua" />
     <None Include="Assets\chara\reko\alpha_sword_prepare.png.anim" />
     <None Include="Assets\chara\reko\alpha_sword_attack.png.anim" />
+    <None Include="Assets\board\map1.lua" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shader\BlurInShader.hlsl" />

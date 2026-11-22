@@ -36,8 +36,14 @@ namespace Game {
 		UpdateColor();
 	}
 
+	void BoardTile::SetEnemyTargetHint(bool enemyTargetHint) {
+		_enemyTargetHint = enemyTargetHint;
+		_hintTime = 0.0;
+		UpdateColor();
+	}
+
 	void BoardTile::_Update(float dt) {
-		if (not _moveHint) return;
+		if (not _moveHint && not _enemyTargetHint) return;
 		_hintTime += dt;
 		UpdateColor();
 	}
@@ -48,12 +54,25 @@ namespace Game {
 			_sprite->SetModulate({ 255, 230, 100 });
 			return;
 		}
+		if (_moveHint && _enemyTargetHint) {
+			const auto pulse = (std::sin(_hintTime * 6.0) + 1.0) / 2.0;
+			_sprite->SetModulate(Vector3D(255, 140, 140) * (1.0 - pulse) + Vector3D(255, 40, 40) * pulse);
+			return;
+		}
 		if (_moveHint) {
 			const auto pulse = (std::sin(_hintTime * 6.0) + 1.0) / 2.0;
 			const Vector3D baseColor = _terrain == BoardTerrain::Other
 				? Vector3D(180, 140, 80)
 				: Vector3D(120, 160, 210);
 			_sprite->SetModulate(baseColor * (1.0 - pulse) + Vector3D(255, 255, 255) * pulse);
+			return;
+		}
+		if (_enemyTargetHint) {
+			const auto pulse = (std::sin(_hintTime * 6.0) + 1.0) / 2.0;
+			const Vector3D baseColor = _terrain == BoardTerrain::Other
+				? Vector3D(180, 140, 80)
+				: Vector3D(120, 160, 210);
+			_sprite->SetModulate(baseColor * (1.0 - pulse) + Vector3D(255, 60, 60) * pulse);
 			return;
 		}
 		if (_terrain == BoardTerrain::Disabled) {
