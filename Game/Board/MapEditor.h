@@ -3,9 +3,12 @@
 #include <Scene/Texture/Sprite2D.h>
 #include <Scene/Text/TextLabel.h>
 #include <array>
+#include <map>
 #include <string>
 #include <vector>
 #include "BoardTypes.h"
+
+struct ID3D11ShaderResourceView;
 
 namespace Game {
 	enum class MapEditorTool {
@@ -45,6 +48,12 @@ namespace Game {
 		std::string icon;
 	};
 
+	struct MapEditorAssetThumbnail {
+		ID3D11ShaderResourceView* srv = nullptr;
+		int width = 0;
+		int height = 0;
+	};
+
 	class MapEditor : public Scene {
 	private:
 		int _width = 9;
@@ -59,9 +68,11 @@ namespace Game {
 		std::vector<SharedPtr<Sprite2D>> _characterSprites;
 		std::vector<SharedPtr<TextLabel>> _characterLabels;
 		std::vector<MapEditorCharacterInfo> _characterCatalog;
+		std::vector<std::string> _assetFiles;
 		std::string _mapPath = "board/default.lua";
 		std::string _defaultTileTexture;
 		std::string _tileTexture;
+		std::string _selectedAssetPath;
 		bool _tilePassable = true;
 		int _objectWidth = 1;
 		int _objectHeight = 1;
@@ -81,6 +92,9 @@ namespace Game {
 		std::array<char, 512> _objectTextureInput{};
 		std::array<char, 128> _characterNameInput{};
 		std::array<char, 512> _characterIconInput{};
+		std::array<char, 128> _assetSearch{};
+		std::map<std::string, MapEditorAssetThumbnail> _thumbnailCache;
+		float _thumbnailSize = 96.0f;
 		int _characterTeam = 0;
 		int _catalogSelection = -1;
 		bool _leftMouseDown = false;
@@ -92,6 +106,10 @@ namespace Game {
 		void RebuildObjectSprites();
 		void RebuildCharacterSprites();
 		void UpdateEditorUI();
+		void RefreshAssetFiles();
+		void ClearThumbnailCache();
+		ID3D11ShaderResourceView* GetOrCreateThumbnail(const std::string& assetPath, int* outWidth, int* outHeight);
+		void ApplySelectedAssetToTool();
 		void HandleViewportInput();
 		void PlaceAt(int x, int y);
 		void SelectAt(int x, int y);

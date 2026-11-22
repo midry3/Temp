@@ -13,6 +13,7 @@
 #include <Windows.h>
 #include <DxLib.h>
 #include <algorithm>
+#include <cctype>
 #include <cmath>
 #include <cstring>
 #include <filesystem>
@@ -97,6 +98,7 @@ namespace Game {
 		Camera.SetPosition({ 0.0, 0.0 });
 		Camera.SetZoom(1.0);
 		CreateScene<MapEditorOverlay>()->SetUIMode(true)->IgnoreCamera();
+		RefreshAssetFiles();
 		if (not LoadMap(_mapPath)) {
 			_tiles.resize(_width * _height);
 			_status = "Could not load board/default.lua; create or select a valid Lua map file.";
@@ -112,6 +114,7 @@ namespace Game {
 	}
 
 	void MapEditor::_Release() {
+		ClearThumbnailCache();
 		if (ImGui::GetCurrentContext()) {
 			ImGui_ImplDX11_Shutdown();
 			ImGui_ImplWin32_Shutdown();
@@ -627,6 +630,281 @@ namespace Game {
 			if (not _status.empty()) ImGui::TextWrapped("%s", _status.c_str());
 		}
 		ImGui::End();
+
+		ImGui::SetNextWindowPos(ImVec2(12.0f, 12.0f), ImGuiCond_FirstUseEver);
+		ImGui::SetNextWindowSize(ImVec2(480.0f, 720.0f), ImGuiCond_FirstUseEver);
+		if (ImGui::Begin("Asset Explorer")) {
+			ImGui::TextUnformatted("Assets/ (PNG textures)");
+			ImGui::InputText("Search", _assetSearch.data(), _assetSearch.size());
+			ImGui::SameLine();
+			if (ImGui::Button("Refresh")) RefreshAssetFiles();
+			ImGui::SliderFloat("Icon size", &_thumbnailSize, 48.0f, 160.0f, "%.0f px");
+
+			const std::string search = _assetSearch.data();
+			std::vector<std::string> visibleAssets;
+			visibleAssets.reserve(_assetFiles.size());
+			for (const auto& assetPath : _assetFiles) {
+				if (not search.empty() && assetPath.find(search) == std::string::npos) continue;
+				visibleAssets.push_back(assetPath);
+			}
+			ImGui::TextDisabled("Items: %zu", visibleAssets.size());
+
+			ImGui::BeginChild("AssetGrid", ImVec2(0.0f, -96.0f), ImGuiChildFlags_Borders);
+			const float availWidth = ImGui::GetContentRegionAvail().x;
+			const float cardPadding = 6.0f;
+			const float cardWidth = _thumbnailSize + cardPadding * 2.0f;
+			const float cardHeight = _thumbnailSize + cardPadding * 2.0f + 32.0f;
+			const float spacing = ImGui::GetStyle().ItemSpacing.x;
+			const int columns = Max(1, static_cast<int>((availWidth + spacing) / (cardWidth + spacing)));
+
+			int currentColumn = 0;
+			ImDrawList* const drawList = ImGui::GetWindowDrawList();
+			for (const auto& assetPath : visibleAssets) {
+				if (0 < currentColumn) {
+					ImGui::SameLine();
+				}
+
+				ImGui::PushID(assetPath.c_str());
+				const ImVec2 startPos = ImGui::GetCursorScreenPos();
+				const bool isSelected = (assetPath == _selectedAssetPath);
+
+				const bool clicked = ImGui::InvisibleButton("card", ImVec2(cardWidth, cardHeight));
+				const bool isHovered = ImGui::IsItemHovered();
+				const bool isDoubleClicked = isHovered && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left);
+				const bool isVisible = ImGui::IsItemVisible();
+
+				const ImVec2 pMin = startPos;
+				const ImVec2 pMax(startPos.x + cardWidth, startPos.y + cardHeight);
+				const float rounding = 4.0f;
+
+				if (isSelected) {
+					drawList->AddRectFilled(pMin, pMax, IM_COL32(50, 110, 190, 100), rounding);
+					drawList->AddRect(pMin, pMax, IM_COL32(90, 160, 250, 255), rounding, 0, 1.5f);
+				}
+				else if (isHovered) {
+					drawList->AddRectFilled(pMin, pMax, IM_COL32(255, 255, 255, 30), rounding);
+					drawList->AddRect(pMin, pMax, IM_COL32(130, 190, 250, 180), rounding, 0, 1.0f);
+				}
+
+				int texW = 0;
+				int texH = 0;
+				ID3D11ShaderResourceView* srv = nullptr;
+				if (isVisible) {
+					srv = GetOrCreateThumbnail(assetPath, &texW, &texH);
+				}
+
+				const ImVec2 thumbMin(pMin.x + cardPadding, pMin.y + cardPadding);
+				const ImVec2 thumbMax(thumbMin.x + _thumbnailSize, thumbMin.y + _thumbnailSize);
+
+				float drawW = _thumbnailSize;
+				float drawH = _thumbnailSize;
+				if (0 < texW && 0 < texH) {
+					const float aspect = static_cast<float>(texW) / static_cast<float>(texH);
+					if (aspect <= 1.0f) {
+						drawW = _thumbnailSize * aspect;
+						drawH = _thumbnailSize;
+					}
+					else {
+						drawW = _thumbnailSize;
+						drawH = _thumbnailSize / aspect;
+					}
+				}
+				const float offsetX = (_thumbnailSize - drawW) * 0.5f;
+				const float offsetY = (_thumbnailSize - drawH) * 0.5f;
+				const ImVec2 imgMin(thumbMin.x + offsetX, thumbMin.y + offsetY);
+				const ImVec2 imgMax(imgMin.x + drawW, imgMin.y + drawH);
+
+				drawList->AddRectFilled(thumbMin, thumbMax, IM_COL32(24, 24, 28, 200), 2.0f);
+				if (srv != nullptr) {
+					drawList->AddImage(reinterpret_cast<ImTextureID>(srv), imgMin, imgMax);
+				}
+				else if (isVisible) {
+					const char* const placeholder = "No Image";
+					const ImVec2 phSize = ImGui::CalcTextSize(placeholder);
+					const ImVec2 phPos(thumbMin.x + (_thumbnailSize - phSize.x) * 0.5f, thumbMin.y + (_thumbnailSize - phSize.y) * 0.5f);
+					drawList->AddText(phPos, IM_COL32(140, 140, 140, 255), placeholder);
+				}
+				drawList->AddRect(thumbMin, thumbMax, IM_COL32(60, 60, 70, 150), 2.0f);
+
+				const std::string filename = std::filesystem::path(assetPath).filename().string();
+				const ImVec2 textSize = ImGui::CalcTextSize(filename.c_str());
+				float textX = pMin.x + cardPadding;
+				if (textSize.x < _thumbnailSize) {
+					textX += (_thumbnailSize - textSize.x) * 0.5f;
+				}
+				const float textY = thumbMax.y + 4.0f;
+				drawList->PushClipRect(ImVec2(pMin.x + 2.0f, textY), ImVec2(pMax.x - 2.0f, pMax.y - 2.0f), true);
+				drawList->AddText(ImVec2(textX, textY), IM_COL32(220, 220, 220, 255), filename.c_str());
+				drawList->PopClipRect();
+
+				if (clicked) {
+					_selectedAssetPath = assetPath;
+				}
+				if (isDoubleClicked) {
+					_selectedAssetPath = assetPath;
+					ApplySelectedAssetToTool();
+				}
+
+				if (isHovered) {
+					ImGui::BeginTooltip();
+					ImGui::Text("%s", filename.c_str());
+					ImGui::Separator();
+					ImGui::Text("Path: Assets/%s", assetPath.c_str());
+					if (0 < texW && 0 < texH) {
+						ImGui::Text("Dimensions: %d x %d px", texW, texH);
+					}
+					if (srv != nullptr) {
+						const float previewBase = 128.0f;
+						float pW = previewBase;
+						float pH = previewBase;
+						if (0 < texW && 0 < texH) {
+							const float pAspect = static_cast<float>(texW) / static_cast<float>(texH);
+							if (pAspect <= 1.0f) {
+								pW = previewBase * pAspect;
+								pH = previewBase;
+							}
+							else {
+								pW = previewBase;
+								pH = previewBase / pAspect;
+							}
+						}
+						ImGui::Image(reinterpret_cast<ImTextureID>(srv), ImVec2(pW, pH));
+					}
+					ImGui::EndTooltip();
+				}
+
+				ImGui::PopID();
+
+				++currentColumn;
+				if (columns <= currentColumn) {
+					currentColumn = 0;
+				}
+			}
+			ImGui::EndChild();
+
+			if (_selectedAssetPath.empty()) {
+				ImGui::TextDisabled("Select a PNG texture.");
+			}
+			else {
+				int selW = 0;
+				int selH = 0;
+				ID3D11ShaderResourceView* const selSrv = GetOrCreateThumbnail(_selectedAssetPath, &selW, &selH);
+				if (selSrv != nullptr) {
+					ImGui::Image(reinterpret_cast<ImTextureID>(selSrv), ImVec2(36.0f, 36.0f));
+					ImGui::SameLine();
+				}
+				ImGui::BeginGroup();
+				ImGui::TextUnformatted(_selectedAssetPath.c_str());
+				if (0 < selW && 0 < selH) {
+					ImGui::TextDisabled("%d x %d px", selW, selH);
+				}
+				ImGui::EndGroup();
+
+				if (ImGui::Button("Use for tile brush")) {
+					CopyToBuffer(_tileBrushInput, _selectedAssetPath);
+					_status = "Selected tile brush texture.";
+				}
+				ImGui::SameLine();
+				if (ImGui::Button("Use for object")) {
+					CopyToBuffer(_objectTextureInput, _selectedAssetPath);
+					_status = "Selected object texture.";
+				}
+			}
+		}
+		ImGui::End();
+	}
+
+	void MapEditor::ClearThumbnailCache() {
+		for (auto& [path, info] : _thumbnailCache) {
+			if (info.srv != nullptr) {
+				info.srv->Release();
+				info.srv = nullptr;
+			}
+		}
+		_thumbnailCache.clear();
+	}
+
+	ID3D11ShaderResourceView* MapEditor::GetOrCreateThumbnail(const std::string& assetPath, int* outWidth, int* outHeight) {
+		const auto it = _thumbnailCache.find(assetPath);
+		if (it != _thumbnailCache.end()) {
+			if (outWidth != nullptr) *outWidth = it->second.width;
+			if (outHeight != nullptr) *outHeight = it->second.height;
+			return it->second.srv;
+		}
+
+		MapEditorAssetThumbnail info;
+		const auto textureAsset = LoadAsset<Texture>(assetPath);
+		if (textureAsset) {
+			const int handle = textureAsset->GetHandle();
+			if (not (handle < 0)) {
+				int width = 0;
+				int height = 0;
+				DxLib::GetGraphSize(handle, &width, &height);
+				info.width = width;
+				info.height = height;
+
+				ID3D11Device* const device = static_cast<ID3D11Device*>(const_cast<void*>(DxLib::GetUseDirect3D11Device()));
+				ID3D11Texture2D* const d3dTexture = static_cast<ID3D11Texture2D*>(const_cast<void*>(DxLib::GetGraphID3D11Texture2D(handle)));
+				if (device != nullptr && d3dTexture != nullptr) {
+					ID3D11ShaderResourceView* srv = nullptr;
+					const HRESULT hr = device->CreateShaderResourceView(d3dTexture, nullptr, &srv);
+					if (SUCCEEDED(hr)) {
+						info.srv = srv;
+					}
+				}
+			}
+		}
+
+		_thumbnailCache[assetPath] = info;
+		if (outWidth != nullptr) *outWidth = info.width;
+		if (outHeight != nullptr) *outHeight = info.height;
+		return info.srv;
+	}
+
+	void MapEditor::RefreshAssetFiles() {
+		ClearThumbnailCache();
+		_assetFiles.clear();
+		const auto assetsRoot = AssetManager.ResolvePath("");
+		std::error_code error;
+		if (not std::filesystem::exists(assetsRoot, error)) return;
+		for (auto it = std::filesystem::recursive_directory_iterator(
+			assetsRoot, std::filesystem::directory_options::skip_permission_denied, error);
+			it != std::filesystem::recursive_directory_iterator(); it.increment(error)) {
+			if (error) {
+				error.clear();
+				continue;
+			}
+			const bool isRegularFile = it->is_regular_file(error);
+			if (error) {
+				error.clear();
+				continue;
+			}
+			if (not isRegularFile) continue;
+			std::string extension = it->path().extension().string();
+			std::transform(extension.begin(), extension.end(), extension.begin(), [](unsigned char value) {
+				return static_cast<char>(std::tolower(value));
+			});
+			if (extension != ".png") continue;
+			const auto relative = std::filesystem::relative(it->path(), assetsRoot, error);
+			if (not error) _assetFiles.push_back(relative.generic_string());
+			error.clear();
+		}
+		std::sort(_assetFiles.begin(), _assetFiles.end());
+		if (std::find(_assetFiles.begin(), _assetFiles.end(), _selectedAssetPath) == _assetFiles.end()) {
+			_selectedAssetPath.clear();
+		}
+	}
+
+	void MapEditor::ApplySelectedAssetToTool() {
+		if (_selectedAssetPath.empty()) return;
+		if (_tool == MapEditorTool::PaintTile) {
+			CopyToBuffer(_tileBrushInput, _selectedAssetPath);
+			_status = "Selected tile brush texture.";
+		}
+		else if (_tool == MapEditorTool::PlaceObject) {
+			CopyToBuffer(_objectTextureInput, _selectedAssetPath);
+			_status = "Selected object texture.";
+		}
 	}
 
 	void MapEditor::HandleViewportInput() {
