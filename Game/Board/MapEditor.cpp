@@ -127,6 +127,15 @@ namespace Game {
 		if (not ImGui::GetCurrentContext()) return;
 		ImGui_ImplDX11_NewFrame();
 		ImGui_ImplWin32_NewFrame();
+		int mouseX = 0;
+		int mouseY = 0;
+		GetMousePoint(&mouseX, &mouseY);
+		const int mouseButtons = GetMouseInput();
+		auto& io = ImGui::GetIO();
+		io.AddMousePosEvent(static_cast<float>(mouseX), static_cast<float>(mouseY));
+		io.AddMouseButtonEvent(0, (mouseButtons & MOUSE_INPUT_LEFT) != 0);
+		io.AddMouseButtonEvent(1, (mouseButtons & MOUSE_INPUT_RIGHT) != 0);
+		io.AddMouseButtonEvent(2, (mouseButtons & MOUSE_INPUT_MIDDLE) != 0);
 		ImGui::NewFrame();
 		UpdateEditorUI();
 		HandleViewportInput();
@@ -134,14 +143,34 @@ namespace Game {
 
 	void MapEditor::_Draw() const {
 		if (not ImGui::GetCurrentContext()) return;
-		if (not (_selectedX < 0) && not (_selectedY < 0)) {
-			const auto topLeft = Camera.WorldToScreen(TilePosition(_selectedX, _selectedY));
-			const auto bottomRight = Camera.WorldToScreen(
-				TilePosition(_selectedX + 1, _selectedY + 1));
-			ImGui::GetBackgroundDrawList()->AddRectFilled(
+		auto* drawList = ImGui::GetBackgroundDrawList();
+		auto drawTileHighlight = [this, drawList](int x, int y, int alpha) {
+			const auto topLeft = Camera.WorldToScreen(TilePosition(x, y));
+			const auto bottomRight = Camera.WorldToScreen(TilePosition(x + 1, y + 1));
+			drawList->AddRectFilled(
 				ImVec2(static_cast<float>(topLeft.x), static_cast<float>(topLeft.y)),
 				ImVec2(static_cast<float>(bottomRight.x), static_cast<float>(bottomRight.y)),
-				IM_COL32(255, 255, 0, 150));
+				IM_COL32(255, 255, 0, alpha));
+		};
+
+		const bool hasSelection = not (_selectedX < 0) && not (_selectedY < 0);
+		int hoveredX = -1;
+		int hoveredY = -1;
+		const auto mousePosition = ImGui::GetIO().MousePos;
+		if (not (mousePosition.x < 0.0f) && not (mousePosition.y < 0.0f)) {
+			const auto world = Camera.ScreenToWorld({ mousePosition.x, mousePosition.y });
+			hoveredX = static_cast<int>(std::floor((world.x - _boardPosition.x) / _tileSize));
+			hoveredY = static_cast<int>(std::floor((world.y - _boardPosition.y) / _tileSize));
+			if (hoveredX < 0 || hoveredY < 0 || not (hoveredX < _width) || not (hoveredY < _height)) {
+				hoveredX = hoveredY = -1;
+			}
+		}
+
+		if (hasSelection) drawTileHighlight(_selectedX, _selectedY, 150);
+		const bool hoverMatchesSelection = hasSelection
+			&& hoveredX == _selectedX && hoveredY == _selectedY;
+		if (not (hoveredX < 0) && not (hoveredY < 0) && not hoverMatchesSelection) {
+			drawTileHighlight(hoveredX, hoveredY, 50);
 		}
 		ImGui::Render();
 	}
@@ -446,7 +475,7 @@ namespace Game {
 			}
 			const auto& label = CreateScene<TextLabel>();
 			label->SetFontSize(13)->SetText(character.displayName)->SetWidth(_tileSize);
-			label->SetForegroundColor({ 255, 255, 255 });
+			label->SetForegroundColor({ 0, 0, 0 });
 			label->SetPosition(TilePosition(character.x, character.y) + Vector2D(2.0, _tileSize * 0.76));
 			_characterLabels.push_back(label);
 		}
@@ -591,7 +620,7 @@ namespace Game {
 						RebuildCharacterSprites();
 					}
 				}
-				ImGui::TextWrapped("Select Place character, then click a tile. Allies can be placed once per character type; enemies can be repeated.");
+				ImGui::TextWrapped("Select Place character, then click a tile. Placing an ally type again moves its initial position. Enemies can be repeated.");
 			}
 			ImGui::Separator();
 			ImGui::TextWrapped("Right mouse drag: pan | Mouse wheel: zoom at cursor");
@@ -663,21 +692,44 @@ namespace Game {
 			&& _selectedCharacter < static_cast<int>(_characterCatalog.size())) {
 			const auto& info = _characterCatalog[_selectedCharacter];
 			const auto team = _characterTeam == 0 ? BoardTeam::Ally : BoardTeam::Enemy;
-			if (team == BoardTeam::Ally && IsAllyTypePlaced(BoardCharacterTypeKey(info.type))) {
-				_status = "This ally already has an initial tile.";
-				return;
+			std::string id = team == BoardTeam::Ally
+				? std::string("ally_") + BoardCharacterTypeKey(info.type) : std::string();
+			std::string moveType = "adjacent";
+			if (team == BoardTeam::Ally) {
+				const auto existing = std::find_if(_characters.begin(), _characters.end(), [&info](const auto& character) {
+					return character.team == BoardTeam::Ally && character.type == info.type;
+				});
+				if (existing != _characters.end()) {
+					id = existing->id;
+					moveType = existing->moveType;
+				}
+				std::erase_if(_characters, [&info](const auto& character) {
+					return character.team == BoardTeam::Ally && character.type == info.type;
+				});
+			}
+			else {
+				int index = 1;
+				do {
+					id = "enemy_" + std::to_string(index++);
+				} while (std::any_of(_characters.begin(), _characters.end(), [&id](const auto& character) {
+					return character.id == id;
+				}));
 			}
 			MapEditorCharacterData character;
-			character.id = std::string(team == BoardTeam::Ally ? "ally_" : "enemy_") + std::to_string(_characters.size() + 1);
+			character.id = id;
 			character.type = info.type;
 			character.displayName = info.displayName;
 			character.icon = info.icon;
 			character.team = team;
+			character.moveType = moveType;
 			character.x = x;
 			character.y = y;
 			_characters.push_back(character);
 			_isDirty = true;
 			RebuildCharacterSprites();
+			_status = team == BoardTeam::Ally
+				? "Ally initial position set."
+				: "Enemy placed.";
 		}
 	}
 
@@ -702,13 +754,6 @@ namespace Game {
 		_tileTexture = tile.texture;
 		_tilePassable = tile.passable;
 		CopyToBuffer(_tileTextureInput, _tileTexture);
-	}
-
-	bool MapEditor::IsAllyTypePlaced(const std::string& type) const {
-		const auto parsedType = ParseBoardCharacterType(type);
-		return std::any_of(_characters.begin(), _characters.end(), [parsedType](const auto& character) {
-			return character.team == BoardTeam::Ally && character.type == parsedType;
-		});
 	}
 
 	Vector2D MapEditor::TilePosition(int x, int y) const {

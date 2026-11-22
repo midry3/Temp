@@ -95,7 +95,6 @@ namespace Game {
 		void HandleViewportInput();
 		void PlaceAt(int x, int y);
 		void SelectAt(int x, int y);
-		bool IsAllyTypePlaced(const std::string& type) const;
 		Vector2D TilePosition(int x, int y) const;
 
 	protected:
