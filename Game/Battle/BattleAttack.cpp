@@ -242,40 +242,51 @@ namespace Game {
 		Enable();
 	}
 
-	void BattleAttack::QueuePreload(const SharedPtr<BattleCharacter>& actor, const SkillInfo& skill) {
-		if (not actor || skill.directionFile.empty()) return;
-		_preloadQueue.emplace_back(actor, skill);
-	}
-
-	// キューの先頭1スキル分だけタイムラインを解析してアセットを読み込む。
-	// 全て処理し終えたら true を返す。戦闘開始前専用（解析結果は破棄する）。
-	bool BattleAttack::ProcessPreloadQueue() {
-		if (_preloadQueue.empty()) return true;
-		const auto [actor, skill] = _preloadQueue.front();
-		_preloadQueue.erase(_preloadQueue.begin());
-		_actor = actor;
-		_target = nullptr;
-		_actions.clear();
-		_statChanges.clear();
-		if (LoadTimeline(skill.directionFile)) {
-			for (const auto& action : _actions) {
-				if (action.type == "effect" && not action.effect.empty()) {
-					LoadAsset<EffekseerAsset>(action.effect);
-				}
-				else if (action.type == "pickup") {
-					for (const auto& texture : action.pickupTextures) {
-						LoadAsset<Texture>(texture);
+	// タイムラインを解析して、参照アセットのパスだけを集める（読み込みは行わない）。
+	// 集めたパスの読み込みは呼び出し側が任意のシーンの LoadAsset で行う。
+	BattleAttack::SkillAssets BattleAttack::CollectSkillAssets(
+		const SharedPtr<BattleCharacter>& actor, const SkillInfo& skill) {
+		SkillAssets result;
+		if (skill.directionFile.empty()) return result;
+		lua_State* state = luaL_newstate();
+		if (not state) return result;
+		luaL_openlibs(state);
+		RegisterActorParameters(state, actor);
+		const auto resolvedFile = AssetManager.ResolvePath(skill.directionFile);
+		if (luaL_dofile(state, resolvedFile.string().c_str()) != LUA_OK) {
+			lua_close(state);
+			return result;
+		}
+		lua_getglobal(state, "attack");
+		if (lua_istable(state, -1)) {
+			lua_getfield(state, -1, "actions");
+			if (lua_istable(state, -1)) {
+				const auto count = static_cast<int>(lua_rawlen(state, -1));
+				for (int i = 1; i <= count; ++i) {
+					lua_rawgeti(state, -1, i);
+					if (lua_istable(state, -1)) {
+						const std::string type = ReadString(state, -1, "type");
+						if (type == "effect") {
+							const std::string effect = ReadString(state, -1, "effect");
+							if (not effect.empty()) result.effects.push_back(effect);
+						}
+						else if (type == "pickup") {
+							const auto textures = ReadStringArray(state, -1, "textures");
+							result.textures.insert(result.textures.end(), textures.begin(), textures.end());
+						}
+						else if (type == "sound") {
+							const std::string sound = ReadString(state, -1, "sound");
+							if (not sound.empty()) result.sounds.push_back(sound);
+						}
 					}
-				}
-				else if (action.type == "sound" && not action.sound.empty()) {
-					LoadAsset<Sound>(action.sound);
+					lua_pop(state, 1);
 				}
 			}
+			lua_pop(state, 1);
 		}
-		_actions.clear();
-		_statChanges.clear();
-		_actor = nullptr;
-		return _preloadQueue.empty();
+		lua_pop(state, 1);
+		lua_close(state);
+		return result;
 	}
 
 	// 演出の開始前に、必要なアセット読み込みとインスタンス生成を済ませておく。

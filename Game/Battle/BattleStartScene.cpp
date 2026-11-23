@@ -3,22 +3,9 @@
 #include <Asset/AssetManager.h>
 
 namespace Game {
-	void BattleStartScene::Setup(const std::vector<BattleStartIconData>& icons, const std::function<void()>& onFinished,
-		const std::function<bool()>& preloadStep) {
+	void BattleStartScene::Setup(const std::vector<BattleStartIconData>& icons, const std::function<void()>& onFinished) {
 		_iconData = icons;
 		_onFinished = onFinished;
-		_preloadStep = preloadStep;
-		_preloadDone = not _preloadStep;
-	}
-
-	void BattleStartScene::_Update(float dt) {
-		// 演出の裏で事前ロードを少しずつ進める
-		if (not _preloadDone && _preloadStep) {
-			for (int i = 0; i < 2 && not _preloadDone; ++i) {
-				_preloadDone = _preloadStep();
-			}
-		}
-		if (_waitingPreload && _preloadDone) Finish();
 	}
 
 	void BattleStartScene::_Load() {
@@ -101,10 +88,6 @@ namespace Game {
 
 	void BattleStartScene::Finish() {
 		if (_finished) return;
-		if (not _preloadDone) {
-			_waitingPreload = true;
-			return;
-		}
 		_finished = true;
 		if (_onFinished) _onFinished();
 	}

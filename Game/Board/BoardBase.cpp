@@ -3,6 +3,7 @@
 #include "BoardWinScreen.h"
 #include "CoopSelectModal.h"
 #include "../Battle/BattleBase.h"
+#include "../Battle/BattleLoadingScene.h"
 #include "../Battle/BattleStartScene.h"
 #include "../Battle/BattleCharacter/BattleCharacterFactory.h"
 #include "../Battle/BattleCharacter/Enemy/EnemyBattleCharacter.h"
@@ -578,11 +579,18 @@ namespace Game {
 		addIcon(enemyUnit, true);
 
 		const auto startScene = MakeShared<BattleStartScene>();
-		battleScene->QueueBattlePreload();
 		startScene->Setup(icons, [this, battleScene]() {
-			TransitionToBattle(battleScene);
-			}, [battleScene]() {
-				return battleScene->ProcessBattlePreload();
+			// 開始演出の後はローディングシーンを挟み、必要なアセットを
+			// 読み込んでから戦闘シーンへ遷移する
+			const auto loadingScene = MakeShared<BattleLoadingScene>();
+			std::vector<SharedPtr<BattleCharacter>> characters;
+			for (const auto& [unit, character] : _battleParticipants) {
+				if (character) characters.push_back(character);
+			}
+			loadingScene->Setup(battleScene, characters, [this, battleScene]() {
+				TransitionToBattle(battleScene);
+				});
+			SceneManager.TransSceneTo(loadingScene, 0.3, 0.3, false);
 			});
 
 		_bgmPlayer->FadeAndPause(0.5f);
