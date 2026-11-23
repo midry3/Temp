@@ -91,13 +91,19 @@ namespace Game {
 			});
 
 		for (size_t i = 0; i < _skills.size(); i++) {
+			const bool canUse = _skills[i].mpCost <= _availableMP;
 			const auto& skillButton = _buttonGrid->CreateScene<TextureButton>();
 			skillButton->SetTexture(LoadAsset<Texture>("ui/skill.png"))
 				->SetScale(2)
 				->SetPixelShader<OutLineShader>()
 				->SetPixelShaderConstantBuffer(_outlineBuffer.handle);
-			skillButton->LeftPressed += [this, skillButton, i](const MouseEvent& e) {
+			if (not canUse) {
+				skillButton->SetAlpha(100)
+					->SetModulate({100, 100, 100});
+			}
+			skillButton->LeftPressed += [this, skillButton, i, canUse](const MouseEvent& e) {
 				if (e.just && not _isAlreadySelected) {
+					if (not canUse) return;
 					_isAlreadySelected = true;
 					const auto& tg = CreateTweenGroup();
 					tg->CreateTween(&skillButton->alpha, 50, 0.1);

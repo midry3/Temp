@@ -28,7 +28,7 @@ namespace Game {
 		_enemyStatusGrid->SetMatrixSize({ 1, static_cast<double>(_enemies.size()) });
 		_enemyStatusPanels.clear();
 		for (const auto& character : _enemies) {
-			const auto& panel = _enemyStatusGrid->CreateScene<StatusPanel>();
+			const auto& panel = _enemyStatusGrid->CreateScene<EnemyStatsPanel>();
 			panel->SetCharacter(character);
 			_enemyStatusPanels.push_back(panel);
 		}

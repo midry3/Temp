@@ -11,6 +11,7 @@ class GridContainer;
 namespace Game {
 	class SkillSelect : public AnimatedUI {
 	private:
+		int _availableMP = 0;
 		bool _isAlreadySelected = false;
 		OutLineShaderBuffer _outlineBuffer;
 		std::vector<SkillInfo> _skills;
@@ -29,5 +30,6 @@ namespace Game {
 	public:
 		Signal<SkillInfo> SkillSelected;
 		void SetSkills(const std::vector<SkillInfo>& skills);
+		void SetAvailableMP(int mp) { _availableMP = mp; }
 	};
 }

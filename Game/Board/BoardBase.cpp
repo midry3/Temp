@@ -6,6 +6,7 @@
 #include <Animation/Tween.h>
 #include <Asset/AssetManager.h>
 #include <Scene/Texture/Sprite2D.h>
+#include <Game/Data/CommonData.h>
 #include <SceneManager.h>
 #include <lua.hpp>
 #include <algorithm>
@@ -71,7 +72,7 @@ namespace Game {
 	}
 
 	void BoardBase::_Load() {
-		LoadBoard("board/default.lua");
+		CommonData::CurrentBoard = std::dynamic_pointer_cast<BoardBase>(shared_from_this());
 	}
 
 	void BoardBase::_Update(float dt) {
@@ -490,7 +491,7 @@ namespace Game {
 	}
 
 	void BoardBase::TransitionToBattle(const SharedPtr<BattleBase>& battleScene) {
-		SceneManager.SetCurrentScene(battleScene);
+		SceneManager.TransSceneTo(battleScene, 1.0, 0.3, false);
 	}
 
 	bool BoardBase::MoveUnit(const SharedPtr<BoardUnit>& unit, int x, int y, bool allowOccupiedByTarget, const std::function<void()>& onComplete) {

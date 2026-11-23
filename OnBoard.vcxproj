@@ -76,7 +76,7 @@
   <PropertyGroup Label="UserMacros" />
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>..\Novot\ThirdParty\Lua\src;ThirdParty\imgui-1.92.9b;ThirdParty\imgui-1.92.9b\backends;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.;..\Novot\ThirdParty\Lua\src;ThirdParty\imgui-1.92.9b;ThirdParty\imgui-1.92.9b\backends;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -153,10 +153,14 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Game\Battle\BattleCharacter\DamagedEffect.cpp" />
     <ClCompile Include="Game\Battle\BattleCharacter\Gou.cpp" />
     <ClCompile Include="Game\Battle\BattleCharacter\Zon.cpp" />
+    <ClCompile Include="Game\Battle\EnemyStatsPanel.cpp" />
     <ClCompile Include="Game\Battle\Hud.cpp" />
     <ClCompile Include="Game\Battle\StatusPanel.cpp" />
+    <ClCompile Include="Game\Battle\UsingSkillPanel.cpp" />
+    <ClCompile Include="Game\Battle\WinScreen.cpp" />
     <ClCompile Include="Game\Board\BoardBase.cpp" />
     <ClCompile Include="Game\Board\CoopSelectModal.cpp" />
     <ClCompile Include="Game\Board\BoardTile.cpp" />
@@ -176,6 +180,7 @@
     <ClCompile Include="Game\Battle\BattleUI.cpp" />
     <ClCompile Include="Game\Battle\SkillSelect.cpp" />
     <ClCompile Include="Game\Battle\TestBattle.cpp" />
+    <ClCompile Include="Game\Data\CommonData.cpp" />
     <ClCompile Include="Game\Goods\Pickup.cpp" />
     <ClCompile Include="Game\TestScene.cpp" />
     <ClCompile Include="main.cpp" />
@@ -187,10 +192,14 @@
     <ClCompile Include="ThirdParty\imgui-1.92.9b\backends\imgui_impl_win32.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Game\Battle\BattleCharacter\DamagedEffect.h" />
     <ClInclude Include="Game\Battle\BattleCharacter\Gou.h" />
     <ClInclude Include="Game\Battle\BattleCharacter\Zon.h" />
+    <ClInclude Include="Game\Battle\EnemyStatsPanel.h" />
     <ClInclude Include="Game\Battle\Hud.h" />
     <ClInclude Include="Game\Battle\StatusPanel.h" />
+    <ClInclude Include="Game\Battle\UsingSkillPanel.h" />
+    <ClInclude Include="Game\Battle\WinScreen.h" />
     <ClInclude Include="Game\Board\BoardBase.h" />
     <ClInclude Include="Game\Board\CoopSelectModal.h" />
     <ClInclude Include="Game\Board\BoardTile.h" />
@@ -199,6 +208,7 @@
     <ClInclude Include="Game\Board\MapEditor.h" />
     <ClInclude Include="Game\Battle\BattleCharacter\BattleCharacterFactory.h" />
     <ClInclude Include="Game\Board\Map\Map1.h" />
+    <ClInclude Include="Game\Data\CommonData.h" />
     <ClInclude Include="ThirdParty\imgui-1.92.9b\imgui.h" />
     <ClInclude Include="ThirdParty\imgui-1.92.9b\imconfig.h" />
     <ClInclude Include="ThirdParty\imgui-1.92.9b\backends\imgui_impl_dx11.h" />

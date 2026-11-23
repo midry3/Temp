@@ -4,6 +4,7 @@
 namespace Game {
 	void Slime::_Load() {
 		EnemyBattleCharacter::_Load();
+		SetStatsScale(3.0);
 		SetInfo({
 			"スライム",
 			"enemy/slime/icon.png",

@@ -1,4 +1,5 @@
 #include "BattleCharacter.h"
+#include "DamagedEffect.h"
 
 namespace Game {
 	void BattleCharacter::_Load() {
@@ -32,6 +33,21 @@ namespace Game {
 		_sprite->Play(0);
 	}
 
+	void BattleCharacter::SetStats(const BattleCharacterStats stats) {
+		_info.stats = stats;
+		_info.stats.maxHP = static_cast<int>(stats.maxHP * _statsScale);
+		_info.stats.atk = static_cast<int>(stats.atk * _statsScale);
+		_info.stats.def = static_cast<int>(stats.def * _statsScale);
+		_info.stats.mdef = static_cast<int>(stats.mdef * _statsScale);
+		_info.stats.speed = static_cast<int>(stats.speed * _statsScale);
+		_info.currentState.currentHP = static_cast<int>(stats.maxHP * _statsScale);
+
+		_info.currentState.atk = static_cast<int>(stats.atk * _statsScale);
+		_info.currentState.def = static_cast<int>(stats.def * _statsScale);
+		_info.currentState.mdef = static_cast<int>(stats.mdef * _statsScale);
+		_info.currentState.speed = static_cast<int>(stats.speed * _statsScale);
+	}
+
 	void BattleCharacter::PlayAnimation(int animation, std::optional<bool> loop, bool reverse) {
 		if (_sprite) {
 			_sprite->Play(animation, loop, reverse);
@@ -43,15 +59,25 @@ namespace Game {
 	}
 
 	void BattleCharacter::ApplyDamage(int damage) {
-		const int appliedDamage = damage > 0 ? damage : 0;
-		_info.currentState.currentHP = _info.currentState.currentHP > appliedDamage
-			? _info.currentState.currentHP - appliedDamage : 0;
+		const int appliedDamage = Max(0, damage);
+		_info.currentState.currentHP = Max(0, _info.currentState.currentHP - appliedDamage);
 		if (IsDead()) {
-			PlayAnimation(3);
+			// 死亡演出
 		}
 		else {
-			PlayAnimation(2);
+			// 被弾演出
 		}
+		CreateScene<DamagedEffect>()->SetDamageAmount(appliedDamage);
+		StatChanged.Emit();
+	}
+
+	void BattleCharacter::UseMP(int amount) {
+		_info.currentState.currentMP = Max(0, _info.currentState.currentMP - amount);
+		StatChanged.Emit();
+	}
+
+	bool BattleCharacter::CanUseSkill(int mp) {
+		return mp <= _info.currentState.currentMP;
 	}
 
 	void BattleCharacter::ModifyStat(const std::string& stat, int delta) {

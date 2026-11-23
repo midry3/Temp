@@ -46,6 +46,8 @@ namespace Game
 	private:
 		BattleCharacterInfo _info;
 		std::vector<SkillInfo> _skills;
+
+		double _statsScale = 1.0;
 	protected:
 		SharedPtr<AnimatedSprite2D> _sprite;
 		SharedPtr<EffekseerEmitter2D> _powerUpEffect;
@@ -54,15 +56,18 @@ namespace Game
 
 		void Initialize();
 		void SetInfo(const BattleCharacterInfo info) { _info = info; }
-		void SetStats(const BattleCharacterStats stats) { _info.stats = stats; }
+		void SetStats(const BattleCharacterStats stats);
 		void SetState(const BattleCharacterState state) { _info.currentState = state; }
 		void SetSkills(const std::vector<SkillInfo>& skills) { _skills = skills; }
+		void SetStatsScale(double scale) { _statsScale = scale; }
 	public:
 		Signal<> StatChanged;
 		Signal<int> AnimationFinished;
 		void PlayAnimation(int animation, std::optional<bool> loop = std::nullopt, bool reverse = false);
 		[[nodiscard]] Vector2D* GetAnimationPositionPointer();
 		void ApplyDamage(int damage);
+		void UseMP(int amount);
+		[[nodiscard]] bool CanUseSkill(int mp);
 		void ModifyStat(const std::string& stat, int delta);
 		[[nodiscard]] int GetCurrentHP() const { return _info.currentState.currentHP; }
 		[[nodiscard]] bool IsDead() const { return _info.currentState.currentHP <= 0; }

@@ -6,6 +6,7 @@
 #include "BattleAttack.h"
 #include "BattleBackground.h"
 #include "Hud.h"
+#include "UsingSkillPanel.h"
 #include <Event/StateMachine.h>
 
 namespace Game {
@@ -15,6 +16,8 @@ namespace Game {
 			Opening,
 			Command,
 			Direction,
+			Won,
+			Lost
 		};
 
 		static constexpr int
@@ -31,6 +34,8 @@ namespace Game {
 	protected:
 		std::vector<SharedPtr<BattleCharacter>> _allies, _enemies;
 		SharedPtr<BattleUI> _battleUI;
+		SharedPtr<AnimatedUI> _usingSkillView;
+		SharedPtr<UsingSkillPanel> _allySkillPanel;
 		SharedPtr<SkillSelect> _skillSelect;
 		SharedPtr<BattleAttack> _attack;
 		SharedPtr<BattleBackground> _background;
@@ -39,6 +44,7 @@ namespace Game {
 		void _Load() override;
 		void StartAttack();
 		bool NextCharaExists();
+		bool IsDefeatedAllEnemies();
 	public:
 		void PutCharacters();
 		void SetAllies(std::vector<SharedPtr<BattleCharacter>> allies) { _allies = allies; }

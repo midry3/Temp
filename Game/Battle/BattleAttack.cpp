@@ -201,7 +201,6 @@ namespace Game {
 
 	void BattleAttack::Start(const SharedPtr<BattleCharacter>& actor,
 		const SharedPtr<BattleCharacter>& target, const SkillInfo& skill) {
-		SetName("BattleAttack");
 		StopEffects();
 		for (const auto& effect : _effects) {
 			DeleteScene(effect);
@@ -228,6 +227,8 @@ namespace Game {
 		_endTime = 0.0;
 		_mainFinished = false;
 		_finished = false;
+
+		actor->UseMP(skill.mpCost);
 		LoadTimeline(skill.directionFile);
 		Enable();
 	}

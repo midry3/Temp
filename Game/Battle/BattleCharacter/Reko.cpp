@@ -52,10 +52,10 @@ namespace Game {
 			CoreBackend::Drawing::Color(100, 255, 200)
 			});
 		SetSkills({
-			{ "ビーム", "special", "fire", "chara/reko/attack/beam.lua" },
+			{ "ビーム", "special", "fire", "chara/reko/attack/beam.lua", 20 },
 			{ "Fire", "special", "fire", "battle/fire.lua" },
-			{ "セキュリティアップデート", "special", "water", "chara/reko/attack/security_update.lua" },
-			{ "ソード", "special", "nature", "chara/reko/attack/sword.lua" }
+			{ "セキュリティアップデート", "special", "water", "chara/reko/attack/security_update.lua", 20 },
+			{ "ソード", "special", "nature", "chara/reko/attack/sword.lua", 100 }
 			});
 
 		Initialize();
