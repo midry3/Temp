@@ -8,7 +8,7 @@ namespace Game {
 	// 選択SE再生用の SoundPlayer を子シーンとして作成する
 	inline SharedPtr<SoundPlayer> CreateSelectSePlayer(Scene* scene) {
 		const auto& player = scene->CreateScene<SoundPlayer>();
-		player->SetSound(LoadAsset<Sound>(SELECT_SE));
+		player->SetSound(scene->LoadAsset<Sound>(SELECT_SE));
 		return player;
 	}
 }

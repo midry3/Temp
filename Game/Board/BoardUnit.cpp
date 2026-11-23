@@ -14,10 +14,15 @@ namespace Game {
 		const auto& hoverSE = CreateScene<SoundPlayer>();
 		hoverSE->SetSound(LoadAsset<Sound>(HOVER_SE))
 			->SetVolume(0.7f);
-		Entered += [hoverSE](const MouseEvent& event) {
+		Entered += [this, hoverSE](const MouseEvent& event) {
+			_isMouseEntered = true;
 			hoverSE->Play();
 		};
-		Exited += [hoverSE](const MouseEvent& event) {
+		Exited += [this, hoverSE](const MouseEvent& event) {
+			_isMouseEntered = false;
+			if (not _intentHint) {
+				_sprite->SetModulate({ 255, 255, 255 });
+			}
 			hoverSE->Stop();
 			};
 
@@ -29,11 +34,17 @@ namespace Game {
 
 	void BoardUnit::_Update(float dt) {
 		Button::_Update(dt);
-		if (not _intentHint) return;
+		if (not _intentHint && not _isMouseEntered) return;
 		_hintTime += dt;
 		if (_sprite) {
-			const auto pulse = (std::sin(_hintTime * 6.0) + 1.0) / 2.0;
-			_sprite->SetModulate(Vector3D(255, 60, 60) * pulse + Vector3D(255, 255, 255) * (1.0 - pulse));
+			if (_intentHint) {
+				const auto pulse = (std::sin(_hintTime * 6.0) + 1.0) / 2.0;
+				_sprite->SetModulate(Vector3D(255, 60, 60) * pulse + Vector3D(255, 255, 255) * (1.0 - pulse));
+			}
+			else if (_isMouseEntered) {
+				const auto pulse = (std::sin(_hintTime * 6.0) + 1.0) / 2.0;
+				_sprite->SetModulate(Vector3D(60, 60, 60) * pulse + Vector3D(255, 255, 255) * (1.0 - pulse));
+			}
 		}
 	}
 

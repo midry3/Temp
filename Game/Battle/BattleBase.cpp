@@ -2,10 +2,17 @@
 #include <Scene/Container/Animation/AnimatedGrid.h>
 #include <Game/Data/CommonData.h>
 #include "WinScreen.h"
+#include <Scene/Sound/SoundPlayer.h>
 
 namespace Game {
 	void BattleBase::_Load() {
 		Camera.SetZoom(Vec2D_1);
+
+		const auto& bgmPlayer = CreateScene<SoundPlayer>();
+		bgmPlayer->SetSound(LoadAsset<Sound>("sound/bgm/bgm1.oga"))
+			->SetLoop()
+			->SetVolume(0.5f);
+		bgmPlayer->Play();
 
 		_background = CreateScene<BattleBackground>();
 

@@ -16,7 +16,7 @@ namespace Game {
 		BoardUnitData _data;
 		SharedPtr<Sprite2D> _sprite;
 		SharedPtr<TextLabel> _nameLabel;
-		bool _intentHint = false;
+		bool _intentHint = false, _isMouseEntered = false;
 		double _hintTime = 0.0;
 		std::vector<BoardOffset> _relativeMoveOffsets;
 		// Board 単位で保持する永続キャラクター。ステータス変化はこの状態に蓄積され、
