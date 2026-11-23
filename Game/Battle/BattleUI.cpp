@@ -12,7 +12,7 @@ namespace Game {
 		const auto& commandGrid = CreateScene<GridContainer>();
 		commandGrid->SetMatrixSize({ 1, 4 })
 			->SetSize({ 200, 500 })
-			->SetPosition({ 100, 100 });
+			->SetPosition({ 400, 100 });
 
 		const auto& atkButton = commandGrid->CreateScene<TextureButton>();
 		atkButton->SetTexture(LoadAsset<Texture>("ui/atk.png"))

@@ -5,6 +5,13 @@ namespace Game {
 		BattleCharacter::_Load();
 		SetInfo({
 			"ゾン",
+			"chara/zon/icon.png",
+			{
+			DEFAULT_MAX_HP, DEFAULT_MAX_MP, DEFAULT_ATK, DEFAULT_DEF, DEFAULT_MDEF, DEFAULT_SPEED
+			},
+			{
+			DEFAULT_MAX_HP, DEFAULT_MAX_MP, DEFAULT_ATK, DEFAULT_DEF, DEFAULT_MDEF, DEFAULT_SPEED
+			},
 			{
 				{ ZonAnimation::Idle, "chara/zon/idle.png" },
 				{ ZonAnimation::Attack, "chara/zon/gun_shot.png" },
@@ -15,10 +22,11 @@ namespace Game {
 				{ ZonAnimation::GUN_SHOT_PREPARE, "chara/zon/gun_prepare.png" },
 				{ ZonAnimation::GUN_SHOT, "chara/zon/gun_shot.png" },
 				{ ZonAnimation::Pick, "chara/zon/pick.png" }
-			}
+			},
+			CoreBackend::Drawing::Color(100, 50, 100)
 			});
 		SetStats({
-			100, 50, 10, 5, 7
+			DEFAULT_MAX_HP, DEFAULT_MAX_MP, DEFAULT_ATK, DEFAULT_DEF, DEFAULT_MDEF, DEFAULT_SPEED
 			});
 		SetSkills({
 			{ "射撃", "special", "fire", "chara/zon/attack/gun_shot.lua" },

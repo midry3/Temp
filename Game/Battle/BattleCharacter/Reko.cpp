@@ -29,6 +29,13 @@ namespace Game {
 
 		SetInfo({
 			"レコ",
+			"chara/reko/icon.png",
+			{
+			DEFAULT_MAX_HP, DEFAULT_MAX_MP, DEFAULT_ATK, DEFAULT_DEF, DEFAULT_MDEF, DEFAULT_SPEED
+			},
+			{
+			DEFAULT_MAX_HP, DEFAULT_MAX_MP, DEFAULT_ATK, DEFAULT_DEF, DEFAULT_MDEF, DEFAULT_SPEED
+			},
 			{
 				{ RekoAnimation::Idle, "chara/reko/idle.png" },
 				/*
@@ -41,10 +48,8 @@ namespace Game {
 				{ RekoAnimation::UsingPC, "chara/reko/pc.png" },
 				{ RekoAnimation::SwordPrepare, "chara/reko/idle.png" },
 				{ RekoAnimation::SwordAttack, "chara/reko/attack.png" },
-			}
-			});
-		SetStats({
-			100, 50, 10, 5, 7
+			},
+			CoreBackend::Drawing::Color(100, 255, 200)
 			});
 		SetSkills({
 			{ "ビーム", "special", "fire", "chara/reko/attack/beam.lua" },

@@ -12,6 +12,8 @@ class Sprite2D;
 
 namespace Game {
 	class BattleCharacter;
+	class BattleBase;
+	class CoopSelectModal;
 
 	struct BoardEnemyAction {
 		SharedPtr<BoardUnit> enemy;
@@ -35,8 +37,11 @@ namespace Game {
 		int _turn = 1;
 		bool _isEnemyTurn = false;
 		bool _isAnimating = false;
+		bool _isCoopSelecting = false;
 		std::optional<BoardEnemyAction> _nextEnemyAction;
 		EnemyActionDecider _customEnemyActionDecider;
+		std::function<void()> _pendingTransition;
+		SharedPtr<CoopSelectModal> _coopModal;
 
 		void UpdateLayout();
 		void BuildTiles(const std::map<BoardTerrain, std::string>& textures, const std::vector<BoardTileData>& tiles);
@@ -51,6 +56,7 @@ namespace Game {
 
 	protected:
 		void _Load() override;
+		void _Update(float dt) override;
 		bool LoadBoard(const std::string& file);
 
 	public:
@@ -59,6 +65,12 @@ namespace Game {
 		void SetEnemyActionDecider(const EnemyActionDecider& decider) { _customEnemyActionDecider = decider; }
 
 		[[nodiscard]] virtual std::optional<BoardEnemyAction> DecideEnemyAction();
+
+		[[nodiscard]] bool CanReachTile(const BoardUnit& unit, int targetX, int targetY) const;
+		virtual void OpenCoopSelect(const SharedPtr<BoardUnit>& primaryAlly, const SharedPtr<BoardUnit>& enemy);
+		virtual void SetupBattle(BattleBase& battle, const SharedPtr<BoardUnit>& allyUnit, const SharedPtr<BoardUnit>& enemyUnit, const std::vector<SharedPtr<BoardUnit>>& coopAllies = {});
+		virtual void StartBattle(const SharedPtr<BoardUnit>& allyUnit, const SharedPtr<BoardUnit>& enemyUnit, const std::vector<SharedPtr<BoardUnit>>& coopAllies = {});
+		virtual void TransitionToBattle(const SharedPtr<BattleBase>& battleScene);
 
 		bool MoveUnit(const SharedPtr<BoardUnit>& unit, int x, int y, bool allowOccupiedByTarget = false, const std::function<void()>& onComplete = nullptr);
 		[[nodiscard]] bool IsMoveAllowed(const BoardUnit& unit, int x, int y, bool allowOccupiedByTarget = false) const;
@@ -84,6 +96,7 @@ namespace Game {
 		[[nodiscard]] int GetTurn() const { return _turn; }
 		[[nodiscard]] bool IsEnemyTurn() const { return _isEnemyTurn; }
 		[[nodiscard]] bool IsAnimating() const { return _isAnimating; }
+		[[nodiscard]] bool IsCoopSelecting() const { return _isCoopSelecting; }
 		[[nodiscard]] const std::optional<BoardEnemyAction>& GetNextEnemyAction() const { return _nextEnemyAction; }
 	};
 }

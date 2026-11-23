@@ -52,7 +52,8 @@ attack = {
 
 | フィールド | 型 | 対応する `type` | 説明 |
 | --- | --- | --- | --- |
-| `time` | number | すべて | 演出開始から実行するまでの時間。秒単位。 |
+| `time` | number | すべて | 実行するまでの時間。秒単位。通常は演出開始からの時間、`finally = true` の場合は演出終了（`duration` 到達）からの時間になります。 |
+| `finally` | boolean | すべて | `true` の場合、そのアクションは演出終了後の処理として実行されます。既定値は `false` です。詳細は「演出終了後の処理（finally）」を参照してください。 |
 | `type` | string | すべて | `animation`、`position`、`position_tween`、`damage`、`effect`、`pickup`、`screen_flash`、`blur_in`、`blur_out`、`concentration_lines`、`screen_shake`、`time_scale` のいずれか。 |
 | `target` | string | `animation`、`damage` | 対象。`actor` は攻撃者、`target` は攻撃対象を表します。 |
 | `animation` | integer | `animation` | 対象に再生するアニメーション番号。 |
@@ -175,6 +176,33 @@ Tweenで移動し、省略または `0` 以下の場合は即時に移動しま�
 ```
 
 `value` フィールドも読み込まれますが、現在の攻撃演出では使用されません。
+
+## 演出終了後の処理（finally）
+
+アクションに `finally = true` を付けると、そのアクションは通常のタイムライン
+（演出開始からの `time`）ではなく、演出終了後の処理として実行されます。
+この場合の `time` は、演出終了（`attack.duration` 到達）から実行するまでの
+秒数です。`time` が 0 未満の場合は 0 として扱われます。
+
+```lua
+attack = {
+    duration = 1.0,
+    actions = {
+        { time = 0.6, type = "damage", target = "target", amount = 30 },
+        -- 演出終了の瞬間に待機アニメーションへ戻す
+        { time = 0.0, finally = true, type = "animation", target = "actor", animation = 0 },
+        -- 演出終了の0.5秒後に初期位置へ戻す
+        { time = 0.5, finally = true, type = "position", target = "actor", reset = true }
+    }
+}
+```
+
+動作は次の通りです。
+
+- 演出終了の時点で、通常アクション側のエフェクトや画面効果は従来通り停止します。その後に `finally` アクションが実行されるため、`finally` 側で開始したエフェクト等が終了処理で止められることはありません。
+- `BattleAttack` の完了（`Completed` シグナルと `IsFinished()`）は、すべての `finally` アクションが実行された後になります。`finally` アクションが1つも無い場合は従来通り `duration` で完了します。
+- 演出全体の終了時刻は、最も遅い `finally` アクションの実行時刻（`duration + time`）で決まります。`finally` アクション自体に再生時間がある場合（`effect` や `pickup` など）は、その分を見込んで後続の `finally` アクションの `time` を遅らせてください。最後の `finally` アクションが実行された時点で、残っているエフェクト等は停止します。
+- `effect` アクションの `triggerTime` / `triggers` は、`finally` の場合も実行時刻からの相対秒として扱われます。
 
 ## キャラクターへのスキル設定
 

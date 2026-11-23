@@ -5,6 +5,13 @@ namespace Game {
 		BattleCharacter::_Load();
 		SetInfo({
 			"業",
+			"chara/gou/icon.png",
+			{
+			DEFAULT_MAX_HP, DEFAULT_MAX_MP, DEFAULT_ATK, DEFAULT_DEF, DEFAULT_MDEF, DEFAULT_SPEED
+			},
+			{
+			DEFAULT_MAX_HP, DEFAULT_MAX_MP, DEFAULT_ATK, DEFAULT_DEF, DEFAULT_MDEF, DEFAULT_SPEED
+			},
 			{
 				{ GouAnimation::Idle, "chara/gou/idle.png" },
 				{ GouAnimation::Attack, "chara/gou/attack.png" },
@@ -14,10 +21,8 @@ namespace Game {
 				{ GouAnimation::Damage, "chara/gou/gou_damage.png" },
 				{ GouAnimation::Death, "chara/gou/gou_death.png" }
 				*/
-			}
-			});
-		SetStats({
-			100, 50, 10, 5, 7
+			},
+			CoreBackend::Drawing::Color(255, 100, 100)
 			});
 		SetSkills({
 			{ "金棒スイング", "special", "fire", "chara/gou/attack/swing.lua" },

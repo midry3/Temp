@@ -1,9 +1,12 @@
 #include "BoardBase.h"
+#include "CoopSelectModal.h"
+#include "../Battle/BattleBase.h"
 #include "../Battle/BattleCharacter/BattleCharacterFactory.h"
 #include "../Battle/BattleCharacter/Enemy/EnemyBattleCharacter.h"
 #include <Animation/Tween.h>
 #include <Asset/AssetManager.h>
 #include <Scene/Texture/Sprite2D.h>
+#include <SceneManager.h>
 #include <lua.hpp>
 #include <algorithm>
 #include <cmath>
@@ -69,6 +72,16 @@ namespace Game {
 
 	void BoardBase::_Load() {
 		LoadBoard("board/default.lua");
+	}
+
+	void BoardBase::_Update(float dt) {
+		Scene::_Update(dt);
+		if (_pendingTransition) {
+			auto transition = std::move(_pendingTransition);
+			_pendingTransition = nullptr;
+			transition();
+			return;
+		}
 	}
 
 	bool BoardBase::LoadBoard(const std::string& file) {
@@ -271,8 +284,13 @@ namespace Game {
 	}
 
 	void BoardBase::SelectUnit(const SharedPtr<BoardUnit>& unit) {
-		if (_isEnemyTurn || _isAnimating) return;
-		if (not unit->IsAlly()) return;
+		if (_isEnemyTurn || _isAnimating || _isCoopSelecting) return;
+		if (not unit->IsAlly()) {
+			if (_selectedUnit) {
+				SelectTile(unit->GetData().x, unit->GetData().y);
+			}
+			return;
+		}
 		CancelSelection();
 		_selectedUnit = unit;
 		GetTile(unit->GetData().x, unit->GetData().y)->SetSelected(true);
@@ -280,13 +298,20 @@ namespace Game {
 	}
 
 	void BoardBase::SelectTile(int x, int y) {
-		if (_isEnemyTurn || _isAnimating) return;
+		if (_isEnemyTurn || _isAnimating || _isCoopSelecting) return;
 		if (not _selectedUnit) return;
 		const auto movingUnit = _selectedUnit;
-		if (IsMoveAllowed(*movingUnit, x, y, false)) {
+		if (IsMoveAllowed(*movingUnit, x, y, true)) {
+			const auto targetUnit = GetUnitAt(x, y);
+			const bool isEnemyEncounter = targetUnit && not targetUnit->IsAlly();
 			CancelSelection();
-			MoveUnit(movingUnit, x, y, false, [this]() {
-				ExecuteEnemyTurn();
+			MoveUnit(movingUnit, x, y, true, [this, movingUnit, targetUnit, isEnemyEncounter]() {
+				if (isEnemyEncounter) {
+					OpenCoopSelect(movingUnit, targetUnit);
+				}
+				else {
+					ExecuteEnemyTurn();
+				}
 			});
 		}
 	}
@@ -303,7 +328,7 @@ namespace Game {
 		if (not _selectedUnit) return;
 		for (int y = 0; y < _height; y++) {
 			for (int x = 0; x < _width; x++) {
-				GetTile(x, y)->SetMoveHint(IsMoveAllowed(*_selectedUnit, x, y, false));
+				GetTile(x, y)->SetMoveHint(IsMoveAllowed(*_selectedUnit, x, y, true));
 			}
 		}
 	}
@@ -346,20 +371,34 @@ namespace Game {
 		}
 
 		if (action.has_value() && action->enemy) {
+			const auto targetUnit = GetUnitAt(action->targetX, action->targetY);
+			const bool isAllyEncounter = targetUnit && targetUnit->IsAlly();
 			if (CanMoveTo(*action->enemy, action->targetX, action->targetY, true)) {
-				MoveUnit(action->enemy, action->targetX, action->targetY, true, [this]() {
-					_turn++;
-					_isEnemyTurn = false;
-					UpdateEnemyIntentVisuals();
+				MoveUnit(action->enemy, action->targetX, action->targetY, true, [this, enemy = action->enemy, targetUnit, isAllyEncounter]() {
+					if (isAllyEncounter) {
+						OpenCoopSelect(targetUnit, enemy);
+					}
+					else {
+						_turn++;
+						_isEnemyTurn = false;
+						UpdateEnemyIntentVisuals();
+					}
 				});
 				return;
 			}
 			const auto fallbackAction = DecideEnemyAction();
 			if (fallbackAction.has_value() && fallbackAction->enemy && CanMoveTo(*fallbackAction->enemy, fallbackAction->targetX, fallbackAction->targetY, true)) {
-				MoveUnit(fallbackAction->enemy, fallbackAction->targetX, fallbackAction->targetY, true, [this]() {
-					_turn++;
-					_isEnemyTurn = false;
-					UpdateEnemyIntentVisuals();
+				const auto fallbackTarget = GetUnitAt(fallbackAction->targetX, fallbackAction->targetY);
+				const bool fallbackEncounter = fallbackTarget && fallbackTarget->IsAlly();
+				MoveUnit(fallbackAction->enemy, fallbackAction->targetX, fallbackAction->targetY, true, [this, enemy = fallbackAction->enemy, fallbackTarget, fallbackEncounter]() {
+					if (fallbackEncounter) {
+						OpenCoopSelect(fallbackTarget, enemy);
+					}
+					else {
+						_turn++;
+						_isEnemyTurn = false;
+						UpdateEnemyIntentVisuals();
+					}
 				});
 				return;
 			}
@@ -371,9 +410,87 @@ namespace Game {
 	}
 
 	void BoardBase::EndTurn() {
-		if (_isEnemyTurn || _isAnimating) return;
+		if (_isEnemyTurn || _isAnimating || _isCoopSelecting) return;
 		CancelSelection();
 		ExecuteEnemyTurn();
+	}
+
+	bool BoardBase::CanReachTile(const BoardUnit& unit, int targetX, int targetY) const {
+		if (not IsInside(targetX, targetY)) return false;
+		if (not GetTile(targetX, targetY)->IsPassable()) return false;
+		const auto& data = unit.GetData();
+		const auto dx = targetX - data.x;
+		const auto dy = targetY - data.y;
+		if (dx == 0 && dy == 0) return false;
+
+		const auto absX = std::abs(dx);
+		const auto absY = std::abs(dy);
+		if (data.moveType == BoardMoveType::Adjacent) return not (1 < absX) && not (1 < absY);
+		if (data.moveType == BoardMoveType::RangeTwo) return not (2 < absX) && not (2 < absY);
+		if (data.moveType == BoardMoveType::DiagonalUnlimited) {
+			if (dx == 0 || dy == 0) return not (1 < absX) && not (1 < absY);
+			if (absX != absY) return false;
+			return IsPathClear(data.x, data.y, targetX, targetY);
+		}
+		if (dx != 0 && dy != 0) return false;
+		return IsPathClear(data.x, data.y, targetX, targetY);
+	}
+
+	void BoardBase::OpenCoopSelect(const SharedPtr<BoardUnit>& primaryAlly, const SharedPtr<BoardUnit>& enemy) {
+		_isCoopSelecting = true;
+		std::vector<SharedPtr<BoardUnit>> availableAllies;
+		const int battleX = enemy->GetData().x;
+		const int battleY = enemy->GetData().y;
+		for (const auto& unit : GetAllyUnits()) {
+			if (unit != primaryAlly && CanReachTile(*unit, battleX, battleY)) {
+				availableAllies.push_back(unit);
+			}
+		}
+
+		_coopModal = CreateScene<CoopSelectModal>();
+		_coopModal->Setup(primaryAlly, enemy, availableAllies, _tileSize, [this, primaryAlly, enemy](const std::vector<SharedPtr<BoardUnit>>& selectedCoopAllies) {
+			if (_coopModal) {
+				_coopModal->Free();
+				_coopModal = nullptr;
+			}
+			_isCoopSelecting = false;
+			_pendingTransition = [this, primaryAlly, enemy, selectedCoopAllies]() {
+				StartBattle(primaryAlly, enemy, selectedCoopAllies);
+			};
+		});
+	}
+
+	void BoardBase::SetupBattle(BattleBase& battle, const SharedPtr<BoardUnit>& allyUnit, const SharedPtr<BoardUnit>& enemyUnit, const std::vector<SharedPtr<BoardUnit>>& coopAllies) {
+		if (allyUnit) {
+			const auto allyChar = CreateBattleCharacterForUnit(*allyUnit);
+			if (allyChar) {
+				battle.AddAlly(allyChar);
+			}
+		}
+		for (const auto& coopUnit : coopAllies) {
+			if (coopUnit && coopUnit != allyUnit) {
+				const auto coopChar = CreateBattleCharacterForUnit(*coopUnit);
+				if (coopChar) {
+					battle.AddAlly(coopChar);
+				}
+			}
+		}
+		if (enemyUnit) {
+			const auto enemyChar = CreateBattleCharacterForUnit(*enemyUnit);
+			if (enemyChar) {
+				battle.AddEnemy(enemyChar);
+			}
+		}
+	}
+
+	void BoardBase::StartBattle(const SharedPtr<BoardUnit>& allyUnit, const SharedPtr<BoardUnit>& enemyUnit, const std::vector<SharedPtr<BoardUnit>>& coopAllies) {
+		const auto battleScene = MakeShared<BattleBase>();
+		SetupBattle(*battleScene, allyUnit, enemyUnit, coopAllies);
+		TransitionToBattle(battleScene);
+	}
+
+	void BoardBase::TransitionToBattle(const SharedPtr<BattleBase>& battleScene) {
+		SceneManager.SetCurrentScene(battleScene);
 	}
 
 	bool BoardBase::MoveUnit(const SharedPtr<BoardUnit>& unit, int x, int y, bool allowOccupiedByTarget, const std::function<void()>& onComplete) {

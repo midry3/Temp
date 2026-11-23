@@ -70,6 +70,8 @@ namespace Game {
 			bool hasBlurCenter = false;
 			bool flashUnderEffects = false;
 			bool executed = false;
+			bool isFinally = false;
+			double executeTime = 0.0;
 		};
 		SharedPtr<BattleCharacter> _actor;
 		SharedPtr<BattleCharacter> _target;
@@ -92,6 +94,8 @@ namespace Game {
 		std::vector<AnimationFinishedConnection> _animationFinishedConnections;
 		double _elapsed = 0.0;
 		double _duration = 0.0;
+		double _endTime = 0.0;
+		bool _mainFinished = false;
 		bool _finished = false;
 		bool _blurActive = false;
 		bool _blurIn = false;
@@ -123,6 +127,7 @@ namespace Game {
 
 		bool LoadTimeline(const std::string& file);
 		void Execute(Action& action);
+		void StopTimelineEffects();
 		void RegisterAnimationFinishedAction(const SharedPtr<BattleCharacter>& target,
 			int animation, const Action& action);
 		void StopAnimationFinishedConnections();

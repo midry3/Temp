@@ -5,16 +5,16 @@
 namespace Game {
 	namespace {
 		std::string GetPrimaryAttributeDescription(const std::string& attribute) {
-			if (attribute == "physical") return "物理: 武器や肉体による攻撃";
-			if (attribute == "special") return "特殊: 魔法や特殊能力による攻撃";
+			if (attribute == "physical") return "物理: 武器や肉体による攻撃、DEFの影響を受ける";
+			if (attribute == "special") return "特殊: 魔法や特殊能力による攻撃、MDEFの影響を受ける";
 			return "第一属性: 不明";
 		}
 
 		std::string GetSecondaryAttributeDescription(const std::string& attribute) {
-			if (attribute == "fire") return "火: 炎や熱を操る属性";
-			if (attribute == "water") return "水: 水流や冷気を操る属性";
-			if (attribute == "nature") return "自然: 植物や大地の力を操る属性";
-			return "第二属性: 不明";
+			if (attribute == "fire") return "火";
+			if (attribute == "water") return "水";
+			if (attribute == "nature") return "自然";
+			return "無";
 		}
 	}
 
@@ -33,26 +33,36 @@ namespace Game {
 		_skillNameLabel = CreateScene<TextLabel>();
 		_skillNameLabel->BeginSetting()
 			->SetFontSize(28)
+			->SetWidth(360)
 			->EndSetting()
 			->SetPosition({ 825, 125 });
 
 		_primaryAttributeLabel = CreateScene<TextLabel>();
 		_primaryAttributeLabel->BeginSetting()
 			->SetFontSize(20)
+			->SetWidth(360)
 			->EndSetting()
 			->SetPosition({ 825, 200 });
 
 		_secondaryAttributeLabel = CreateScene<TextLabel>();
 		_secondaryAttributeLabel->BeginSetting()
 			->SetFontSize(20)
+			->SetWidth(360)
 			->EndSetting()
 			->SetPosition({ 825, 275 });
+
+		_mpCostLabel = CreateScene<TextLabel>();
+		_mpCostLabel->BeginSetting()
+			->SetFontSize(20)
+			->SetWidth(360)
+			->EndSetting()
+			->SetPosition({ 825, 350 });
 
 		_buttonGrid = CreateScene<GridContainer>();
 		_buttonGrid->SetMatrixSize({ 1, 1 })
 			->SetSpace({ 0, 20 })
 			->SetSize({ 200, 500 })
-			->SetPosition({ 100, 100 });
+			->SetPosition({ 400, 100 });
 
 		RebuildButtons();
 
@@ -111,6 +121,7 @@ namespace Game {
 		_skillNameLabel->SetText(std::format("技名: {}", skill.name));
 		_primaryAttributeLabel->SetText(GetPrimaryAttributeDescription(skill.primaryAttribute));
 		_secondaryAttributeLabel->SetText(GetSecondaryAttributeDescription(skill.secondaryAttribute));
+		_mpCostLabel->SetText(std::format("必要MP: {}", skill.mpCost));
 	}
 
 	void SkillSelect::_Update(float dt) {

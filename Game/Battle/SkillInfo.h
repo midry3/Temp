@@ -7,5 +7,6 @@ namespace Game {
 		std::string primaryAttribute;
 		std::string secondaryAttribute;
 		std::string directionFile;
+		int mpCost = 10;
 	};
 }

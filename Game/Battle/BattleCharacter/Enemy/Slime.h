@@ -15,6 +15,7 @@ namespace Game {
 			DEFAULT_MAX_MP = 20,
 			DEFAULT_ATK = 8,
 			DEFAULT_DEF = 3,
+			DEFAULT_MDEF = 0,
 			DEFAULT_SPEED = 5;
 
 	protected:

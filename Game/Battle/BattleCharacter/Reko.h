@@ -19,8 +19,9 @@ namespace Game {
 		static constexpr int
 			DEFAULT_MAX_HP = 500,
 			DEFAULT_MAX_MP = 250,
-			DEFAULT_ATK = 10,
-			DEFAULT_DEF = 5,
+			DEFAULT_ATK = 100,
+			DEFAULT_DEF = 80,
+			DEFAULT_MDEF = 0,
 			DEFAULT_SPEED = 10;
 		SharedPtr<RekoAlpha> _alphaAnim;
 	protected:

@@ -18,6 +18,7 @@ namespace Game {
 		SharedPtr<TextLabel> _skillNameLabel;
 		SharedPtr<TextLabel> _primaryAttributeLabel;
 		SharedPtr<TextLabel> _secondaryAttributeLabel;
+		SharedPtr<TextLabel> _mpCostLabel;
 
 		void RebuildButtons();
 		void UpdateDescription(const SkillInfo& skill);

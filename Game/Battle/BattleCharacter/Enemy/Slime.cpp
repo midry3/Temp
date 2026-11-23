@@ -6,12 +6,20 @@ namespace Game {
 		EnemyBattleCharacter::_Load();
 		SetInfo({
 			"スライム",
+			"enemy/slime/icon.png",
+			{
+			DEFAULT_MAX_HP, 0, DEFAULT_ATK, DEFAULT_DEF, DEFAULT_MDEF, DEFAULT_SPEED
+			},
+			{
+			DEFAULT_MAX_HP, 0, DEFAULT_ATK, DEFAULT_DEF, DEFAULT_MDEF, DEFAULT_SPEED
+			},
 			{
 				{ SlimeAnimation::Idle, "enemy/slime/idle.png" },
 				{ SlimeAnimation::Attack, "enemy/slime/idle.png" },
 				{ SlimeAnimation::Damage, "enemy/slime/idle.png" },
 				{ SlimeAnimation::Death, "enemy/slime/idle.png" }
-			}
+			},
+			CoreBackend::Drawing::Color(100, 160, 200)
 		});
 		SetStats({
 			DEFAULT_MAX_HP, DEFAULT_MAX_MP, DEFAULT_ATK, DEFAULT_DEF, DEFAULT_SPEED

@@ -156,7 +156,7 @@ namespace Game {
 					? static_cast<float>(lua_tonumber(state, -1)) : fallback;
 				lua_pop(state, 1);
 				return value;
-			};
+				};
 			result[0] = readChannel(lua_gettop(state), "r", 255.0f);
 			result[1] = readChannel(lua_gettop(state), "g", 255.0f);
 			result[2] = readChannel(lua_gettop(state), "b", 255.0f);
@@ -205,6 +205,8 @@ namespace Game {
 		StopFlash();
 		_elapsed = 0.0;
 		_duration = 0.0;
+		_endTime = 0.0;
+		_mainFinished = false;
 		_finished = false;
 		LoadTimeline(skill.directionFile);
 		Enable();
@@ -257,6 +259,9 @@ namespace Game {
 				if (lua_istable(state, -1)) {
 					Action action;
 					action.time = ReadNumber(state, -1, "time");
+					action.isFinally = ReadBool(state, -1, "finally");
+					action.executeTime = action.isFinally
+						? _duration + Max(action.time, 0.0) : action.time;
 					action.type = ReadString(state, -1, "type");
 					action.target = ReadString(state, -1, "target");
 					action.value = ReadString(state, -1, "value");
@@ -315,7 +320,11 @@ namespace Game {
 		}
 		lua_close(state);
 		std::sort(_actions.begin(), _actions.end(),
-			[](const Action& left, const Action& right) { return left.time < right.time; });
+			[](const Action& left, const Action& right) { return left.executeTime < right.executeTime; });
+		_endTime = _duration;
+		for (const auto& action : _actions) {
+			if (action.isFinally) _endTime = Max(_endTime, action.executeTime);
+		}
 		return true;
 	}
 
@@ -370,18 +379,18 @@ namespace Game {
 			if (action.trigger >= 0) {
 				_effectTriggers.push_back({
 					effect,
-					action.time + Max(action.triggerTime, 0.0),
+					action.executeTime + Max(action.triggerTime, 0.0),
 					action.trigger,
 					false
-				});
+					});
 			}
 			for (const auto& [relativeTime, trigger] : action.triggers) {
 				_effectTriggers.push_back({
 					effect,
-					action.time + Max(relativeTime, 0.0),
+					action.executeTime + Max(relativeTime, 0.0),
 					trigger,
 					false
-				});
+					});
 			}
 		}
 		else if (action.type == "pickup" && not action.pickupTextures.empty()) {
@@ -400,7 +409,7 @@ namespace Game {
 			CreateTimer(Max(action.duration, 0.0), [this, pickup]() {
 				pickup->Free();
 				std::erase(_pickups, pickup);
-			});
+				});
 		}
 
 		else if (action.type == "blur_in") {
@@ -503,6 +512,17 @@ namespace Game {
 		_pickups.clear();
 	}
 
+	void BattleAttack::StopTimelineEffects() {
+		StopAnimationFinishedConnections();
+		StopEffects();
+		StopPickups();
+		StopBlur();
+		StopConcentrationLines();
+		StopShake();
+		StopTimeScale();
+		StopFlash();
+	}
+
 	void BattleAttack::_Update(float dt) {
 		if (_finished) return;
 		_elapsed += dt;
@@ -512,21 +532,24 @@ namespace Game {
 		UpdateConcentrationLines(dt);
 		UpdateShake(dt);
 		for (auto& action : _actions) {
-			if (not action.executed && _elapsed >= action.time) {
-				action.executed = true;
-				Execute(action);
-			}
+			if (action.isFinally) continue;
+			if (action.executed || _elapsed < action.executeTime) continue;
+			action.executed = true;
+			Execute(action);
 		}
-		if (_elapsed >= _duration) {
+		if (not _mainFinished && not (_elapsed < _duration)) {
+			_mainFinished = true;
+			StopTimelineEffects();
+		}
+		for (auto& action : _actions) {
+			if (not action.isFinally) continue;
+			if (action.executed || _elapsed < action.executeTime) continue;
+			action.executed = true;
+			Execute(action);
+		}
+		if (not (_elapsed < _endTime)) {
 			_finished = true;
-			StopAnimationFinishedConnections();
-			StopEffects();
-			StopPickups();
-			StopBlur();
-			StopConcentrationLines();
-			StopShake();
-			StopTimeScale();
-			StopFlash();
+			StopTimelineEffects();
 			_completed.Emit();
 		}
 	}
