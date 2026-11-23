@@ -26,7 +26,7 @@ namespace Game {
 			->SetForegroundColor({ 255, 255, 255 })
 			->EndSetting()
 			->SetText("You Win!")
-			->SetPosition({ 300, 300 });
+			->SetPosition({ 200, 200 });
 
 		CreateTweenGroup()->CreateTween(&background->alpha, 150, 0.5)->From(0);
 		CreateTweenGroup()->CreateTween(&label->offset.x, 0, 1.0, Easing::EaseInCubic)->From(1500);

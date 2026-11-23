@@ -14,8 +14,8 @@ namespace Game {
 	private:
 		static constexpr int
 			DEFAULT_MAX_HP = 500,
-			DEFAULT_MAX_MP = 250,
-			DEFAULT_ATK = 500,
+			DEFAULT_MAX_MP = 100,
+			DEFAULT_ATK = 5000,
 			DEFAULT_DEF = 60,
 			DEFAULT_MDEF = 0,
 			DEFAULT_SPEED = 10;

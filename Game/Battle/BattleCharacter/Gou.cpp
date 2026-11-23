@@ -25,10 +25,7 @@ namespace Game {
 			CoreBackend::Drawing::Color(255, 100, 100)
 			});
 		SetSkills({
-			{ "金棒スイング", "special", "fire", "chara/gou/attack/swing.lua" },
-			{ "Fire", "special", "fire", "battle/fire.lua" },
-			{ "Ice", "special", "water", "battle/ice.lua" },
-			{ "Heal", "special", "nature", "battle/heal.lua" }
+			{ "金棒スイング", "special", "fire", "chara/gou/attack/swing.lua", 20 },
 			});
 
 		Initialize();
