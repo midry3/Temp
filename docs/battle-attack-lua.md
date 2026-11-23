@@ -48,6 +48,17 @@ attack = {
 | `duration` | number | 演出全体の長さ。秒単位。 |
 | `actions` | table | 時系列で実行するアクションの配列。`time` の昇順で実行されます。 |
 
+## 技の対象（SkillInfo）
+
+各技には対象の属性があります（`SkillInfo` の `targetScope` / `targetSide`）。
+
+- `targetScope`：`Single`（単体）または `All`（全体）。既定値は `Single` です。
+- `targetSide`：`Enemy`（敵）または `Ally`（味方）。既定値は `Enemy` です。
+
+単体対象の技を選ぶと対象選択画面になります。対象候補の情報パネル（味方は左上、敵は右上）以外は薄く暗くなり、パネルをクリックして対象を選びます。候補が1体だけの場合は選択をスキップして自動でその対象になります。全体対象の技は選択なしで、対象陣営の生存者全員が対象になります。対象候補は生存しているキャラのみです。
+
+演出側では `target = "target"` が、単体対象では選んだ相手、全体対象では対象全員を指します（`damage`、`animation`、`position`、`position_tween`、`rustle`、`stat_changes` に適用）。
+
 ## アクション
 
 | フィールド | 型 | 対応する `type` | 説明 |
@@ -55,7 +66,7 @@ attack = {
 | `time` | number | すべて | 実行するまでの時間。秒単位。通常は演出開始からの時間、`finally = true` の場合は演出終了（`duration` 到達）からの時間になります。 |
 | `finally` | boolean | すべて | `true` の場合、そのアクションは演出終了後の処理として実行されます。既定値は `false` です。詳細は「演出終了後の処理（finally）」を参照してください。 |
 | `type` | string | すべて | `animation`、`position`、`position_tween`、`damage`、`effect`、`pickup`、`sound`、`screen_flash`、`blur_in`、`blur_out`、`concentration_lines`、`screen_shake`、`time_scale` のいずれか。 |
-| `target` | string | `animation`、`damage` | 対象。`actor` は攻撃者、`target` は攻撃対象を表します。 |
+| `target` | string | `animation`、`damage`、`position`、`position_tween`、`rustle` | 対象。`actor` は攻撃者、`target` は攻撃対象を表します。単体対象スキルでは選んだ相手、全体対象スキルでは対象全員に適用されます。 |
 | `animation` | integer | `animation` | 対象に再生するアニメーション番号。 |
 | `reverse` | boolean | `animation` | `true` の場合は逆再生します。既定値は `false` です。 |
 | `loop` | boolean | `animation` | ループ再生するか指定します。省略時は `.anim` の `loop` 設定を使用します。 |

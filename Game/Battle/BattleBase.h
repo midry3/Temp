@@ -6,6 +6,7 @@
 #include "BattleAttack.h"
 #include "BattleBackground.h"
 #include "Hud.h"
+#include "TargetSelect.h"
 #include "UsingSkillPanel.h"
 #include <Event/StateMachine.h>
 
@@ -28,8 +29,13 @@ namespace Game {
 
 		StateMachine _state;
 		std::vector<SkillInfo> _selectedSkills;
+		std::vector<std::vector<SharedPtr<BattleCharacter>>> _selectedTargets;
 		int _currentCharacterIndex = 0;
 		bool _charactersPut = false;
+
+		std::vector<SharedPtr<BattleCharacter>> GetTargetCandidates(const SkillInfo& skill) const;
+		void AdvanceSelection();
+		void ShowTargetSelect(const SkillInfo& skill, const std::vector<SharedPtr<BattleCharacter>>& candidates);
 
 	protected:
 		std::vector<SharedPtr<BattleCharacter>> _allies, _enemies;
@@ -40,6 +46,7 @@ namespace Game {
 		SharedPtr<BattleAttack> _attack;
 		SharedPtr<BattleBackground> _background;
 		SharedPtr<Hud> _hud;
+		SharedPtr<TargetSelect> _targetSelect;
 
 		void _Load() override;
 		void StartAttack();

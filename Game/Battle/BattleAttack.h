@@ -3,6 +3,7 @@
 #include "../../Shader/BlurInShader.h"
 #include "../../Shader/ConcentrationLineShader.h"
 #include <Scene/Shape/ColorRect.h>
+#include <map>
 #include <vector>
 #include "BattleCharacter/BattleCharacter.h"
 #include "SkillInfo.h"
@@ -85,8 +86,9 @@ namespace Game {
 		};
 		SharedPtr<BattleCharacter> _actor;
 		SharedPtr<BattleCharacter> _target;
+		std::vector<SharedPtr<BattleCharacter>> _targets;
 		Vector2D _actorInitialAnimationPosition;
-		Vector2D _targetInitialAnimationPosition;
+		std::map<SharedPtr<BattleCharacter>, Vector2D> _initialAnimationPositions;
 		std::vector<Action> _actions;
 		std::vector<StatChange> _statChanges;
 		std::vector<SharedPtr<EffekseerEmitter2D>> _effects;
@@ -170,11 +172,13 @@ namespace Game {
 		void UpdateEffectTriggers();
 		void StopPickups();
 		SharedPtr<BattleCharacter> ResolveTarget(const std::string& target) const;
+		std::vector<SharedPtr<BattleCharacter>> ResolveTargets(const std::string& target) const;
+		Vector2D GetInitialAnimationPosition(const SharedPtr<BattleCharacter>& character) const;
 	protected:
 		void _Update(float dt) override;
 	public:
 		void Start(const SharedPtr<BattleCharacter>& actor,
-			const SharedPtr<BattleCharacter>& target,
+			const std::vector<SharedPtr<BattleCharacter>>& targets,
 			const SkillInfo& skill);
 
 		// スキルの演出タイムラインが参照するアセットのパスの集合

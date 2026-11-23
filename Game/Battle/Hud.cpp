@@ -34,6 +34,23 @@ namespace Game {
 		}
 	}
 
+	std::optional<std::pair<Vector2D, Vector2D>> Hud::GetCharacterPanelRect(const SharedPtr<BattleCharacter>& character) const {
+		// パネル本体の位置と大きさは StatusPanel / EnemyStatsPanel の定義に合わせる
+		for (size_t i = 0; i < _allies.size() && i < _allyStatusPanels.size(); ++i) {
+			if (_allies[i] == character && _allyStatusPanels[i]) {
+				const auto position = _allyStatusPanels[i]->GetGlobalPosition() + Vector2D(20, 20);
+				return std::make_pair(position, Vector2D(320, 120));
+			}
+		}
+		for (size_t i = 0; i < _enemies.size() && i < _enemyStatusPanels.size(); ++i) {
+			if (_enemies[i] == character && _enemyStatusPanels[i]) {
+				const auto position = _enemyStatusPanels[i]->GetGlobalPosition() + Vector2D(10, 10);
+				return std::make_pair(position, Vector2D(380, 100));
+			}
+		}
+		return std::nullopt;
+	}
+
 	void Hud::UpdateView() {
 		for (const auto& panel : _allyStatusPanels) {
 			panel->UpdateView();

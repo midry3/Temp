@@ -4,6 +4,8 @@
 #include "EnemyStatsPanel.h"
 #include <Scene/Container/Grid/GridContainer.h>
 #include "BattleCharacter/BattleCharacter.h"
+#include <optional>
+#include <utility>
 
 namespace Game {
 	class Hud : public Scene {
@@ -18,5 +20,7 @@ namespace Game {
 		void SetAllies(const std::vector<SharedPtr<BattleCharacter>>& allies);
 		void SetEnemies(const std::vector<SharedPtr<BattleCharacter>>& enemies);
 		void UpdateView();
+		// キャラの情報パネルの表示矩形（左上座標と大きさ）。表示がなければ nullopt。
+		std::optional<std::pair<Vector2D, Vector2D>> GetCharacterPanelRect(const SharedPtr<BattleCharacter>& character) const;
 	};
 }

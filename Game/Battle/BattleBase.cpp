@@ -24,15 +24,19 @@ namespace Game {
 		_skillSelect = CreateScene<SkillSelect>();
 		_skillSelect->SetUIMode(true)->Disable();
 
+		_targetSelect = CreateScene<TargetSelect>();
+		_targetSelect->SetUIMode(true);
+
 		_skillSelect->SkillSelected += [this](const SkillInfo& skill) {
-			_selectedSkills.push_back(skill);
-			if (NextCharaExists()) {
-				_currentCharacterIndex++;
-				_battleUI->In();
+			const auto candidates = GetTargetCandidates(skill);
+			if (skill.targetScope == SkillTargetScope::All || not (1 < static_cast<int>(candidates.size()))) {
+				// 全体対象、または単体対象でも候補が1体以下なら選択をスキップする
+				_selectedSkills.push_back(skill);
+				_selectedTargets.push_back(candidates);
+				AdvanceSelection();
 			}
 			else {
-				_currentCharacterIndex = 0;
-				StartAttack();
+				ShowTargetSelect(skill, candidates);
 			}
 			};
 
@@ -63,6 +67,7 @@ namespace Game {
 		_state[Command].Entered += [this]() {
 			_currentCharacterIndex = 0;
 			_selectedSkills.clear();
+			_selectedTargets.clear();
 			_usingSkillView->Out();
 			_battleUI->In();
 			_hud->UpdateView();
@@ -110,7 +115,61 @@ namespace Game {
 		_state >> Direction;
 		_allySkillPanel->SetSkill(_selectedSkills[_currentCharacterIndex]);
 		_usingSkillView->In();
-		_attack->Start(_allies[_currentCharacterIndex], _enemies.front(), _selectedSkills[_currentCharacterIndex]);
+		std::vector<SharedPtr<BattleCharacter>> targets;
+		if (_currentCharacterIndex < static_cast<int>(_selectedTargets.size())) {
+			targets = _selectedTargets[_currentCharacterIndex];
+		}
+		if (targets.empty() && not _enemies.empty()) {
+			targets.push_back(_enemies.front());
+		}
+		_attack->Start(_allies[_currentCharacterIndex], targets, _selectedSkills[_currentCharacterIndex]);
+	}
+
+	std::vector<SharedPtr<BattleCharacter>> BattleBase::GetTargetCandidates(const SkillInfo& skill) const {
+		std::vector<SharedPtr<BattleCharacter>> result;
+		const auto& source = skill.targetSide == SkillTargetSide::Ally ? _allies : _enemies;
+		for (const auto& character : source) {
+			if (character && not character->IsDead()) {
+				result.push_back(character);
+			}
+		}
+		return result;
+	}
+
+	void BattleBase::AdvanceSelection() {
+		if (NextCharaExists()) {
+			_currentCharacterIndex++;
+			_battleUI->In();
+		}
+		else {
+			_currentCharacterIndex = 0;
+			StartAttack();
+		}
+	}
+
+	void BattleBase::ShowTargetSelect(const SkillInfo& skill, const std::vector<SharedPtr<BattleCharacter>>& candidates) {
+		std::vector<std::pair<SharedPtr<BattleCharacter>, std::pair<Vector2D, Vector2D>>> panelCandidates;
+		for (const auto& character : candidates) {
+			if (not character) continue;
+			const auto rect = _hud->GetCharacterPanelRect(character);
+			if (rect.has_value()) {
+				panelCandidates.emplace_back(character, rect.value());
+			}
+		}
+		if (panelCandidates.empty()) {
+			// パネル矩形が取れない場合は先頭を自動選択して進める
+			_selectedSkills.push_back(skill);
+			_selectedTargets.push_back(candidates.empty()
+				? std::vector<SharedPtr<BattleCharacter>>{}
+				: std::vector<SharedPtr<BattleCharacter>>{ candidates.front() });
+			AdvanceSelection();
+			return;
+		}
+		_targetSelect->Show(panelCandidates, [this, skill](const SharedPtr<BattleCharacter>& chosen) {
+			_selectedSkills.push_back(skill);
+			_selectedTargets.push_back({ chosen });
+			AdvanceSelection();
+			});
 	}
 
 	void BattleBase::PutCharacters() {

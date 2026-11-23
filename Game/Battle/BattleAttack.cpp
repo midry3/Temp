@@ -204,7 +204,7 @@ namespace Game {
 	}
 
 	void BattleAttack::Start(const SharedPtr<BattleCharacter>& actor,
-		const SharedPtr<BattleCharacter>& target, const SkillInfo& skill) {
+		const std::vector<SharedPtr<BattleCharacter>>& targets, const SkillInfo& skill) {
 		StopEffects();
 		for (const auto& effect : _effects) {
 			DeleteScene(effect);
@@ -214,12 +214,19 @@ namespace Game {
 			if (action.soundPlayer) DeleteScene(action.soundPlayer);
 		}
 		_actor = actor;
-		_target = target;
+		_targets.clear();
+		for (const auto& target : targets) {
+			if (target) _targets.push_back(target);
+		}
+		_target = _targets.empty() ? nullptr : _targets.front();
 		StopAnimationFinishedConnections();
 		_actorInitialAnimationPosition = _actor
 			? *(_actor->GetAnimationPositionPointer()) : Vector2D();
-		_targetInitialAnimationPosition = _target
-			? *(_target->GetAnimationPositionPointer()) : Vector2D();
+		_initialAnimationPositions.clear();
+		if (_actor) _initialAnimationPositions[_actor] = _actorInitialAnimationPosition;
+		for (const auto& target : _targets) {
+			_initialAnimationPositions[target] = *(target->GetAnimationPositionPointer());
+		}
 		_actions.clear();
 		_statChanges.clear();
 		_effects.clear();
@@ -456,12 +463,28 @@ namespace Game {
 		return nullptr;
 	}
 
+	std::vector<SharedPtr<BattleCharacter>> BattleAttack::ResolveTargets(const std::string& target) const {
+		if (target == "actor") {
+			return _actor ? std::vector<SharedPtr<BattleCharacter>>{ _actor }
+				: std::vector<SharedPtr<BattleCharacter>>{};
+		}
+		if (target == "target") return _targets;
+		return {};
+	}
+
+	Vector2D BattleAttack::GetInitialAnimationPosition(const SharedPtr<BattleCharacter>& character) const {
+		const auto it = _initialAnimationPositions.find(character);
+		return it != _initialAnimationPositions.end() ? it->second : Vector2D();
+	}
+
 	void BattleAttack::Execute(Action& action) {
 		if (action.type == "damage") {
-			if (auto target = ResolveTarget(action.target)) target->ApplyDamage(action.amount);
+			for (const auto& target : ResolveTargets(action.target)) {
+				target->ApplyDamage(action.amount);
+			}
 		}
 		else if (action.type == "animation") {
-			if (auto target = ResolveTarget(action.target)) {
+			for (const auto& target : ResolveTargets(action.target)) {
 				target->PlayAnimation(action.animation, action.loop, action.reverse);
 				if (action.hasAfterPosition || action.hasAfterOffset) {
 					RegisterAnimationFinishedAction(target, action.animation, action);
@@ -469,9 +492,8 @@ namespace Game {
 			}
 		}
 		else if (action.type == "position") {
-			if (auto target = ResolveTarget(action.target)) {
-				const auto& initialPosition = target == _actor
-					? _actorInitialAnimationPosition : _targetInitialAnimationPosition;
+			for (const auto& target : ResolveTargets(action.target)) {
+				const auto initialPosition = GetInitialAnimationPosition(target);
 				if (action.resetPosition) {
 					*target->GetAnimationPositionPointer() = initialPosition;
 				}
@@ -481,9 +503,8 @@ namespace Game {
 			}
 		}
 		else if (action.type == "position_tween") {
-			if (auto target = ResolveTarget(action.target)) {
-				const auto& initialPosition = target == _actor
-					? _actorInitialAnimationPosition : _targetInitialAnimationPosition;
+			for (const auto& target : ResolveTargets(action.target)) {
+				const auto initialPosition = GetInitialAnimationPosition(target);
 				if (action.resetPosition) {
 					*target->GetAnimationPositionPointer() = initialPosition;
 				}
@@ -567,7 +588,7 @@ namespace Game {
 			StartTimeScale(action.duration, action.scale);
 		}
 		else if (action.type == "rustle") {
-			if (auto target = ResolveTarget(action.target)) {
+			for (const auto& target : ResolveTargets(action.target)) {
 				auto tweenGroup = CreateTweenGroup();
 				const double w = action.width;
 				const int trips = action.roundTrips;
@@ -650,10 +671,10 @@ namespace Game {
 
 	void BattleAttack::ApplyStatChanges() {
 		for (const auto& change : _statChanges) {
-			auto character = ResolveTarget(change.target);
-			if (not character) continue;
-			character->ModifyStat(change.stat, change.amount);
-			_statChanged.Emit(character, change.stat, change.amount);
+			for (const auto& character : ResolveTargets(change.target)) {
+				character->ModifyStat(change.stat, change.amount);
+				_statChanged.Emit(character, change.stat, change.amount);
+			}
 		}
 	}
 

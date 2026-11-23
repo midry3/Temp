@@ -184,6 +184,7 @@
     <ClCompile Include="Game\Battle\BattleCharacter\RekoAlpha.cpp" />
     <ClCompile Include="Game\Battle\BattleUI.cpp" />
     <ClCompile Include="Game\Battle\SkillSelect.cpp" />
+    <ClCompile Include="Game\Battle\TargetSelect.cpp" />
     <ClCompile Include="Game\Battle\TestBattle.cpp" />
     <ClCompile Include="Game\Data\CommonData.cpp" />
     <ClCompile Include="Game\Goods\Pickup.cpp" />
@@ -239,6 +240,7 @@
     <ClInclude Include="Game\Battle\BattleCharacter\RekoAlpha.h" />
     <ClInclude Include="Game\Battle\BattleUI.h" />
     <ClInclude Include="Game\Battle\SkillSelect.h" />
+    <ClInclude Include="Game\Battle\TargetSelect.h" />
     <ClInclude Include="Game\Battle\TestBattle.h" />
     <ClInclude Include="Game\Board\TestBoard.h" />
     <ClInclude Include="Game\Goods\Pickup.h" />
