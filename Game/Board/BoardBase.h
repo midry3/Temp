@@ -27,6 +27,9 @@ namespace Game {
 	public:
 		using EnemyActionDecider = std::function<std::optional<BoardEnemyAction>(BoardBase&)>;
 
+		// ウィンドウ横幅に対する マップ : 情報パネル の比率（2 : 1）
+		static constexpr double MAP_PANEL_RATIO = 2.0;
+
 	private:
 		int _width = 0;
 		int _height = 0;

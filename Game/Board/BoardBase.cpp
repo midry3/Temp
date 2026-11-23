@@ -231,19 +231,18 @@ namespace Game {
 			window = PropertyManager.GetRealWindowSize();
 		}
 		if (0.0 < size.x && 0.0 < size.y && 0.0 < window.x && 0.0 < window.y) {
-			// 盤面は縦がウィンドウサイズに合うよう拡大し、残りの横幅を情報パネルが使う
-			double scaleFactor = window.y / size.y;
-			if (window.x < size.x * scaleFactor) scaleFactor = window.x / size.x;
+			// マップ領域 : パネル領域 = MAP_PANEL_RATIO : 1 （ウィンドウ横幅に対する比率）。
+			// マップは、横がマップ領域に合うか、縦がウィンドウサイズに一致するまでの拡大率で表示する。
+			const double mapAreaWidth = window.x * MAP_PANEL_RATIO / (MAP_PANEL_RATIO + 1.0);
+			const double scaleFactor = Min(mapAreaWidth / size.x, window.y / size.y);
 			SetScale(scaleFactor);
-			const Vector2D offset(0.0, (window.y - size.y * scaleFactor) * 0.5);
+			const Vector2D offset((mapAreaWidth - size.x * scaleFactor) * 0.5, (window.y - size.y * scaleFactor) * 0.5);
 			SetPosition(offset);
 			if (_infoPanel) {
-				// パネルは盤面の変形を受けないよう逆変換し、残りのスペースに合わせて拡縮する
-				const double boardScreenWidth = size.x * scaleFactor;
-				const double panelWidth = window.x - boardScreenWidth;
-				const double panelScale = 0.0 < panelWidth ? panelWidth / BoardInfoPanel::WIDTH : 0.0;
-				_infoPanel->SetPosition({ (boardScreenWidth - offset.x) / scaleFactor, -offset.y / scaleFactor });
-				_infoPanel->SetScale(panelScale / scaleFactor);
+				// パネルは盤面の変形を受けないよう逆変換し、実寸で表示する
+				_infoPanel->SetPosition({ (mapAreaWidth - offset.x) / scaleFactor, -offset.y / scaleFactor });
+				_infoPanel->SetScale(1.0 / scaleFactor);
+				_infoPanel->SetPanelSize(window.x - mapAreaWidth, window.y);
 			}
 		}
 	}

@@ -1,40 +1,42 @@
 #include "BoardInfoPanel.h"
-#include <Scene/Shape/ColorRect.h>
 #include <Scene/Text/TextLabel.h>
 
 namespace Game {
 	void BoardInfoPanel::_Load() {
-		const auto& background = CreateScene<ColorRect>();
-		// 縮小表示されてもウィンドウ下端まで覆えるよう、高さには余裕を持たせる
-		background->SetSize({ WIDTH, 1440 })
-			->SetColor({ 24, 28, 38 })
+		_background = CreateScene<ColorRect>();
+		_background->SetColor({ 24, 28, 38 })
 			->SetAlpha(255);
 
 		const auto& allyHeading = CreateScene<TextLabel>();
 		allyHeading->BeginSetting()
-			->SetFontSize(24)
+			->SetFontSize(22)
 			->SetForegroundColor({ 255, 255, 255 })
 			->EndSetting()
 			->SetText("味方ステータス")
-			->SetPosition({ 20, 6 });
+			->SetPosition({ 12, 6 });
 
+		// 味方パネル (196x124) を 2x2 で並べる
 		_allyGrid = CreateScene<GridContainer>();
-		_allyGrid->SetSpace({ 340, 110 })
+		_allyGrid->SetSpace({ BoardStatusPanel::PANEL_WIDTH + 8, BoardStatusPanel::PANEL_HEIGHT + 6 })
 			->SetMatrixSize({ 2, 2 })
-			->SetPosition({ 0, 34 });
+			->SetPosition({ 8, 34 });
 
 		const auto& enemyHeading = CreateScene<TextLabel>();
 		enemyHeading->BeginSetting()
-			->SetFontSize(24)
+			->SetFontSize(22)
 			->SetForegroundColor({ 255, 255, 255 })
 			->EndSetting()
 			->SetText("敵情報")
-			->SetPosition({ 20, 296 });
+			->SetPosition({ 12, 306 });
 
 		_enemyGrid = CreateScene<GridContainer>();
-		_enemyGrid->SetSpace({ 0, 110 })
+		_enemyGrid->SetSpace({ 0, BoardEnemyStatusPanel::PANEL_HEIGHT + 6 })
 			->SetMatrixSize({ 1, 3 })
-			->SetPosition({ 0, 326 });
+			->SetPosition({ 8, 336 });
+	}
+
+	void BoardInfoPanel::SetPanelSize(double width, double height) {
+		_background->SetSize({ width, height });
 	}
 
 	void BoardInfoPanel::SetAllies(const std::vector<SharedPtr<BattleCharacter>>& allies) {
@@ -44,7 +46,7 @@ namespace Game {
 		_allyPanels.clear();
 		for (const auto& character : allies) {
 			if (not character) continue;
-			const auto& panel = _allyGrid->CreateScene<StatusPanel>();
+			const auto& panel = _allyGrid->CreateScene<BoardStatusPanel>();
 			panel->SetCharacter(character);
 			_allyPanels.push_back(panel);
 		}
@@ -54,7 +56,7 @@ namespace Game {
 		ClearEnemies();
 		for (const auto& character : enemies) {
 			if (not character) continue;
-			const auto& panel = _enemyGrid->CreateScene<EnemyStatsPanel>();
+			const auto& panel = _enemyGrid->CreateScene<BoardEnemyStatusPanel>();
 			panel->SetCharacter(character);
 			_enemyPanels.push_back(panel);
 		}
