@@ -39,8 +39,6 @@ namespace Game {
 			double volume = 1.0;
 			std::vector<std::string> pickupTextures;
 			// 演出開始前にあらかじめ用意しておくインスタンス（PreloadAssets で作成）
-			SharedPtr<EffekseerEmitter2D> effectInstance;
-			SharedPtr<Pickup> pickupInstance;
 			SharedPtr<SoundPlayer> soundPlayer;
 			int amount = 0;
 			int animation = -1;

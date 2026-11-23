@@ -102,10 +102,12 @@ attack = {
 }
 ```
 
-演出の開始前には、タイムラインで使うアセットとインスタンスがあらかじめ
-用意されます（`BattleAttack::PreloadAssets`）。対象は `effect` の
-Effekseerエフェクト（エミッター生成と読み込み）、`pickup` のテクスチャ
-読み込みと `Pickup` 生成、`sound` のサウンド読み込みと `SoundPlayer` 生成です。
+演出の開始前には、タイムラインで使うアセットがあらかじめ読み込まれます
+（`BattleAttack::PreloadAssets`）。対象は `effect` のEffekseerエフェクト、
+`pickup` のテクスチャ、`sound` のサウンド（こちらは `SoundPlayer` の生成まで）です。
+エフェクトと `Pickup` のインスタンスは実行時に生成します。生成順が描画順に
+なるため、開始前に生成すると、後から生成されるフラッシュ等より下に隠れて
+しまうためです。
 
 `screen_flash` アクションは画面全体を指定色の矩形で覆います。`underEffects = true` を指定すると、
 攻撃演出中のEffekseerエフェクトをフラッシュより前面に表示できます。

@@ -210,10 +210,7 @@ namespace Game {
 			DeleteScene(effect);
 		}
 		// 前回の演出で使われなかったプリロード済みインスタンスを破棄する
-		// （実行済みのものは所有が移っているため nullptr になっている）
 		for (auto& action : _actions) {
-			if (action.effectInstance) DeleteScene(action.effectInstance);
-			if (action.pickupInstance) DeleteScene(action.pickupInstance);
 			if (action.soundPlayer) DeleteScene(action.soundPlayer);
 		}
 		_actor = actor;
@@ -245,20 +242,18 @@ namespace Game {
 		Enable();
 	}
 
-	// 演出の開始前に、必要なアセット読み込みとインスタンス生成を済ませておく
+	// 演出の開始前に、必要なアセット読み込みとインスタンス生成を済ませておく。
+	// エフェクトと Pickup は、生成した順序がそのまま描画順になり、後から生成された
+	// フラッシュ等より下に隠れてしまうため、アセット読み込みのみ事前に行う。
 	void BattleAttack::PreloadAssets() {
 		for (auto& action : _actions) {
 			if (action.type == "effect" && not action.effect.empty()) {
-				action.effectInstance = CreateScene<EffekseerEmitter2D>();
-				action.effectInstance->SetEffect(action.effect);
-				action.effectInstance->Disable();
+				LoadAsset<EffekseerAsset>(action.effect);
 			}
 			else if (action.type == "pickup") {
 				for (const auto& texture : action.pickupTextures) {
 					LoadAsset<Texture>(texture);
 				}
-				action.pickupInstance = CreateScene<Pickup>();
-				action.pickupInstance->Hide();
 			}
 			else if (action.type == "sound" && not action.sound.empty()) {
 				action.soundPlayer = CreateScene<SoundPlayer>();
@@ -447,14 +442,9 @@ namespace Game {
 			}
 		}
 		else if (action.type == "effect" && not action.effect.empty()) {
-			auto effect = action.effectInstance;
-			action.effectInstance = nullptr;
-			if (not effect) {
-				effect = CreateScene<EffekseerEmitter2D>();
-				effect->SetEffect(action.effect);
-			}
+			auto effect = CreateScene<EffekseerEmitter2D>();
+			effect->SetEffect(action.effect);
 			if (_actor) effect->SetGlobalPosition(_actor->GetGlobalPosition() + action.offset);
-			effect->Enable();
 			effect->Play();
 			_effects.push_back(effect);
 			if (action.trigger >= 0) {
@@ -476,11 +466,8 @@ namespace Game {
 		}
 		else if (action.type == "pickup" && not action.pickupTextures.empty()) {
 			const int textureIndex = GetRandomInt(0, static_cast<int>(action.pickupTextures.size()));
-			auto pickup = action.pickupInstance;
-			action.pickupInstance = nullptr;
-			if (not pickup) pickup = CreateScene<Pickup>();
+			auto pickup = CreateScene<Pickup>();
 			pickup->SetPicture(action.pickupTextures[textureIndex]);
-			pickup->Show();
 			Vector2D displayPosition = action.hasPosition
 				? action.position : Vector2D();
 			if (not action.hasPosition) {
