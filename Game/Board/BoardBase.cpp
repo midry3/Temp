@@ -77,9 +77,16 @@ namespace Game {
 	void BoardBase::_Load() {
 		CommonData::CurrentBoard = std::dynamic_pointer_cast<BoardBase>(shared_from_this());
 		_infoPanel = CreateScene<BoardInfoPanel>();
+
+		_bgmPlayer = CreateScene<SoundPlayer>();
+		_bgmPlayer->SetSound(LoadAsset<Sound>("sound/bgm/bgm1.oga"))
+			->SetLoop()
+			->SetVolume(0.5);
+		
 		EnteredMainScene.Connect([this]() {
 			OnReturnedFromBattle();
-		});
+			_bgmPlayer->FadeAndPlay(0.5f);
+			});
 	}
 
 	void BoardBase::_Update(float dt) {
@@ -574,7 +581,11 @@ namespace Game {
 		startScene->Setup(icons, [this, battleScene]() {
 			TransitionToBattle(battleScene);
 		});
-		SceneManager.TransSceneTo(startScene, 0.3, 0.3, false);
+
+		_bgmPlayer->FadeAndPause(0.5f);
+		CreateTimer(0.6, [this, startScene]() {
+			SceneManager.TransSceneTo(startScene, 0.3, 0.3, false);
+		});
 	}
 
 	void BoardBase::OnReturnedFromBattle() {

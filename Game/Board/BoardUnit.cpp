@@ -1,5 +1,6 @@
 #include "BoardUnit.h"
 #include <Scene/Texture/Sprite2D.h>
+#include <Scene/Sound/SoundPlayer.h>
 #include <cmath>
 
 namespace Game {
@@ -8,6 +9,16 @@ namespace Game {
 		_sprite = CreateScene<Sprite2D>();
 		_nameLabel = CreateScene<TextLabel>();
 		_nameLabel->SetFontSize(14)->SetForegroundColor({ 20, 20, 20 });
+
+		const auto& hoverSE = CreateScene<SoundPlayer>();
+		hoverSE->SetSound(LoadAsset<Sound>(HOVER_SE))
+			->SetVolume(0.7f);
+		Entered += [hoverSE](const MouseEvent& event) {
+			hoverSE->Play();
+		};
+		Exited += [hoverSE](const MouseEvent& event) {
+			hoverSE->Stop();
+			};
 	}
 
 	void BoardUnit::_Update(float dt) {

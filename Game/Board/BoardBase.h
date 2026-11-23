@@ -7,6 +7,7 @@
 #include <vector>
 #include "BoardTile.h"
 #include "BoardUnit.h"
+#include <Scene/Sound/SoundPlayer.h>
 
 class Sprite2D;
 
@@ -49,6 +50,7 @@ namespace Game {
 		SharedPtr<CoopSelectModal> _coopModal;
 		SharedPtr<BoardUnit> _battleEnemyUnit;
 		SharedPtr<BoardUnit> _battleWarningEnemy;
+		SharedPtr<SoundPlayer> _bgmPlayer;
 		bool _battleStartedInEnemyTurn = false;
 		SharedPtr<BoardWinScreen> _winScreen;
 		SharedPtr<BoardInfoPanel> _infoPanel;

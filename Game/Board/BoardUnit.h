@@ -11,6 +11,8 @@ class Texture;
 namespace Game {
 	class BoardUnit : public Button {
 	private:
+		static constexpr const char* HOVER_SE = "sound/one_shot/select_2.oga";
+
 		BoardUnitData _data;
 		SharedPtr<Sprite2D> _sprite;
 		SharedPtr<TextLabel> _nameLabel;
