@@ -89,6 +89,7 @@ namespace Game {
 		Vector2D _targetInitialAnimationPosition;
 		std::vector<Action> _actions;
 		std::vector<StatChange> _statChanges;
+		std::vector<std::pair<SharedPtr<BattleCharacter>, SkillInfo>> _preloadQueue;
 		std::vector<SharedPtr<EffekseerEmitter2D>> _effects;
 		struct EffectTrigger {
 			SharedPtr<EffekseerEmitter2D> effect;
@@ -176,6 +177,9 @@ namespace Game {
 		void Start(const SharedPtr<BattleCharacter>& actor,
 			const SharedPtr<BattleCharacter>& target,
 			const SkillInfo& skill);
+		// 戦闘開始前の事前ロード用キュー。ProcessPreloadQueue で1スキルずつ処理する。
+		void QueuePreload(const SharedPtr<BattleCharacter>& actor, const SkillInfo& skill);
+		bool ProcessPreloadQueue();
 		Signal<>& Completed() { return _completed; }
 		Signal<SharedPtr<BattleCharacter>, std::string, int>& StatChanged() { return _statChanged; }
 		[[nodiscard]] bool IsFinished() const { return _finished; }

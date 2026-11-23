@@ -578,9 +578,12 @@ namespace Game {
 		addIcon(enemyUnit, true);
 
 		const auto startScene = MakeShared<BattleStartScene>();
+		battleScene->QueueBattlePreload();
 		startScene->Setup(icons, [this, battleScene]() {
 			TransitionToBattle(battleScene);
-		});
+			}, [battleScene]() {
+				return battleScene->ProcessBattlePreload();
+			});
 
 		_bgmPlayer->FadeAndPause(0.5f);
 		CreateTimer(0.6, [this, startScene]() {

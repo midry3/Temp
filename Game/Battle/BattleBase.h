@@ -47,6 +47,9 @@ namespace Game {
 		bool IsDefeatedAllEnemies();
 	public:
 		void PutCharacters();
+		// 戦闘開始演出中に裏で進める事前ロード（敵味方全キャラの全スキル分）
+		void QueueBattlePreload();
+		bool ProcessBattlePreload();
 		void SetAllies(std::vector<SharedPtr<BattleCharacter>> allies) { _allies = allies; }
 		void AddAlly(SharedPtr<BattleCharacter> ally) { _allies.push_back(ally); }
 		void SetEnemies(std::vector<SharedPtr<BattleCharacter>> enemies) { _enemies = enemies; }

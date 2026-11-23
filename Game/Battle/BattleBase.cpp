@@ -87,6 +87,27 @@ namespace Game {
 		}
 	}
 
+	void BattleBase::QueueBattlePreload() {
+		if (not _attack) return;
+		for (const auto& ally : _allies) {
+			if (not ally) continue;
+			for (const auto& skill : ally->GetSkills()) {
+				_attack->QueuePreload(ally, skill);
+			}
+		}
+		for (const auto& enemy : _enemies) {
+			if (not enemy) continue;
+			for (const auto& skill : enemy->GetSkills()) {
+				_attack->QueuePreload(enemy, skill);
+			}
+		}
+	}
+
+	bool BattleBase::ProcessBattlePreload() {
+		if (not _attack) return true;
+		return _attack->ProcessPreloadQueue();
+	}
+
 	void BattleBase::StartAttack() {
 		if (_allies.empty() || _enemies.empty()) return;
 		_skillSelect->Disable();

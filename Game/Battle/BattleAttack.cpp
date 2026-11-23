@@ -242,6 +242,42 @@ namespace Game {
 		Enable();
 	}
 
+	void BattleAttack::QueuePreload(const SharedPtr<BattleCharacter>& actor, const SkillInfo& skill) {
+		if (not actor || skill.directionFile.empty()) return;
+		_preloadQueue.emplace_back(actor, skill);
+	}
+
+	// キューの先頭1スキル分だけタイムラインを解析してアセットを読み込む。
+	// 全て処理し終えたら true を返す。戦闘開始前専用（解析結果は破棄する）。
+	bool BattleAttack::ProcessPreloadQueue() {
+		if (_preloadQueue.empty()) return true;
+		const auto [actor, skill] = _preloadQueue.front();
+		_preloadQueue.erase(_preloadQueue.begin());
+		_actor = actor;
+		_target = nullptr;
+		_actions.clear();
+		_statChanges.clear();
+		if (LoadTimeline(skill.directionFile)) {
+			for (const auto& action : _actions) {
+				if (action.type == "effect" && not action.effect.empty()) {
+					LoadAsset<EffekseerAsset>(action.effect);
+				}
+				else if (action.type == "pickup") {
+					for (const auto& texture : action.pickupTextures) {
+						LoadAsset<Texture>(texture);
+					}
+				}
+				else if (action.type == "sound" && not action.sound.empty()) {
+					LoadAsset<Sound>(action.sound);
+				}
+			}
+		}
+		_actions.clear();
+		_statChanges.clear();
+		_actor = nullptr;
+		return _preloadQueue.empty();
+	}
+
 	// 演出の開始前に、必要なアセット読み込みとインスタンス生成を済ませておく。
 	// エフェクトと Pickup は、生成した順序がそのまま描画順になり、後から生成された
 	// フラッシュ等より下に隠れてしまうため、アセット読み込みのみ事前に行う。
