@@ -204,7 +204,8 @@ Mapクラス側にはロジック記述用の便利なヘルパー関数が提�
    - `_enemies`: 接触した敵ユニットから `BattleCharacter` を生成して登録します。
 3. **キャラクター配置とシーン遷移 (StartBattle, TransitionToBattle)**:
    - `battle->PutCharacters()` が実行されてキャラクターがグリッド上に配置されます。
-   - `SceneManager.SetCurrentScene(battleScene)` により戦闘シーンへ遷移します。
+   - 共闘選択が終わると、まず戦闘開始演出シーン (`Game/Battle/BattleStartScene`) へ遷移し、演出の完了後に `TransitionToBattle` で戦闘シーンへ遷移します。
+   - 戦闘開始演出（暫定）: 白背景に、戦う敵味方のアイコンを Board と同じ位置・大きさで表示 → 味方は左、敵は右へ移動 → 一度中央まで互いに移動 → 弾かれたように左右へ戻る → 戦闘シーンへ。アイコンの Board 上の位置・大きさは `StartBattle` がウィンドウ座標に変換して `BattleStartScene::Setup` に渡します。
    - （※Tween完了時コールバック内での即時シーン差し替えによる参照解放クラッシュを防ぐため、`_pendingTransition` を介して更新フレームの安全なタイミングでシーン遷移が実行されます）
    - 必要に応じて `BoardBase` の派生クラスで `SetupBattle` や `TransitionToBattle` をオーバーライドして挙動をカスタマイズできます。
 

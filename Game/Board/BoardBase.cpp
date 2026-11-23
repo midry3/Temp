@@ -3,6 +3,7 @@
 #include "BoardWinScreen.h"
 #include "CoopSelectModal.h"
 #include "../Battle/BattleBase.h"
+#include "../Battle/BattleStartScene.h"
 #include "../Battle/BattleCharacter/BattleCharacterFactory.h"
 #include "../Battle/BattleCharacter/Enemy/EnemyBattleCharacter.h"
 #include <Animation/Tween.h>
@@ -543,7 +544,38 @@ namespace Game {
 		CommonData::LastBattleEnemyDefeated = false;
 		const auto battleScene = MakeShared<BattleBase>();
 		SetupBattle(*battleScene, allyUnit, enemyUnit, coopAllies);
-		TransitionToBattle(battleScene);
+
+		// 戦闘シーンの前に、戦闘開始演出シーンを挟む
+		std::vector<BattleStartIconData> icons;
+		auto addIcon = [this, &icons](const SharedPtr<BoardUnit>& unit, bool isEnemy) {
+			if (not unit) return;
+			const auto& data = unit->GetData();
+			std::string texture = data.texture;
+			if (texture.empty() && unit->GetCharacter()) {
+				texture = unit->GetCharacter()->GetInfo().icon.string();
+			}
+			if (texture.empty()) return;
+			const auto boardScale = GetScale().x;
+			icons.push_back({
+				texture,
+				GetGlobalPosition() + GetTilePosition(data.x, data.y) * boardScale,
+				_tileSize.x * boardScale,
+				isEnemy
+			});
+		};
+		addIcon(allyUnit, false);
+		for (const auto& coopUnit : coopAllies) {
+			if (coopUnit && coopUnit != allyUnit) {
+				addIcon(coopUnit, false);
+			}
+		}
+		addIcon(enemyUnit, true);
+
+		const auto startScene = MakeShared<BattleStartScene>();
+		startScene->Setup(icons, [this, battleScene]() {
+			TransitionToBattle(battleScene);
+		});
+		SceneManager.TransSceneTo(startScene, 0.3, 0.3, false);
 	}
 
 	void BoardBase::OnReturnedFromBattle() {
