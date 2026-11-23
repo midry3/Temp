@@ -1,5 +1,6 @@
 #include "BattleUI.h"
 #include <Scene/Container/Grid/GridContainer.h>
+#include <Game/Data/SoundEffects.h>
 
 namespace Game {
 	void BattleUI::_Load() {
@@ -19,8 +20,10 @@ namespace Game {
 			->SetScale(2)
 			->SetPixelShader<OutLineShader>()
 			->SetPixelShaderConstantBuffer(_outlineBuffer.handle);
-		atkButton->LeftPressed += [this](const MouseEvent& e) {
+		const auto& atkSE = CreateSelectSePlayer(atkButton.get());
+		atkButton->LeftPressed += [this, atkSE](const MouseEvent& e) {
 			if (e.just) {
+				atkSE->Play();
 				AtkPressed.Emit();
 			}
 			};

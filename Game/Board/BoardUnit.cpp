@@ -1,6 +1,7 @@
 #include "BoardUnit.h"
 #include <Scene/Texture/Sprite2D.h>
 #include <Scene/Sound/SoundPlayer.h>
+#include <Game/Data/SoundEffects.h>
 #include <cmath>
 
 namespace Game {
@@ -18,6 +19,11 @@ namespace Game {
 		};
 		Exited += [hoverSE](const MouseEvent& event) {
 			hoverSE->Stop();
+			};
+
+		const auto& clickSE = CreateSelectSePlayer(this);
+		LeftPressed += [clickSE](const MouseEvent& event) {
+			if (event.just) clickSE->Play();
 			};
 	}
 

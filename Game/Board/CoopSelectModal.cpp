@@ -1,5 +1,6 @@
 #include "CoopSelectModal.h"
 #include <Asset/AssetManager.h>
+#include <Game/Data/SoundEffects.h>
 #include <cmath>
 
 namespace Game {
@@ -42,6 +43,10 @@ namespace Game {
 			Vector2D(0.0, 80.0)
 		});
 		_startButton->SetPosition({ 510.0, 400.0 });
+		const auto& startSE = CreateSelectSePlayer(_startButton.get());
+		_startButton->LeftPressed += [startSE](const MouseEvent& event) {
+			if (event.just) startSE->Play();
+			};
 
 		_startButtonBorder = CreateScene<ColorRect>();
 		_startButtonBorder->SetSize({ 264.0, 52.0 })->SetColor(Vector3D(255, 200, 80))->SetAlpha(220);
@@ -199,6 +204,10 @@ namespace Game {
 				Vector2D(0.0, tileSize.y)
 			});
 			item.button->SetPosition(pos);
+			const auto& itemSE = CreateSelectSePlayer(item.button.get());
+			item.button->LeftPressed += [itemSE](const MouseEvent& event) {
+				if (event.just) itemSE->Play();
+				};
 
 			const int candidateIndex = i;
 			item.button->LeftPressed += [this, candidateIndex](const MouseEvent& event) {

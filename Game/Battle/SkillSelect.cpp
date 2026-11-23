@@ -1,5 +1,6 @@
 #include "SkillSelect.h"
 #include <Scene/Container/Grid/GridContainer.h>
+#include <Game/Data/SoundEffects.h>
 #include <format>
 
 namespace Game {
@@ -101,9 +102,11 @@ namespace Game {
 				skillButton->SetAlpha(100)
 					->SetModulate({100, 100, 100});
 			}
-			skillButton->LeftPressed += [this, skillButton, i, canUse](const MouseEvent& e) {
+			const auto& skillSE = CreateSelectSePlayer(skillButton.get());
+			skillButton->LeftPressed += [this, skillButton, skillSE, i, canUse](const MouseEvent& e) {
 				if (e.just && not _isAlreadySelected) {
 					if (not canUse) return;
+					skillSE->Play();
 					_isAlreadySelected = true;
 					const auto& tg = CreateTweenGroup();
 					tg->CreateTween(&skillButton->alpha, 50, 0.1);

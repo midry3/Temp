@@ -1,11 +1,16 @@
 #include "BoardTile.h"
 #include <Scene/Texture/Sprite2D.h>
+#include <Game/Data/SoundEffects.h>
 #include <cmath>
 
 namespace Game {
 	void BoardTile::_Load() {
 		Button::_Load();
 		_sprite = CreateScene<Sprite2D>();
+		const auto& clickSE = CreateSelectSePlayer(this);
+		LeftPressed += [clickSE](const MouseEvent& event) {
+			if (event.just) clickSE->Play();
+			};
 	}
 
 	void BoardTile::SetTile(BoardTerrain terrain, const SharedPtr<Texture>& texture, const Vector2D& size) {
