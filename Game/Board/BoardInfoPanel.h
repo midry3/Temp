@@ -9,7 +9,8 @@ namespace Game {
 	class BattleCharacter;
 
 	// 盤面右側の情報パネル。上半分に味方4人のステータスを 2x2 で表示し、
-	// 下半分にクリックしたマスの敵情報を表示する。座標はウィンドウ座標（1280x720前提）。
+	// 下半分にクリックしたマスの敵情報を表示する。内部レイアウトは設計サイズ
+	// （WIDTH x 720）で組み、盤面の右に残ったスペースに合わせて拡縮される。
 	class BoardInfoPanel : public Scene {
 	public:
 		static constexpr int WIDTH = 700;

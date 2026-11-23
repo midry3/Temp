@@ -5,7 +5,8 @@
 namespace Game {
 	void BoardInfoPanel::_Load() {
 		const auto& background = CreateScene<ColorRect>();
-		background->SetSize({ WIDTH, 720 })
+		// 縮小表示されてもウィンドウ下端まで覆えるよう、高さには余裕を持たせる
+		background->SetSize({ WIDTH, 1440 })
 			->SetColor({ 24, 28, 38 })
 			->SetAlpha(255);
 

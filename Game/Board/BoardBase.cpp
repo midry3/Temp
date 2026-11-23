@@ -230,16 +230,19 @@ namespace Game {
 			window = PropertyManager.GetRealWindowSize();
 		}
 		if (0.0 < size.x && 0.0 < size.y && 0.0 < window.x && 0.0 < window.y) {
-			// 盤面は左側の領域に寄せ、右側は情報パネル用に空ける
-			const Vector2D boardArea(window.x - BoardInfoPanel::WIDTH, window.y);
-			const double scaleFactor = Min(boardArea.x / size.x, boardArea.y / size.y);
+			// 盤面は縦がウィンドウサイズに合うよう拡大し、残りの横幅を情報パネルが使う
+			double scaleFactor = window.y / size.y;
+			if (window.x < size.x * scaleFactor) scaleFactor = window.x / size.x;
 			SetScale(scaleFactor);
-			const Vector2D offset = (boardArea - size * scaleFactor) * 0.5;
+			const Vector2D offset(0.0, (window.y - size.y * scaleFactor) * 0.5);
 			SetPosition(offset);
 			if (_infoPanel) {
-				// パネルは盤面の変形を受けないよう、逆変換してウィンドウ座標に合わせる
-				_infoPanel->SetPosition({ (boardArea.x - offset.x) / scaleFactor, -offset.y / scaleFactor });
-				_infoPanel->SetScale(1.0 / scaleFactor);
+				// パネルは盤面の変形を受けないよう逆変換し、残りのスペースに合わせて拡縮する
+				const double boardScreenWidth = size.x * scaleFactor;
+				const double panelWidth = window.x - boardScreenWidth;
+				const double panelScale = 0.0 < panelWidth ? panelWidth / BoardInfoPanel::WIDTH : 0.0;
+				_infoPanel->SetPosition({ (boardScreenWidth - offset.x) / scaleFactor, -offset.y / scaleFactor });
+				_infoPanel->SetScale(panelScale / scaleFactor);
 			}
 		}
 	}
