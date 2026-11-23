@@ -22,7 +22,7 @@ namespace {
 
 void NovotSetup() {
 	SetHookWinProc(MapEditorWndProc);
-
+	PropertyManager.ToFullScreen();
 	FontManager.AddFont("font/JF-Dot-jiskan16.ttf");
 	TextLabel::DefaultFont = FontManager.GetFont(0);
 
