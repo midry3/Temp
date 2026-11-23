@@ -73,7 +73,7 @@ attack = {
 | `sound` | string | `sound` | 再生するサウンドのアセットパス（`Assets` からの相対パス）。 |
 | `volume` | number | `sound` | 音量。`0` から `1` の範囲に丸められます。既定値は `1` です。 |
 | `offset` | Vector2D | `effect`、`pickup` | 攻撃者またはPickupの基準座標に加算する位置オフセット。`{ x = 0, y = 0 }` が既定値です。 |
-| `duration` | number | `pickup`、`blur_in`、`blur_out`、`concentration_lines`、`screen_shake`、`time_scale` | Pickupの表示時間または効果の長さ。秒単位。 |
+| `duration` | number | `pickup`、`sound`、`blur_in`、`blur_out`、`concentration_lines`、`screen_shake`、`time_scale` | Pickupの表示時間、サウンドの再生時間、または効果の長さ。秒単位。 |
 | `color` | table | `screen_flash` | 発光色。`{ r = 255, g = 255, b = 255, a = 255 }`形式。省略時は白です。0から1の値も指定できます。 |
 | `fadeIn` | number | `screen_flash` | 発光へ徐々に変化する時間。秒単位。省略時は `0` 秒です。 |
 | `hold` | number | `screen_flash` | 最大発光を維持する時間。省略時は `duration` の値を使用します。 |
@@ -88,14 +88,17 @@ attack = {
 `effect` アクションの `EfekseerEmitter2D` は、常に攻撃者のグローバル座標で
 再生されます。`offset` を指定した場合は、その値を攻撃者の座標へ加算します。
 
-`sound` アクションは指定したサウンドを再生します。
+`sound` アクションは指定したサウンドを再生します。`duration` を指定すると、
+再生開始からその秒数が経った時点で 0.2 秒かけてフェードアウトして停止します。
+`duration` を省略した（または `0` の）場合は、サウンドを最後まで再生します。
 
 ```lua
 {
     time = 0.5,
     type = "sound",
     sound = "sound/one_shot/select_2.oga",
-    volume = 0.8
+    volume = 0.8,
+    duration = 1.5
 }
 ```
 

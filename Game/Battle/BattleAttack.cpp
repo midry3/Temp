@@ -17,6 +17,9 @@
 
 namespace Game {
 	namespace {
+		// サウンドの再生時間（duration）が過ぎた後のフェードアウト時間
+		constexpr double SOUND_FADE_OUT_SECONDS = 0.2;
+
 		void TimeScaleController::_Update(float dt) {
 			_remaining -= dt;
 			if (_remaining <= 0.0) {
@@ -494,7 +497,18 @@ namespace Game {
 		}
 
 		else if (action.type == "sound" && not action.sound.empty()) {
-			if (action.soundPlayer) action.soundPlayer->Play();
+			if (action.soundPlayer) {
+				action.soundPlayer->Play();
+				if (0.0 < action.duration) {
+					const auto& player = action.soundPlayer;
+					CreateTimer(action.duration, [player]() {
+						player->AnimateVolume(0, static_cast<float>(SOUND_FADE_OUT_SECONDS));
+						});
+					CreateTimer(action.duration + SOUND_FADE_OUT_SECONDS, [player]() {
+						player->Stop();
+						});
+				}
+			}
 		}
 		else if (action.type == "blur_in") {
 			StartBlur(true, action.duration, action.strength, action.blurCenter,
