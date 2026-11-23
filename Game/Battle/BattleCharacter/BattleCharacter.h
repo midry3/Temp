@@ -2,6 +2,7 @@
 #include <Scene.h>
 #include <Scene/Texture/AnimatedSprite2D.h>
 #include <Effekseer/EffekseerEmitter.h>
+#include <Scene/Sound/SoundPlayer.h>
 #include "../SkillInfo.h"
 #include <optional>
 #include <string>
@@ -51,7 +52,7 @@ namespace Game
 	protected:
 		SharedPtr<AnimatedSprite2D> _sprite;
 		SharedPtr<EffekseerEmitter2D> _powerUpEffect;
-
+		SharedPtr<SoundPlayer> _powerUpSoundPlayer;
 		void _Load() override;
 
 		void Initialize();

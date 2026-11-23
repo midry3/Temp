@@ -10,6 +10,10 @@ namespace Game {
 		_powerUpEffect = _sprite->CreateScene<EffekseerEmitter2D>();
 		_powerUpEffect->SetEffect("common_effect/powerup.efk");
 
+		_powerUpSoundPlayer = _sprite->CreateScene<SoundPlayer>();
+		_powerUpSoundPlayer->SetSound(LoadAsset<Sound>("sound/one_shot/status_up_1.mp3"))
+			->SetVolume(0.7f);
+
 		_sprite->AnimationChanged += [this](int anim) {
 			const auto& s = _sprite->GetRawSize();
 			_powerUpEffect->SetPosition({s.x/2, s.y/1.5});
@@ -102,6 +106,7 @@ namespace Game {
 
 			if (0 < delta) {
 				_powerUpEffect->Play();
+				_powerUpSoundPlayer->Play();
 			}
 		}
 
