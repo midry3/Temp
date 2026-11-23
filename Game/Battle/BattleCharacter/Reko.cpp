@@ -55,7 +55,7 @@ namespace Game {
 			{ "ビーム", "special", "fire", "chara/reko/attack/beam.lua", 20 },
 			{ "Fire", "special", "fire", "battle/fire.lua" },
 			{ "セキュリティアップデート", "special", "water", "chara/reko/attack/security_update.lua", 20 },
-			{ "ソード", "special", "nature", "chara/reko/attack/sword.lua", 100 }
+			{ "ソード", "special", "nature", "chara/reko/attack/sword.lua", 50 }
 			});
 
 		Initialize();
