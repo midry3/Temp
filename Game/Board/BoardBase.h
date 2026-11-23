@@ -58,6 +58,7 @@ namespace Game {
 		void UpdateMoveHints();
 		void ExecuteEnemyTurn();
 		void ClearEnemyIntentVisuals();
+		bool IsBlockedBeyondUnit(const BoardUnit& unit, int dx, int dy) const;
 		void OnReturnedFromBattle();
 		void ShowWinScreen();
 
