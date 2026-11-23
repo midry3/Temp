@@ -9,6 +9,7 @@
 #include <optional>
 
 class EffekseerEmitter2D;
+class SoundPlayer;
 
 namespace Game {
 	class Pickup;
@@ -34,7 +35,13 @@ namespace Game {
 			std::string target;
 			std::string value;
 			std::string effect;
+			std::string sound;
+			double volume = 1.0;
 			std::vector<std::string> pickupTextures;
+			// 演出開始前にあらかじめ用意しておくインスタンス（PreloadAssets で作成）
+			SharedPtr<EffekseerEmitter2D> effectInstance;
+			SharedPtr<Pickup> pickupInstance;
+			SharedPtr<SoundPlayer> soundPlayer;
 			int amount = 0;
 			int animation = -1;
 			bool reverse = false;
@@ -133,6 +140,7 @@ namespace Game {
 		Signal<SharedPtr<BattleCharacter>, std::string, int> _statChanged;
 
 		bool LoadTimeline(const std::string& file);
+		void PreloadAssets();
 		void Execute(Action& action);
 		void ApplyStatChanges();
 		void StopTimelineEffects();

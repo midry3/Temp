@@ -2,6 +2,7 @@
 #include "../../Shader/BlurOutShader.h"
 #include "../Goods/Pickup.h"
 #include <Asset/AssetManager.h>
+#include <Scene/Sound/SoundPlayer.h>
 #include <Effekseer/EffekseerEmitter.h>
 #include <Animation/Tween.h>
 #include <Animation/EasingFunction.h>
@@ -205,6 +206,13 @@ namespace Game {
 		for (const auto& effect : _effects) {
 			DeleteScene(effect);
 		}
+		// 前回の演出で使われなかったプリロード済みインスタンスを破棄する
+		// （実行済みのものは所有が移っているため nullptr になっている）
+		for (auto& action : _actions) {
+			if (action.effectInstance) DeleteScene(action.effectInstance);
+			if (action.pickupInstance) DeleteScene(action.pickupInstance);
+			if (action.soundPlayer) DeleteScene(action.soundPlayer);
+		}
 		_actor = actor;
 		_target = target;
 		StopAnimationFinishedConnections();
@@ -230,7 +238,31 @@ namespace Game {
 
 		actor->UseMP(skill.mpCost);
 		LoadTimeline(skill.directionFile);
+		PreloadAssets();
 		Enable();
+	}
+
+	// 演出の開始前に、必要なアセット読み込みとインスタンス生成を済ませておく
+	void BattleAttack::PreloadAssets() {
+		for (auto& action : _actions) {
+			if (action.type == "effect" && not action.effect.empty()) {
+				action.effectInstance = CreateScene<EffekseerEmitter2D>();
+				action.effectInstance->SetEffect(action.effect);
+				action.effectInstance->Disable();
+			}
+			else if (action.type == "pickup") {
+				for (const auto& texture : action.pickupTextures) {
+					LoadAsset<Texture>(texture);
+				}
+				action.pickupInstance = CreateScene<Pickup>();
+				action.pickupInstance->Hide();
+			}
+			else if (action.type == "sound" && not action.sound.empty()) {
+				action.soundPlayer = CreateScene<SoundPlayer>();
+				action.soundPlayer->SetSound(LoadAsset<Sound>(action.sound))
+					->SetVolume(static_cast<float>(Clamp(action.volume, 0.0, 1.0)));
+			}
+		}
 	}
 
 	void BattleAttack::StopEffects() {
@@ -288,6 +320,8 @@ namespace Game {
 					action.target = ReadString(state, -1, "target");
 					action.value = ReadString(state, -1, "value");
 					action.effect = ReadString(state, -1, "effect");
+					action.sound = ReadString(state, -1, "sound");
+					action.volume = ReadNumber(state, -1, "volume", 1.0);
 					action.pickupTextures = ReadStringArray(state, -1, "textures");
 					action.trigger = static_cast<int>(ReadNumber(state, -1, "trigger", -1));
 					action.triggerTime = ReadNumber(state, -1, "triggerTime");
@@ -410,9 +444,14 @@ namespace Game {
 			}
 		}
 		else if (action.type == "effect" && not action.effect.empty()) {
-			auto effect = CreateScene<EffekseerEmitter2D>();
-			effect->SetEffect(action.effect);
+			auto effect = action.effectInstance;
+			action.effectInstance = nullptr;
+			if (not effect) {
+				effect = CreateScene<EffekseerEmitter2D>();
+				effect->SetEffect(action.effect);
+			}
 			if (_actor) effect->SetGlobalPosition(_actor->GetGlobalPosition() + action.offset);
+			effect->Enable();
 			effect->Play();
 			_effects.push_back(effect);
 			if (action.trigger >= 0) {
@@ -434,8 +473,11 @@ namespace Game {
 		}
 		else if (action.type == "pickup" && not action.pickupTextures.empty()) {
 			const int textureIndex = GetRandomInt(0, static_cast<int>(action.pickupTextures.size()));
-			auto pickup = CreateScene<Pickup>();
+			auto pickup = action.pickupInstance;
+			action.pickupInstance = nullptr;
+			if (not pickup) pickup = CreateScene<Pickup>();
 			pickup->SetPicture(action.pickupTextures[textureIndex]);
+			pickup->Show();
 			Vector2D displayPosition = action.hasPosition
 				? action.position : Vector2D();
 			if (not action.hasPosition) {
@@ -451,6 +493,9 @@ namespace Game {
 				});
 		}
 
+		else if (action.type == "sound" && not action.sound.empty()) {
+			if (action.soundPlayer) action.soundPlayer->Play();
+		}
 		else if (action.type == "blur_in") {
 			StartBlur(true, action.duration, action.strength, action.blurCenter,
 				action.focusRadius, action.hasBlurCenter);

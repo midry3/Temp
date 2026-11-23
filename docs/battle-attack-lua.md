@@ -54,7 +54,7 @@ attack = {
 | --- | --- | --- | --- |
 | `time` | number | すべて | 実行するまでの時間。秒単位。通常は演出開始からの時間、`finally = true` の場合は演出終了（`duration` 到達）からの時間になります。 |
 | `finally` | boolean | すべて | `true` の場合、そのアクションは演出終了後の処理として実行されます。既定値は `false` です。詳細は「演出終了後の処理（finally）」を参照してください。 |
-| `type` | string | すべて | `animation`、`position`、`position_tween`、`damage`、`effect`、`pickup`、`screen_flash`、`blur_in`、`blur_out`、`concentration_lines`、`screen_shake`、`time_scale` のいずれか。 |
+| `type` | string | すべて | `animation`、`position`、`position_tween`、`damage`、`effect`、`pickup`、`sound`、`screen_flash`、`blur_in`、`blur_out`、`concentration_lines`、`screen_shake`、`time_scale` のいずれか。 |
 | `target` | string | `animation`、`damage` | 対象。`actor` は攻撃者、`target` は攻撃対象を表します。 |
 | `animation` | integer | `animation` | 対象に再生するアニメーション番号。 |
 | `reverse` | boolean | `animation` | `true` の場合は逆再生します。既定値は `false` です。 |
@@ -70,6 +70,8 @@ attack = {
 | `triggerTime` | number | `effect` | 単一`trigger`を送信するエフェクト再生からの相対時刻。既定値は `0` 秒です。 |
 | `triggers` | table[] | `effect` | 複数トリガーの `{ time = 相対秒, trigger = 番号 }` 配列。 |
 | `textures` | string[] | `pickup` | ランダムに1つ選ぶテクスチャのアセットパス配列。 |
+| `sound` | string | `sound` | 再生するサウンドのアセットパス（`Assets` からの相対パス）。 |
+| `volume` | number | `sound` | 音量。`0` から `1` の範囲に丸められます。既定値は `1` です。 |
 | `offset` | Vector2D | `effect`、`pickup` | 攻撃者またはPickupの基準座標に加算する位置オフセット。`{ x = 0, y = 0 }` が既定値です。 |
 | `duration` | number | `pickup`、`blur_in`、`blur_out`、`concentration_lines`、`screen_shake`、`time_scale` | Pickupの表示時間または効果の長さ。秒単位。 |
 | `color` | table | `screen_flash` | 発光色。`{ r = 255, g = 255, b = 255, a = 255 }`形式。省略時は白です。0から1の値も指定できます。 |
@@ -85,6 +87,22 @@ attack = {
 
 `effect` アクションの `EfekseerEmitter2D` は、常に攻撃者のグローバル座標で
 再生されます。`offset` を指定した場合は、その値を攻撃者の座標へ加算します。
+
+`sound` アクションは指定したサウンドを再生します。
+
+```lua
+{
+    time = 0.5,
+    type = "sound",
+    sound = "sound/one_shot/select_2.oga",
+    volume = 0.8
+}
+```
+
+演出の開始前には、タイムラインで使うアセットとインスタンスがあらかじめ
+用意されます（`BattleAttack::PreloadAssets`）。対象は `effect` の
+Effekseerエフェクト（エミッター生成と読み込み）、`pickup` のテクスチャ
+読み込みと `Pickup` 生成、`sound` のサウンド読み込みと `SoundPlayer` 生成です。
 
 `screen_flash` アクションは画面全体を指定色の矩形で覆います。`underEffects = true` を指定すると、
 攻撃演出中のEffekseerエフェクトをフラッシュより前面に表示できます。
