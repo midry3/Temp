@@ -31,13 +31,13 @@ namespace Game {
 		for (const auto& data : _iconData) {
 			const auto& sprite = CreateScene<Sprite2D>();
 			sprite->SetTexture(LoadAsset<Texture>(data.texture));
-			// Board のユニット表示に合わせ、タイルの 0.8 倍に収まるよう拡縮する
+
 			const auto textureSize = sprite->GetRawSize();
 			if (not (textureSize.x <= 0) && not (textureSize.y <= 0)) {
 				const auto scale = Min(data.tileSize / textureSize.x, data.tileSize / textureSize.y) * 0.8;
 				sprite->SetScale(scale);
 			}
-			sprite->SetPosition(data.boardPosition + data.tileSize * 0.1);
+			sprite->SetPosition(data.boardPosition + Vec2D_1 * data.tileSize * 0.1 );
 
 			const int count = data.isEnemy ? enemyCount : allyCount;
 			const int index = data.isEnemy ? enemyIndex++ : allyIndex++;
@@ -74,7 +74,8 @@ namespace Game {
 			const auto& tg = icon.sprite->CreateTweenGroup();
 			tg->CreateTween(&icon.sprite->position, icon.centerPosition, 0.4, Easing::EaseInCubic);
 		}
-		CreateTimer(0.45, [this]() { MoveBack(); });
+		CreateTweenGroup()->CreateTween(&Camera.zoom, Vec2{ 3, 3 }, 0.7);
+		CreateTimer(2.0, [this]() { Finish(); });
 	}
 
 	void BattleStartScene::MoveBack() {
@@ -88,6 +89,7 @@ namespace Game {
 	void BattleStartScene::Finish() {
 		if (_finished) return;
 		_finished = true;
+		Camera.SetZoom(Vec2D_1);
 		if (_onFinished) _onFinished();
 	}
 }
