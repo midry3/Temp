@@ -221,7 +221,7 @@ Mapクラス側にはロジック記述用の便利なヘルパー関数が提�
    - `battle->PutCharacters()` が実行されてキャラクターがグリッド上に配置されます。
    - 共闘選択が終わると、まず戦闘開始演出シーン (`Game/Battle/BattleStartScene`) へ遷移し、演出の完了後はローディングシーン (`Game/Battle/BattleLoadingScene`) を挟んで、`TransitionToBattle` で戦闘シーンへ遷移します。
    - 戦闘開始演出（暫定）: 白背景に、戦う敵味方のアイコンを Board と同じ位置・大きさで表示 → 味方は左、敵は右へ移動 → 一度中央まで互いに移動 → 弾かれたように左右へ戻る → 戦闘シーンへ。アイコンの Board 上の位置・大きさは `StartBattle` がウィンドウ座標に変換して `BattleStartScene::Setup` に渡します。
-   - ローディングシーンでは、戦闘参加キャラ（敵味方全員）のアイコンと、全スキル分の演出アセット（エフェクト、Pickupテクスチャ、サウンド）をあらかじめ読み込みます。読み込みは戦闘シーンの `BattleBase::LoadAsset` 経由で行い、対象パスの収集は `BattleAttack::CollectSkillAssets` が行います。汎用部分は `Game/LoadingScene`（タスクをフレームに分散して処理し、進捗を表示）に切り出されており、`BattleLoadingScene` がそれを継承しています。
+   - ローディングシーンでは、戦闘参加キャラ（敵味方全員）のアイコンと、全スキル分の演出アセット（エフェクト、Pickupテクスチャ、サウンド）をあらかじめ読み込みます。読み込みは戦闘シーンの `BattleBase::LoadAsset` 経由で行い、対象パスの収集は `BattleAttack::CollectSkillAssets` が行います。バトル側のキャラはこの時点ではまだ `_Load` 前でスキルが未設定のため、収集には初期化済みの Board 側の永続キャラを使います。汎用部分は `Game/LoadingScene`（タスクをフレームに分散して処理し、進捗を表示）に切り出されており、`BattleLoadingScene` がそれを継承しています。
    - （※Tween完了時コールバック内での即時シーン差し替えによる参照解放クラッシュを防ぐため、`_pendingTransition` を介して更新フレームの安全なタイミングでシーン遷移が実行されます）
    - 必要に応じて `BoardBase` の派生クラスで `SetupBattle` や `TransitionToBattle` をオーバーライドして挙動をカスタマイズできます。
 

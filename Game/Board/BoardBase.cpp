@@ -585,7 +585,11 @@ namespace Game {
 			const auto loadingScene = MakeShared<BattleLoadingScene>();
 			std::vector<SharedPtr<BattleCharacter>> characters;
 			for (const auto& [unit, character] : _battleParticipants) {
-				if (character) characters.push_back(character);
+				// バトル側のキャラはこの時点ではまだ _Load 前でスキルや情報が
+				// 未設定のため、初期化済みの Board 側の永続キャラから集める
+				auto source = unit ? unit->GetCharacter() : nullptr;
+				if (not source) source = character;
+				if (source) characters.push_back(source);
 			}
 			loadingScene->Setup(battleScene, characters, [this, battleScene]() {
 				TransitionToBattle(battleScene);
