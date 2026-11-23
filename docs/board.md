@@ -173,3 +173,36 @@ Mapクラス側にはロジック記述用の便利なヘルパー関数が提�
    - `SceneManager.SetCurrentScene(battleScene)` により戦闘シーンへ遷移します。
    - （※Tween完了時コールバック内での即時シーン差し替えによる参照解放クラッシュを防ぐため、`_pendingTransition` を介して更新フレームの安全なタイミングでシーン遷移が実行されます）
    - 必要に応じて `BoardBase` の派生クラスで `SetupBattle` や `TransitionToBattle` をオーバーライドして挙動をカスタマイズできます。
+
+## 戦闘終了後の盤面復帰処理
+
+戦闘シーンから盤面に戻ると（`BoardBase::EnteredMainScene` を契機に
+`OnReturnedFromBattle()` が呼ばれます）、戦闘結果に応じて次の処理が行われます。
+戦闘結果の受け渡しは `StartBattle()` が戦闘相手の敵ユニットと戦闘開始時点の
+予告敵・手番状態を記録し、`BattleBase` が `Won` 状態に入ったときに
+`CommonData::LastBattleEnemyDefeated` を `true` にすることで行います。
+
+1. **戦った敵を倒した場合**: その敵ユニットを盤面から消去します。
+2. **盤上の敵が0になった場合**: 勝利画面（`Game/Board/BoardWinScreen`）を表示します。`Battle/WinScreen` を参考にしたもので、シーン遷移部分はコメントアウトしてあります（表示中は盤面操作を受け付けません）。
+3. **敵手番中に発生した戦闘だった場合**: 敵手番を終え、ターンを進めて新しい予告を作り、プレイヤーの手番に戻ります。
+4. **予告を出していた敵を倒した場合**（プレイヤー手番側で発生した戦闘）: 敵は動かず、ターンを進めて新しい予告を作り、プレイヤーの手番になります。
+5. **それ以外の場合**: 予告を出していた敵がまだ生きているので、`ExecuteEnemyTurn()` でその敵が動きます。
+
+### 敵消去時の演出の差し込み
+
+消去は `BoardBase::RemoveEnemyUnit(enemy, onComplete)` が担当し、実際の消去
+（`_units` からの除去と `Free()`）は演出完了後に行われます。演出中は
+`_isAnimating` で盤面操作がブロックされます。
+
+既定の演出は「なし」（即座に完了）です。演出を入れる場合は、派生クラスで
+`PlayEnemyRemoveEffect(enemy, onComplete)` をオーバーライドし、演出が終わった
+タイミングで `onComplete` を呼んでください。
+
+```cpp
+void Map1::PlayEnemyRemoveEffect(const SharedPtr<BoardUnit>& enemy, const std::function<void()>& onComplete) {
+    // 例: フェードアウトさせてから消去する
+    auto tween = enemy->CreateTweenGroup();
+    tween->CreateTween(&enemy->alpha, 0, 0.5);
+    tween->OnComplete(onComplete);
+}
+```

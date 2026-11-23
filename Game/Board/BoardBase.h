@@ -13,6 +13,7 @@ class Sprite2D;
 namespace Game {
 	class BattleCharacter;
 	class BattleBase;
+	class BoardWinScreen;
 	class CoopSelectModal;
 
 	struct BoardEnemyAction {
@@ -42,6 +43,10 @@ namespace Game {
 		EnemyActionDecider _customEnemyActionDecider;
 		std::function<void()> _pendingTransition;
 		SharedPtr<CoopSelectModal> _coopModal;
+		SharedPtr<BoardUnit> _battleEnemyUnit;
+		SharedPtr<BoardUnit> _battleWarningEnemy;
+		bool _battleStartedInEnemyTurn = false;
+		SharedPtr<BoardWinScreen> _winScreen;
 
 		void UpdateLayout();
 		void BuildTiles(const std::map<BoardTerrain, std::string>& textures, const std::vector<BoardTileData>& tiles);
@@ -53,6 +58,8 @@ namespace Game {
 		void UpdateMoveHints();
 		void ExecuteEnemyTurn();
 		void ClearEnemyIntentVisuals();
+		void OnReturnedFromBattle();
+		void ShowWinScreen();
 
 	protected:
 		void _Load() override;
@@ -71,6 +78,12 @@ namespace Game {
 		virtual void SetupBattle(BattleBase& battle, const SharedPtr<BoardUnit>& allyUnit, const SharedPtr<BoardUnit>& enemyUnit, const std::vector<SharedPtr<BoardUnit>>& coopAllies = {});
 		virtual void StartBattle(const SharedPtr<BoardUnit>& allyUnit, const SharedPtr<BoardUnit>& enemyUnit, const std::vector<SharedPtr<BoardUnit>>& coopAllies = {});
 		virtual void TransitionToBattle(const SharedPtr<BattleBase>& battleScene);
+
+		// 敵ユニットを盤面から消去する。実際の消去は PlayEnemyRemoveEffect の完了後に行われる。
+		void RemoveEnemyUnit(const SharedPtr<BoardUnit>& enemy, const std::function<void()>& onComplete = nullptr);
+		// 敵消去時の演出。既定では演出なし（即座に onComplete を呼ぶ）。
+		// 演出を挟みたい場合は派生クラスでオーバーライドし、演出の完了時に onComplete を呼ぶこと。
+		virtual void PlayEnemyRemoveEffect(const SharedPtr<BoardUnit>& enemy, const std::function<void()>& onComplete);
 
 		bool MoveUnit(const SharedPtr<BoardUnit>& unit, int x, int y, bool allowOccupiedByTarget = false, const std::function<void()>& onComplete = nullptr);
 		[[nodiscard]] bool IsMoveAllowed(const BoardUnit& unit, int x, int y, bool allowOccupiedByTarget = false) const;

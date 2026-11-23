@@ -1,4 +1,5 @@
 #include "BoardBase.h"
+#include "BoardWinScreen.h"
 #include "CoopSelectModal.h"
 #include "../Battle/BattleBase.h"
 #include "../Battle/BattleCharacter/BattleCharacterFactory.h"
@@ -73,6 +74,9 @@ namespace Game {
 
 	void BoardBase::_Load() {
 		CommonData::CurrentBoard = std::dynamic_pointer_cast<BoardBase>(shared_from_this());
+		EnteredMainScene.Connect([this]() {
+			OnReturnedFromBattle();
+		});
 	}
 
 	void BoardBase::_Update(float dt) {
@@ -285,7 +289,7 @@ namespace Game {
 	}
 
 	void BoardBase::SelectUnit(const SharedPtr<BoardUnit>& unit) {
-		if (_isEnemyTurn || _isAnimating || _isCoopSelecting) return;
+		if (_winScreen || _isEnemyTurn || _isAnimating || _isCoopSelecting) return;
 		if (not unit->IsAlly()) {
 			if (_selectedUnit) {
 				SelectTile(unit->GetData().x, unit->GetData().y);
@@ -299,7 +303,7 @@ namespace Game {
 	}
 
 	void BoardBase::SelectTile(int x, int y) {
-		if (_isEnemyTurn || _isAnimating || _isCoopSelecting) return;
+		if (_winScreen || _isEnemyTurn || _isAnimating || _isCoopSelecting) return;
 		if (not _selectedUnit) return;
 		const auto movingUnit = _selectedUnit;
 		if (IsMoveAllowed(*movingUnit, x, y, true)) {
@@ -411,7 +415,7 @@ namespace Game {
 	}
 
 	void BoardBase::EndTurn() {
-		if (_isEnemyTurn || _isAnimating || _isCoopSelecting) return;
+		if (_winScreen || _isEnemyTurn || _isAnimating || _isCoopSelecting) return;
 		CancelSelection();
 		ExecuteEnemyTurn();
 	}
@@ -485,9 +489,81 @@ namespace Game {
 	}
 
 	void BoardBase::StartBattle(const SharedPtr<BoardUnit>& allyUnit, const SharedPtr<BoardUnit>& enemyUnit, const std::vector<SharedPtr<BoardUnit>>& coopAllies) {
+		_battleEnemyUnit = enemyUnit;
+		_battleWarningEnemy = _nextEnemyAction.has_value() ? _nextEnemyAction->enemy : nullptr;
+		_battleStartedInEnemyTurn = _isEnemyTurn;
+		CommonData::LastBattleEnemyDefeated = false;
 		const auto battleScene = MakeShared<BattleBase>();
 		SetupBattle(*battleScene, allyUnit, enemyUnit, coopAllies);
 		TransitionToBattle(battleScene);
+	}
+
+	void BoardBase::OnReturnedFromBattle() {
+		if (not _battleEnemyUnit) return;
+		const auto battleEnemy = _battleEnemyUnit;
+		const auto warningEnemy = _battleWarningEnemy;
+		const bool startedInEnemyTurn = _battleStartedInEnemyTurn;
+		_battleEnemyUnit.reset();
+		_battleWarningEnemy.reset();
+		_battleStartedInEnemyTurn = false;
+
+		const bool defeated = CommonData::LastBattleEnemyDefeated;
+		CommonData::LastBattleEnemyDefeated = false;
+
+		auto resumeFlow = [this, battleEnemy, warningEnemy, defeated, startedInEnemyTurn]() {
+			if (GetEnemyUnits().empty()) {
+				ShowWinScreen();
+				return;
+			}
+			if (startedInEnemyTurn) {
+				// 敵手番中に発生した戦闘が終わったので、敵手番を終えて次のターンへ
+				_turn++;
+				_isEnemyTurn = false;
+				UpdateEnemyIntentVisuals();
+				return;
+			}
+			if (defeated && warningEnemy && warningEnemy == battleEnemy) {
+				// 警告を出していた敵を倒したので、敵は動かずに次のターンへ
+				_turn++;
+				UpdateEnemyIntentVisuals();
+				return;
+			}
+			// 警告を出していた敵がまだ生きているなら、その敵が動く
+			ExecuteEnemyTurn();
+		};
+
+		if (defeated) {
+			RemoveEnemyUnit(battleEnemy, resumeFlow);
+		}
+		else {
+			resumeFlow();
+		}
+	}
+
+	void BoardBase::RemoveEnemyUnit(const SharedPtr<BoardUnit>& enemy, const std::function<void()>& onComplete) {
+		if (not enemy) {
+			if (onComplete) onComplete();
+			return;
+		}
+		_isAnimating = true;
+		enemy->SetIntentHint(false);
+		PlayEnemyRemoveEffect(enemy, [this, enemy, onComplete]() {
+			std::erase(_units, enemy);
+			enemy->Free();
+			_isAnimating = false;
+			if (onComplete) onComplete();
+		});
+	}
+
+	void BoardBase::PlayEnemyRemoveEffect(const SharedPtr<BoardUnit>& enemy, const std::function<void()>& onComplete) {
+		if (onComplete) onComplete();
+	}
+
+	void BoardBase::ShowWinScreen() {
+		if (_winScreen) return;
+		CancelSelection();
+		ClearEnemyIntentVisuals();
+		_winScreen = CreateScene<BoardWinScreen>();
 	}
 
 	void BoardBase::TransitionToBattle(const SharedPtr<BattleBase>& battleScene) {

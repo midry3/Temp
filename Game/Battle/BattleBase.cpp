@@ -1,5 +1,6 @@
 #include "BattleBase.h"
 #include <Scene/Container/Animation/AnimatedGrid.h>
+#include <Game/Data/CommonData.h>
 #include "WinScreen.h"
 
 namespace Game {
@@ -64,6 +65,7 @@ namespace Game {
 			};
 			};
 		_state[Won].Entered += [this]() {
+			CommonData::LastBattleEnemyDefeated = true;
 			_usingSkillView->Out();
 			_battleUI->Out();
 			CreateScene<WinScreen>();

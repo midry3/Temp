@@ -83,6 +83,9 @@
     <ClCompile Include="Game\Board\BoardBase.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="Game\Board\BoardWinScreen.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
     <ClCompile Include="Game\Board\CoopSelectModal.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -149,6 +152,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Game\Board\BoardBase.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\Board\BoardWinScreen.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Game\Board\CoopSelectModal.h">
