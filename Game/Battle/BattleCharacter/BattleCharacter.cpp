@@ -78,5 +78,7 @@ namespace Game {
 				_powerUpEffect->Play();
 			}
 		}
+
+		StatChanged.Emit();
 	}
 }

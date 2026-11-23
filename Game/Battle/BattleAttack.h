@@ -73,11 +73,17 @@ namespace Game {
 			bool isFinally = false;
 			double executeTime = 0.0;
 		};
+		struct StatChange {
+			std::string target = "actor";
+			std::string stat;
+			int amount = 0;
+		};
 		SharedPtr<BattleCharacter> _actor;
 		SharedPtr<BattleCharacter> _target;
 		Vector2D _actorInitialAnimationPosition;
 		Vector2D _targetInitialAnimationPosition;
 		std::vector<Action> _actions;
+		std::vector<StatChange> _statChanges;
 		std::vector<SharedPtr<EffekseerEmitter2D>> _effects;
 		struct EffectTrigger {
 			SharedPtr<EffekseerEmitter2D> effect;
@@ -124,9 +130,11 @@ namespace Game {
 		SharedPtr<ColorRect> _flashRect;
 		SharedPtr<TimeScaleController> _timeScaleController;
 		Signal<> _completed;
+		Signal<SharedPtr<BattleCharacter>, std::string, int> _statChanged;
 
 		bool LoadTimeline(const std::string& file);
 		void Execute(Action& action);
+		void ApplyStatChanges();
 		void StopTimelineEffects();
 		void RegisterAnimationFinishedAction(const SharedPtr<BattleCharacter>& target,
 			int animation, const Action& action);
@@ -163,6 +171,7 @@ namespace Game {
 			const SharedPtr<BattleCharacter>& target,
 			const SkillInfo& skill);
 		Signal<>& Completed() { return _completed; }
+		Signal<SharedPtr<BattleCharacter>, std::string, int>& StatChanged() { return _statChanged; }
 		[[nodiscard]] bool IsFinished() const { return _finished; }
 	};
 }

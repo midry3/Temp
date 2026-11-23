@@ -178,6 +178,25 @@ namespace Game {
 			}
 			return true;
 		}
+
+		void SetGlobalNumber(lua_State* state, const char* name, double value) {
+			lua_pushnumber(state, value);
+			lua_setglobal(state, name);
+		}
+
+		void RegisterActorParameters(lua_State* state, const SharedPtr<BattleCharacter>& actor) {
+			if (not actor) return;
+			const auto& actorState = actor->GetState();
+			const auto& actorStats = actor->GetInfo().stats;
+			SetGlobalNumber(state, "ATK", actorState.atk);
+			SetGlobalNumber(state, "DEF", actorState.def);
+			SetGlobalNumber(state, "MDEF", actorState.mdef);
+			SetGlobalNumber(state, "SPD", actorState.speed);
+			SetGlobalNumber(state, "CurrentHP", actorState.currentHP);
+			SetGlobalNumber(state, "CurrentMP", actorState.currentMP);
+			SetGlobalNumber(state, "MaxHP", actorStats.maxHP);
+			SetGlobalNumber(state, "MaxMP", actorStats.maxMP);
+		}
 	}
 
 	void BattleAttack::Start(const SharedPtr<BattleCharacter>& actor,
@@ -195,6 +214,7 @@ namespace Game {
 		_targetInitialAnimationPosition = _target
 			? *(_target->GetAnimationPositionPointer()) : Vector2D();
 		_actions.clear();
+		_statChanges.clear();
 		_effects.clear();
 		_effectTriggers.clear();
 		StopPickups();
@@ -236,6 +256,7 @@ namespace Game {
 		lua_State* state = luaL_newstate();
 		if (!state) return false;
 		luaL_openlibs(state);
+		RegisterActorParameters(state, _actor);
 		const auto resolvedFile = AssetManager.ResolvePath(file);
 		if (luaL_dofile(state, resolvedFile.string().c_str()) != LUA_OK) {
 			std::cerr << "Battle attack Lua load error (" << file << "): "
@@ -318,6 +339,23 @@ namespace Game {
 				lua_pop(state, 1);
 			}
 		}
+		lua_getglobal(state, "stat_changes");
+		if (lua_istable(state, -1)) {
+			const auto changeCount = static_cast<int>(lua_rawlen(state, -1));
+			for (int i = 1; i <= changeCount; ++i) {
+				lua_rawgeti(state, -1, i);
+				if (lua_istable(state, -1)) {
+					StatChange change;
+					change.target = ReadString(state, -1, "target");
+					if (change.target.empty()) change.target = "actor";
+					change.stat = ReadString(state, -1, "stat");
+					change.amount = static_cast<int>(ReadNumber(state, -1, "amount"));
+					if (not change.stat.empty()) _statChanges.push_back(change);
+				}
+				lua_pop(state, 1);
+			}
+		}
+		lua_pop(state, 1);
 		lua_close(state);
 		std::sort(_actions.begin(), _actions.end(),
 			[](const Action& left, const Action& right) { return left.executeTime < right.executeTime; });
@@ -512,6 +550,15 @@ namespace Game {
 		_pickups.clear();
 	}
 
+	void BattleAttack::ApplyStatChanges() {
+		for (const auto& change : _statChanges) {
+			auto character = ResolveTarget(change.target);
+			if (not character) continue;
+			character->ModifyStat(change.stat, change.amount);
+			_statChanged.Emit(character, change.stat, change.amount);
+		}
+	}
+
 	void BattleAttack::StopTimelineEffects() {
 		StopAnimationFinishedConnections();
 		StopEffects();
@@ -550,6 +597,7 @@ namespace Game {
 		if (not (_elapsed < _endTime)) {
 			_finished = true;
 			StopTimelineEffects();
+			ApplyStatChanges();
 			_completed.Emit();
 		}
 	}

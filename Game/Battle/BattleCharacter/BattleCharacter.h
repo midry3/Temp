@@ -58,6 +58,7 @@ namespace Game
 		void SetState(const BattleCharacterState state) { _info.currentState = state; }
 		void SetSkills(const std::vector<SkillInfo>& skills) { _skills = skills; }
 	public:
+		Signal<> StatChanged;
 		Signal<int> AnimationFinished;
 		void PlayAnimation(int animation, std::optional<bool> loop = std::nullopt, bool reverse = false);
 		[[nodiscard]] Vector2D* GetAnimationPositionPointer();

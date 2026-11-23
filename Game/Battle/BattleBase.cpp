@@ -90,10 +90,16 @@ namespace Game {
 		enemiesGrid->SetSize({ 200, CHARACTER_GRID_HEIGHT })->SetPosition({ ENEMIES_X, CHARACTER_Y });
 
 		for (const auto& ally : _allies) {
+			ally->StatChanged.Connect([this]() {
+				_hud->UpdateView();
+				});
 			alliesGrid->AddScene(ally);
 		}
 		for (const auto& enemy : _enemies) {
 			//enemy->SetScale({ Abs(enemy->GetScale().x), enemy->GetScale().y });
+			enemy->StatChanged.Connect([this]() {
+				_hud->UpdateView();
+				});
 			enemiesGrid->AddScene(enemy);
 		}
 
