@@ -11,19 +11,14 @@ namespace Game {
 		_nameLabel = CreateScene<TextLabel>();
 		_nameLabel->SetFontSize(14)->SetForegroundColor({ 20, 20, 20 });
 
-		const auto& hoverSE = CreateScene<SoundPlayer>();
-		hoverSE->SetSound(LoadAsset<Sound>(HOVER_SE))
-			->SetVolume(0.7f);
-		Entered += [this, hoverSE](const MouseEvent& event) {
+		Entered += [this](const MouseEvent& event) {
 			_isMouseEntered = true;
-			hoverSE->Play();
 		};
-		Exited += [this, hoverSE](const MouseEvent& event) {
+		Exited += [this](const MouseEvent& event) {
 			_isMouseEntered = false;
 			if (not _intentHint) {
 				_sprite->SetModulate({ 255, 255, 255 });
 			}
-			hoverSE->Stop();
 			};
 
 		const auto& clickSE = CreateSelectSePlayer(this);
