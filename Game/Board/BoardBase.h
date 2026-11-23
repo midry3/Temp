@@ -13,6 +13,7 @@ class Sprite2D;
 namespace Game {
 	class BattleCharacter;
 	class BattleBase;
+	class BoardInfoPanel;
 	class BoardWinScreen;
 	class CoopSelectModal;
 
@@ -47,6 +48,8 @@ namespace Game {
 		SharedPtr<BoardUnit> _battleWarningEnemy;
 		bool _battleStartedInEnemyTurn = false;
 		SharedPtr<BoardWinScreen> _winScreen;
+		SharedPtr<BoardInfoPanel> _infoPanel;
+		std::vector<std::pair<SharedPtr<BoardUnit>, SharedPtr<BattleCharacter>>> _battleParticipants;
 
 		void UpdateLayout();
 		void BuildTiles(const std::map<BoardTerrain, std::string>& textures, const std::vector<BoardTileData>& tiles);
@@ -61,6 +64,7 @@ namespace Game {
 		bool IsBlockedBeyondUnit(const BoardUnit& unit, int dx, int dy) const;
 		void OnReturnedFromBattle();
 		void ShowWinScreen();
+		void ShowEnemyInfo(int x, int y);
 
 	protected:
 		void _Load() override;

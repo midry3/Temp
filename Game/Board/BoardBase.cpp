@@ -1,4 +1,5 @@
 #include "BoardBase.h"
+#include "BoardInfoPanel.h"
 #include "BoardWinScreen.h"
 #include "CoopSelectModal.h"
 #include "../Battle/BattleBase.h"
@@ -74,6 +75,7 @@ namespace Game {
 
 	void BoardBase::_Load() {
 		CommonData::CurrentBoard = std::dynamic_pointer_cast<BoardBase>(shared_from_this());
+		_infoPanel = CreateScene<BoardInfoPanel>();
 		EnteredMainScene.Connect([this]() {
 			OnReturnedFromBattle();
 		});
@@ -228,10 +230,17 @@ namespace Game {
 			window = PropertyManager.GetRealWindowSize();
 		}
 		if (0.0 < size.x && 0.0 < size.y && 0.0 < window.x && 0.0 < window.y) {
-			const double scaleFactor = Min(window.x / size.x, window.y / size.y);
+			// 盤面は左側の領域に寄せ、右側は情報パネル用に空ける
+			const Vector2D boardArea(window.x - BoardInfoPanel::WIDTH, window.y);
+			const double scaleFactor = Min(boardArea.x / size.x, boardArea.y / size.y);
 			SetScale(scaleFactor);
-			const Vector2D offset = (window - size * scaleFactor) * 0.5;
+			const Vector2D offset = (boardArea - size * scaleFactor) * 0.5;
 			SetPosition(offset);
+			if (_infoPanel) {
+				// パネルは盤面の変形を受けないよう、逆変換してウィンドウ座標に合わせる
+				_infoPanel->SetPosition({ (boardArea.x - offset.x) / scaleFactor, -offset.y / scaleFactor });
+				_infoPanel->SetScale(1.0 / scaleFactor);
+			}
 		}
 	}
 
@@ -275,8 +284,11 @@ namespace Game {
 			const auto& unit = CreateScene<BoardUnit>();
 			unit->SetUnit(data, data.texture.empty() ? nullptr : LoadAsset<Texture>(data.texture), _tileSize);
 			unit->SetPosition(GetTilePosition(data.x, data.y));
-			if (not unit->IsAlly()) {
-				const auto battleChara = CreateBattleCharacterForUnit(*unit);
+			// ステータス永続化用に、ユニットごとにキャラクターを1体保持する
+			const auto battleChara = CreateBattleCharacterForUnit(*unit);
+			if (battleChara) {
+				battleChara->Load();
+				unit->SetCharacter(battleChara);
 				if (const auto enemyChara = std::dynamic_pointer_cast<EnemyBattleCharacter>(battleChara)) {
 					unit->SetRelativeMoveOffsets(enemyChara->GetRelativeMoveOffsets());
 				}
@@ -289,6 +301,20 @@ namespace Game {
 				};
 			_units.push_back(unit);
 		}
+		if (_infoPanel) {
+			// 味方パネルは プレア、レコ、ゾン、ゴウ の順で 2x2 表示する
+			std::vector<SharedPtr<BattleCharacter>> allyCharacters;
+			const BoardCharacterType order[] = { BoardCharacterType::Plea, BoardCharacterType::Reko, BoardCharacterType::Zon, BoardCharacterType::Gou };
+			for (const auto type : order) {
+				for (const auto& unit : _units) {
+					if (unit->IsAlly() && unit->GetData().characterType == type && unit->GetCharacter()) {
+						allyCharacters.push_back(unit->GetCharacter());
+						break;
+					}
+				}
+			}
+			_infoPanel->SetAllies(allyCharacters);
+		}
 	}
 
 	void BoardBase::SelectUnit(const SharedPtr<BoardUnit>& unit) {
@@ -296,6 +322,9 @@ namespace Game {
 		if (not unit->IsAlly()) {
 			if (_selectedUnit) {
 				SelectTile(unit->GetData().x, unit->GetData().y);
+			}
+			else {
+				ShowEnemyInfo(unit->GetData().x, unit->GetData().y);
 			}
 			return;
 		}
@@ -307,7 +336,10 @@ namespace Game {
 
 	void BoardBase::SelectTile(int x, int y) {
 		if (_winScreen || _isEnemyTurn || _isAnimating || _isCoopSelecting) return;
-		if (not _selectedUnit) return;
+		if (not _selectedUnit) {
+			ShowEnemyInfo(x, y);
+			return;
+		}
 		const auto movingUnit = _selectedUnit;
 		if (IsMoveAllowed(*movingUnit, x, y, true)) {
 			const auto targetUnit = GetUnitAt(x, y);
@@ -469,26 +501,36 @@ namespace Game {
 	}
 
 	void BoardBase::SetupBattle(BattleBase& battle, const SharedPtr<BoardUnit>& allyUnit, const SharedPtr<BoardUnit>& enemyUnit, const std::vector<SharedPtr<BoardUnit>>& coopAllies) {
-		if (allyUnit) {
-			const auto allyChar = CreateBattleCharacterForUnit(*allyUnit);
-			if (allyChar) {
-				battle.AddAlly(allyChar);
+		_battleParticipants.clear();
+		auto addParticipant = [this, &battle](const SharedPtr<BoardUnit>& unit, bool isEnemy) {
+			if (not unit) return;
+			const auto character = CreateBattleCharacterForUnit(*unit);
+			if (not character) return;
+			if (isEnemy) {
+				battle.AddEnemy(character);
 			}
-		}
+			else {
+				battle.AddAlly(character);
+			}
+			_battleParticipants.push_back({ unit, character });
+		};
+		addParticipant(allyUnit, false);
 		for (const auto& coopUnit : coopAllies) {
 			if (coopUnit && coopUnit != allyUnit) {
-				const auto coopChar = CreateBattleCharacterForUnit(*coopUnit);
-				if (coopChar) {
-					battle.AddAlly(coopChar);
+				addParticipant(coopUnit, false);
+			}
+		}
+		addParticipant(enemyUnit, true);
+
+		// 戦闘シーンのロード完了後（各キャラの初期化後）に、Board 側の永続状態を引き継ぐ
+		const auto participants = _battleParticipants;
+		battle.EnteredMainScene.Connect([participants]() {
+			for (const auto& [unit, character] : participants) {
+				if (unit && character && unit->GetCharacter()) {
+					character->RestoreState(unit->GetCharacter()->GetState());
 				}
 			}
-		}
-		if (enemyUnit) {
-			const auto enemyChar = CreateBattleCharacterForUnit(*enemyUnit);
-			if (enemyChar) {
-				battle.AddEnemy(enemyChar);
-			}
-		}
+		});
 	}
 
 	void BoardBase::StartBattle(const SharedPtr<BoardUnit>& allyUnit, const SharedPtr<BoardUnit>& enemyUnit, const std::vector<SharedPtr<BoardUnit>>& coopAllies) {
@@ -503,6 +545,19 @@ namespace Game {
 
 	void BoardBase::OnReturnedFromBattle() {
 		if (not _battleEnemyUnit) return;
+
+		// 戦闘結果を Board 側の永続状態へ書き戻し、パネル表示を更新する
+		for (const auto& [unit, character] : _battleParticipants) {
+			if (unit && character && unit->GetCharacter()) {
+				unit->GetCharacter()->RestoreState(character->GetState());
+			}
+		}
+		_battleParticipants.clear();
+		if (_infoPanel) {
+			_infoPanel->ClearEnemies();
+			_infoPanel->UpdateView();
+		}
+
 		const auto battleEnemy = _battleEnemyUnit;
 		const auto warningEnemy = _battleWarningEnemy;
 		const bool startedInEnemyTurn = _battleStartedInEnemyTurn;
@@ -560,6 +615,17 @@ namespace Game {
 
 	void BoardBase::PlayEnemyRemoveEffect(const SharedPtr<BoardUnit>& enemy, const std::function<void()>& onComplete) {
 		if (onComplete) onComplete();
+	}
+
+	void BoardBase::ShowEnemyInfo(int x, int y) {
+		if (not _infoPanel) return;
+		std::vector<SharedPtr<BattleCharacter>> enemies;
+		for (const auto& unit : _units) {
+			if (not unit->IsAlly() && unit->GetData().x == x && unit->GetData().y == y && unit->GetCharacter()) {
+				enemies.push_back(unit->GetCharacter());
+			}
+		}
+		_infoPanel->ShowEnemies(enemies);
 	}
 
 	void BoardBase::ShowWinScreen() {

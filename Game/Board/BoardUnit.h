@@ -3,6 +3,7 @@
 #include <Scene/Text/TextLabel.h>
 #include <vector>
 #include "BoardTypes.h"
+#include "../Battle/BattleCharacter/BattleCharacter.h"
 
 class Sprite2D;
 class Texture;
@@ -16,6 +17,9 @@ namespace Game {
 		bool _intentHint = false;
 		double _hintTime = 0.0;
 		std::vector<BoardOffset> _relativeMoveOffsets;
+		// Board 単位で保持する永続キャラクター。ステータス変化はこの状態に蓄積され、
+		// 戦闘開始時に戦闘側へ引き継がれ、戦闘終了時に書き戻される。
+		SharedPtr<BattleCharacter> _character;
 
 	protected:
 		void _Load() override;
@@ -30,5 +34,7 @@ namespace Game {
 		[[nodiscard]] bool HasIntentHint() const { return _intentHint; }
 		void SetRelativeMoveOffsets(const std::vector<BoardOffset>& offsets) { _relativeMoveOffsets = offsets; }
 		[[nodiscard]] const std::vector<BoardOffset>& GetRelativeMoveOffsets() const { return _relativeMoveOffsets; }
+		void SetCharacter(const SharedPtr<BattleCharacter>& character) { _character = character; }
+		[[nodiscard]] const SharedPtr<BattleCharacter>& GetCharacter() const { return _character; }
 	};
 }

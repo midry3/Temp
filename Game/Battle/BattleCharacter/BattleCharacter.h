@@ -69,6 +69,8 @@ namespace Game
 		void UseMP(int amount);
 		[[nodiscard]] bool CanUseSkill(int mp);
 		void ModifyStat(const std::string& stat, int delta);
+		// Board 側で保持する永続状態を復元する（戦闘開始時の状態引き継ぎ用）
+		void RestoreState(const BattleCharacterState& state) { _info.currentState = state; }
 		[[nodiscard]] int GetCurrentHP() const { return _info.currentState.currentHP; }
 		[[nodiscard]] bool IsDead() const { return _info.currentState.currentHP <= 0; }
 		[[nodiscard]] const BattleCharacterInfo& GetInfo() const { return _info; }

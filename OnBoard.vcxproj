@@ -162,6 +162,7 @@
     <ClCompile Include="Game\Battle\UsingSkillPanel.cpp" />
     <ClCompile Include="Game\Battle\WinScreen.cpp" />
     <ClCompile Include="Game\Board\BoardBase.cpp" />
+    <ClCompile Include="Game\Board\BoardInfoPanel.cpp" />
     <ClCompile Include="Game\Board\BoardWinScreen.cpp" />
     <ClCompile Include="Game\Board\CoopSelectModal.cpp" />
     <ClCompile Include="Game\Board\BoardTile.cpp" />
@@ -202,6 +203,7 @@
     <ClInclude Include="Game\Battle\UsingSkillPanel.h" />
     <ClInclude Include="Game\Battle\WinScreen.h" />
     <ClInclude Include="Game\Board\BoardBase.h" />
+    <ClInclude Include="Game\Board\BoardInfoPanel.h" />
     <ClInclude Include="Game\Board\BoardWinScreen.h" />
     <ClInclude Include="Game\Board\CoopSelectModal.h" />
     <ClInclude Include="Game\Board\BoardTile.h" />
