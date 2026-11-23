@@ -16,7 +16,8 @@ namespace Game {
 			const auto icon = character->GetInfo().icon.string();
 			if (not icon.empty()) {
 				AddLoadTask([battleScene, icon]() {
-					battleScene->LoadAsset<Texture>(icon);
+					const auto& asset = battleScene->LoadAsset<Texture>(icon);
+					if (asset) asset->Load();
 					});
 			}
 
@@ -24,14 +25,19 @@ namespace Game {
 				if (skill.directionFile.empty()) continue;
 				AddLoadTask([battleScene, character, skill]() {
 					const auto assets = BattleAttack::CollectSkillAssets(character, skill);
+					// LoadAsset の登録だけでは実ロードが走らないアセット
+					// （Effekseer 等）があるため、Load() を明示的に呼ぶ
 					for (const auto& effect : assets.effects) {
-						battleScene->LoadAsset<EffekseerAsset>(effect);
+						const auto& asset = battleScene->LoadAsset<EffekseerAsset>(effect);
+						if (asset) asset->Load();
 					}
 					for (const auto& texture : assets.textures) {
-						battleScene->LoadAsset<Texture>(texture);
+						const auto& asset = battleScene->LoadAsset<Texture>(texture);
+						if (asset) asset->Load();
 					}
 					for (const auto& sound : assets.sounds) {
-						battleScene->LoadAsset<Sound>(sound);
+						const auto& asset = battleScene->LoadAsset<Sound>(sound);
+						if (asset) asset->Load();
 					}
 					});
 			}

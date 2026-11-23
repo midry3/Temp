@@ -295,16 +295,20 @@ namespace Game {
 	void BattleAttack::PreloadAssets() {
 		for (auto& action : _actions) {
 			if (action.type == "effect" && not action.effect.empty()) {
-				LoadAsset<EffekseerAsset>(action.effect);
+				const auto& asset = LoadAsset<EffekseerAsset>(action.effect);
+				if (asset) asset->Load();
 			}
 			else if (action.type == "pickup") {
 				for (const auto& texture : action.pickupTextures) {
-					LoadAsset<Texture>(texture);
+					const auto& asset = LoadAsset<Texture>(texture);
+					if (asset) asset->Load();
 				}
 			}
 			else if (action.type == "sound" && not action.sound.empty()) {
+				const auto& soundAsset = LoadAsset<Sound>(action.sound);
+				if (soundAsset) soundAsset->Load();
 				action.soundPlayer = CreateScene<SoundPlayer>();
-				action.soundPlayer->SetSound(LoadAsset<Sound>(action.sound))
+				action.soundPlayer->SetSound(soundAsset)
 					->SetVolume(static_cast<float>(Clamp(action.volume, 0.0, 1.0)));
 			}
 		}
