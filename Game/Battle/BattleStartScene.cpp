@@ -89,7 +89,6 @@ namespace Game {
 	void BattleStartScene::Finish() {
 		if (_finished) return;
 		_finished = true;
-		Camera.SetZoom(Vec2D_1);
 		if (_onFinished) _onFinished();
 	}
 }

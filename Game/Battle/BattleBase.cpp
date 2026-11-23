@@ -5,6 +5,8 @@
 
 namespace Game {
 	void BattleBase::_Load() {
+		Camera.SetZoom(Vec2D_1);
+
 		_background = CreateScene<BattleBackground>();
 
 		_hud = CreateScene<Hud>();
