@@ -42,6 +42,11 @@ namespace Game {
 	public:
 		Signal<SkillInfo> SkillSelected;
 		Signal<> BackPressed;
+
+		// BattleUI と同様、切り替え前に子シーンのトゥイーンを止めて残り表示を防ぐ
+		void ShowUI();
+		void HideUI();
+
 		void SetSkills(const std::vector<SkillInfo>& skills);
 		void SetAvailableMP(int mp) { _availableMP = mp; }
 	};

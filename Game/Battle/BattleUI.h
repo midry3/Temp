@@ -25,6 +25,12 @@ namespace Game {
 		Signal<> SurrenderPressed;
 		Signal<> BackPressed;
 
+		// In/Out の前に各子シーンのトゥイーンを止めてから切り替える。
+		// In のトゥイーン（子シーン側に作られる）が残ったまま Out すると、
+		// 退場トゥイーンと競合して UI が画面に残ってしまうため。
+		void ShowUI();
+		void HideUI();
+
 		// 「戻る」の有効・無効を切り替える（無効時は暗く表示し、押せない）
 		void SetBackEnabled(bool enabled);
 	};

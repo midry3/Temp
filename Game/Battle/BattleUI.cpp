@@ -83,6 +83,20 @@ namespace Game {
 		_outlineBuffer.param->time = 0.0f;
 	}
 
+	void BattleUI::ShowUI() {
+		for (const auto& scene : GetVisualScenes()) {
+			scene->KillAllTweenGroups();
+		}
+		In();
+	}
+
+	void BattleUI::HideUI() {
+		for (const auto& scene : GetVisualScenes()) {
+			scene->KillAllTweenGroups();
+		}
+		Out();
+	}
+
 	void BattleUI::_Update(float dt) {
 		AnimatedUI::_Update(dt);
 		_outlineBuffer.param->time += dt;

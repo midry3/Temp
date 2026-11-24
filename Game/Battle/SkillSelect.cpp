@@ -103,6 +103,20 @@ namespace Game {
 		_outlineBuffer.param->time = 0.0f;
 	}
 
+	void SkillSelect::ShowUI() {
+		for (const auto& scene : GetVisualScenes()) {
+			scene->KillAllTweenGroups();
+		}
+		In();
+	}
+
+	void SkillSelect::HideUI() {
+		for (const auto& scene : GetVisualScenes()) {
+			scene->KillAllTweenGroups();
+		}
+		Out();
+	}
+
 	void SkillSelect::SetSkills(const std::vector<SkillInfo>& skills) {
 		_skills = skills;
 		if (_buttonGrid) RebuildButtons();
@@ -148,7 +162,7 @@ namespace Game {
 					tg->SetLoop(5);
 					tg->Completed += [this, i]() {
 						SkillSelected.Emit(_skills.at(i));
-						Out();
+						HideUI();
 						_isAlreadySelected = false;
 						};
 				}

@@ -33,7 +33,7 @@ namespace Game {
 		_targetSelect->BackPressed += [this]() {
 			// 対象選択からスキル選択に戻る
 			_targetSelect->Hide();
-			_skillSelect->In();
+			_skillSelect->ShowUI();
 			};
 
 		_skillSelect->SkillSelected += [this](const SkillInfo& skill) {
@@ -52,13 +52,13 @@ namespace Game {
 			};
 
 		_battleUI->AtkPressed += [this]() {
-			_battleUI->Out();
+			_battleUI->HideUI();
 			if (not _allies.empty()) {
 				_skillSelect->SetAvailableMP(_allies[_currentCharacterIndex]->GetState().currentMP);
 				_skillSelect->SetSkills(_allies[_currentCharacterIndex]->GetSkills());
 			}
 			CreateTimer(0.5, [this]() {
-				_skillSelect->In();
+				_skillSelect->ShowUI();
 			});
 			};
 
@@ -123,7 +123,7 @@ namespace Game {
 			}
 			ApplyAllyFormation(true);
 			_usingSkillView->Out();
-			_battleUI->In();
+			_battleUI->ShowUI();
 			_hud->UpdateView();
 			for (const auto& ally : _allies) {
 				ally->PlayAnimation(0, true);
@@ -135,14 +135,14 @@ namespace Game {
 		_state[Won].Entered += [this]() {
 			CommonData::LastBattleEnemyDefeated = true;
 			_usingSkillView->Out();
-			_battleUI->Out();
+			_battleUI->HideUI();
 			CreateScene<WinScreen>();
 			};
 
 		_state[Lost].Entered += [this]() {
 			CommonData::LastBattleAlliesDefeated = true;
 			_usingSkillView->Out();
-			_battleUI->Out();
+			_battleUI->HideUI();
 			CreateScene<LoseScreen>();
 			};
 
@@ -426,11 +426,11 @@ namespace Game {
 			SetAllyFront(_allies[_currentCharacterIndex]);
 			ApplyAllyFormation(true);
 			UpdateBackButton();
-			_battleUI->In();
+			_battleUI->ShowUI();
 		}
 		else {
 			_currentCharacterIndex = 0;
-			_battleUI->Out();
+			_battleUI->HideUI();
 			BuildActionQueue();
 			ExecuteNextAction();
 		}
@@ -445,14 +445,14 @@ namespace Game {
 		// 選択中のキャラ（_currentCharacterIndex）は変えず、そのキャラのコマンド選択に戻る。
 		// 前のキャラの選択は取り消さない。
 		_targetSelect->Hide();
-		_skillSelect->Out();
+		_skillSelect->HideUI();
 		if (0 <= _currentCharacterIndex && _currentCharacterIndex < static_cast<int>(_allies.size())
 			&& _allies[_currentCharacterIndex]) {
 			SetAllyFront(_allies[_currentCharacterIndex]);
 			ApplyAllyFormation(true);
 		}
 		UpdateBackButton();
-		_battleUI->In();
+		_battleUI->ShowUI();
 	}
 
 	void BattleBase::GoBackSelection() {
