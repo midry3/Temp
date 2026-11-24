@@ -263,7 +263,42 @@ namespace Game {
 		return true;
 	}
 
+	void BoardBase::UpdateUnitIconVisibility() {
+		// 同じマスに複数のユニットが重なる場合は、代表の1体だけアイコンを表示する。
+		// 代表は ATK・DEF・MDEF・SPD の平均値が最も高いユニット。
+		for (const auto& unit : _units) {
+			if (unit) unit->SetIconVisible(true);
+		}
+		for (const auto& unit : _units) {
+			if (not unit) continue;
+			std::vector<SharedPtr<BoardUnit>> stacked;
+			for (const auto& other : _units) {
+				if (other && other->GetData().x == unit->GetData().x && other->GetData().y == unit->GetData().y) {
+					stacked.push_back(other);
+				}
+			}
+			if (static_cast<int>(stacked.size()) <= 1) continue;
+			SharedPtr<BoardUnit> representative = nullptr;
+			double bestAverage = 0.0;
+			for (const auto& member : stacked) {
+				double average = 0.0;
+				if (member->GetCharacter()) {
+					const auto state = member->GetCharacter()->GetState();
+					average = (state.atk + state.def + state.mdef + state.speed) / 4.0;
+				}
+				if (not representative || bestAverage < average) {
+					representative = member;
+					bestAverage = average;
+				}
+			}
+			for (const auto& member : stacked) {
+				member->SetIconVisible(member == representative);
+			}
+		}
+	}
+
 	void BoardBase::UpdateCoopIcons() {
+		UpdateUnitIconVisibility();
 		if (not _coopIconLayer) return;
 		// アイコンはレイヤーの子シーンなので、削除もレイヤー経由で行う
 		for (const auto& icon : _coopIcons) {
@@ -883,44 +918,15 @@ namespace Game {
 
 	void BoardBase::ShowEnemyInfo(int x, int y) {
 		if (not _infoPanel) return;
-		std::vector<SharedPtr<BoardUnit>> matchedUnits;
+		std::vector<SharedPtr<BattleCharacter>> enemies;
 		for (const auto& unit : _units) {
 			if (not unit || unit->IsAlly() || not unit->GetCharacter()) continue;
 			for (const auto& tile : GetOccupiedTiles(*unit)) {
 				if (tile.first == x && tile.second == y) {
-					matchedUnits.push_back(unit);
+					enemies.push_back(unit->GetCharacter());
 					break;
 				}
 			}
-		}
-		// グループは代表の1体だけを表示する（ATK・DEF・MDEF・SPDの平均値が最も高い敵）
-		std::vector<SharedPtr<BattleCharacter>> enemies;
-		std::vector<std::pair<int, int>> shownGroupTiles;
-		for (const auto& unit : matchedUnits) {
-			const auto groupUnits = GetEnemyGroupUnits(unit);
-			if (static_cast<int>(groupUnits.size()) <= 1) {
-				enemies.push_back(unit->GetCharacter());
-				continue;
-			}
-			const auto groupKey = std::make_pair(unit->GetData().initialX, unit->GetData().initialY);
-			bool alreadyShown = false;
-			for (const auto& shown : shownGroupTiles) {
-				if (shown == groupKey) alreadyShown = true;
-			}
-			if (alreadyShown) continue;
-			shownGroupTiles.push_back(groupKey);
-			SharedPtr<BoardUnit> representative = nullptr;
-			double bestAverage = 0.0;
-			for (const auto& member : groupUnits) {
-				if (not member || not member->GetCharacter()) continue;
-				const auto state = member->GetCharacter()->GetState();
-				const double average = (state.atk + state.def + state.mdef + state.speed) / 4.0;
-				if (not representative || bestAverage < average) {
-					representative = member;
-					bestAverage = average;
-				}
-			}
-			if (representative) enemies.push_back(representative->GetCharacter());
 		}
 		_infoPanel->ShowEnemies(enemies);
 	}

@@ -74,6 +74,7 @@ namespace Game {
 		void ExecuteEnemyTurn();
 		void UpdateCoopIcons();
 		void UpdateOccupiedTileVisuals();
+		void UpdateUnitIconVisibility();
 		[[nodiscard]] bool CanPlaceFootprint(const BoardUnit& unit, int x, int y, bool allowOccupiedByTarget) const;
 		[[nodiscard]] SharedPtr<BoardUnit> FindFootprintOverlapEnemy(const SharedPtr<BoardUnit>& unit) const;
 		void MoveEnemyAction(const BoardEnemyAction& action);

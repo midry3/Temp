@@ -53,17 +53,20 @@ namespace Game {
 			});
 		if (texture) _sprite->SetTexture(texture);
 		else _sprite->Hide();
-		if (not data.displayName.empty()) {
-			_nameLabel->SetText(data.displayName)->SetWidth(static_cast<int>(tileSize.x));
-			_nameLabel->SetPosition({ 2.0, tileSize.y * 0.76 });
-		}
-		else _nameLabel->Hide();
+		// Board 上では名前を表示しない
+		_nameLabel->Hide();
 		const auto textureSize = _sprite->GetRawSize();
 		if (not (textureSize.x <= 0) && not (textureSize.y <= 0)) {
 			const auto scale = Min(tileSize.x / textureSize.x, tileSize.y / textureSize.y) * 0.8 * data.iconScale;
 			_sprite->SetScale(scale);
 			_sprite->SetPosition(tileSize * 0.1 + Vector2D(data.iconOffsetX, data.iconOffsetY));
 		}
+	}
+
+	void BoardUnit::SetIconVisible(bool visible) {
+		if (not _sprite) return;
+		if (visible) _sprite->Show();
+		else _sprite->Hide();
 	}
 
 	void BoardUnit::SetIntentHint(bool hint) {

@@ -32,6 +32,8 @@ namespace Game {
 		void SetBoardPosition(int x, int y) { _data.x = x; _data.y = y; }
 		[[nodiscard]] const BoardUnitData& GetData() const { return _data; }
 		[[nodiscard]] bool IsAlly() const { return _data.team == BoardTeam::Ally; }
+		// タイル上のアイコン表示を切り替える（同じマスに重なる場合は代表だけを表示する）
+		void SetIconVisible(bool visible);
 		void SetIntentHint(bool hint);
 		[[nodiscard]] bool HasIntentHint() const { return _intentHint; }
 		void SetRelativeMoveOffsets(const std::vector<BoardOffset>& offsets) { _relativeMoveOffsets = offsets; }
