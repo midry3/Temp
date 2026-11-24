@@ -3,6 +3,7 @@
 #include <Scene/Text/TextLabel.h>
 #include <Scene/Button/Button.h>
 #include <Game/StageSelect.h>
+#include <Game/Data/CommonData.h>
 
 namespace Game {
 	void LoseScreen::_Load() {
@@ -11,8 +12,14 @@ namespace Game {
 		button->SetArea({ {0, 0}, {wsize.x, 0}, {wsize.x, wsize.y}, {0, wsize.y} });
 		button->LeftPressed += [this](const MouseEvent& e) {
 			if (e.just && _isButtonEnabled) {
-				// 敗北時は Board へは戻らず、ステージ選択へ移行する
-				SceneManager.TransSceneTo(MakeShared<StageSelect>(), 1.0, 0.3, true, SceneTransitionBehavior::Ignore);
+				if (CommonData::LastBattleCanContinue && CommonData::CurrentBoard) {
+					// 戦闘に参加していない味方が残っていれば Board へ戻ってステージを継続する
+					SceneManager.TransSceneTo(CommonData::CurrentBoard, 1.0, 0.3, true, SceneTransitionBehavior::Ignore);
+				}
+				else {
+					// 味方が残っていなければステージ選択へ移行する
+					SceneManager.TransSceneTo(MakeShared<StageSelect>(), 1.0, 0.3, true, SceneTransitionBehavior::Ignore);
+				}
 			}
 			};
 

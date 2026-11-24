@@ -696,6 +696,17 @@ namespace Game {
 		const auto battleScene = MakeShared<BattleBase>();
 		SetupBattle(*battleScene, allyUnit, enemyUnit, coopAllies);
 
+		// 敗北時の継続判定: この戦闘に参加していない味方が盤面に残っているか
+		CommonData::LastBattleCanContinue = false;
+		for (const auto& unit : _units) {
+			if (not unit || unit->GetData().team != BoardTeam::Ally) continue;
+			bool participates = false;
+			for (const auto& participant : _battleParticipants) {
+				if (participant.first == unit) participates = true;
+			}
+			if (not participates) CommonData::LastBattleCanContinue = true;
+		}
+
 		// 戦闘シーンの前に、戦闘開始演出シーンを挟む
 		std::vector<BattleStartIconData> icons;
 		auto addIcon = [this, &icons](const SharedPtr<BoardUnit>& unit, bool isEnemy) {
