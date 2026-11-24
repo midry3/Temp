@@ -70,6 +70,9 @@ namespace Game {
 			_currentCharacterIndex = 0;
 			_selectedSkills.clear();
 			_selectedTargets.clear();
+			// 並びを選択順に戻す（選択先頭の味方が最前列）
+			_allyFormation.assign(_allies.rbegin(), _allies.rend());
+			ApplyAllyFormation(true);
 			_usingSkillView->Out();
 			_battleUI->In();
 			_hud->UpdateView();
@@ -141,6 +144,71 @@ namespace Game {
 				if (aIsEnemy != bIsEnemy) return bIsEnemy;
 				return false;
 			});
+
+		// 味方の並びを行動順にする（最初に行動する味方が最前列）
+		std::vector<SharedPtr<BattleCharacter>> allyOrder;
+		for (const auto& queued : _actionQueue) {
+			if (queued.actor && not IsEnemyCharacter(queued.actor)) {
+				allyOrder.push_back(queued.actor);
+			}
+		}
+		for (const auto& ally : _allies) {
+			if (std::find(allyOrder.begin(), allyOrder.end(), ally) == allyOrder.end()) {
+				allyOrder.push_back(ally);
+			}
+		}
+		_allyFormation.assign(allyOrder.rbegin(), allyOrder.rend());
+		ApplyAllyFormation(true);
+	}
+
+	void BattleBase::SetAllyFront(const SharedPtr<BattleCharacter>& character) {
+		const auto it = std::find(_allyFormation.begin(), _allyFormation.end(), character);
+		if (it == _allyFormation.end()) return;
+		std::rotate(_allyFormation.begin(), it + 1, _allyFormation.end());
+	}
+
+	void BattleBase::ApplyAllyFormation(bool animate) {
+		for (size_t i = 0; i < _allyFormation.size(); ++i) {
+			const auto& ally = _allyFormation[i];
+			if (not ally) continue;
+			const Vector2D slot(static_cast<double>(i) * ALLY_SPACING, 0.0);
+			if (animate) {
+				auto tweenGroup = ally->CreateTweenGroup();
+				tweenGroup->CreateTween(&ally->position, slot, FORMATION_ANIMATION_TIME, Easing::EaseInOutQuad);
+			}
+			else {
+				ally->position = slot;
+			}
+		}
+		ApplyAllyDimming();
+	}
+
+	void BattleBase::ApplyAllyDimming() {
+		for (size_t i = 0; i < _allyFormation.size(); ++i) {
+			const auto& ally = _allyFormation[i];
+			if (not ally) continue;
+			const bool isFront = i + 1 == _allyFormation.size();
+			ally->modulate = isFront
+				? Vector3D(255, 255, 255)
+				: Vector3D(FORMATION_DIM_VALUE, FORMATION_DIM_VALUE, FORMATION_DIM_VALUE);
+		}
+	}
+
+	void BattleBase::AdvanceAllyFormationAfterAction() {
+		// 次に行動する味方を最前列にする（最前列の味方が倒れた場合も含む）
+		for (size_t i = _actionIndex; i < _actionQueue.size(); ++i) {
+			const auto& actor = _actionQueue[i].actor;
+			if (not actor || IsEnemyCharacter(actor)) continue;
+			if (not _allyFormation.empty() && _allyFormation.back() == actor) {
+				ApplyAllyDimming();
+			}
+			else {
+				SetAllyFront(actor);
+				ApplyAllyFormation(true);
+			}
+			return;
+		}
+		ApplyAllyDimming();
 	}
 
 	void BattleBase::ExecuteNextAction() {
@@ -156,6 +224,7 @@ namespace Game {
 			_attack = CreateScene<BattleAttack>();
 			_attack->Completed().Connect([this]() {
 				_hud->UpdateView();
+				AdvanceAllyFormationAfterAction();
 				ExecuteNextAction();
 				});
 		}
@@ -230,6 +299,9 @@ namespace Game {
 	void BattleBase::AdvanceSelection() {
 		if (NextCharaExists()) {
 			_currentCharacterIndex++;
+			// 選択が終わったキャラは後ろへ、次のキャラが最前列へ
+			SetAllyFront(_allies[_currentCharacterIndex]);
+			ApplyAllyFormation(true);
 			_battleUI->In();
 		}
 		else {
@@ -268,8 +340,8 @@ namespace Game {
 		if (_charactersPut) return;
 		_charactersPut = true;
 
-		const auto& alliesGrid = CreateScene<AnimatedGrid>();
-		alliesGrid->SetSize({ 200, CHARACTER_GRID_HEIGHT })->SetPosition({ ALLIES_X, CHARACTER_Y });
+		_alliesRow = CreateScene<Scene>();
+		_alliesRow->SetPosition({ ALLIES_X, CHARACTER_Y });
 		const auto& enemiesGrid = CreateScene<AnimatedGrid>();
 		enemiesGrid->SetSize({ 200, CHARACTER_GRID_HEIGHT })->SetPosition({ ENEMIES_X, CHARACTER_Y });
 
@@ -277,8 +349,13 @@ namespace Game {
 			ally->StatChanged.Connect([this]() {
 				_hud->UpdateView();
 				});
-			alliesGrid->AddScene(ally);
+			ally->Load();
+			_alliesRow->AddScene(ally);
 		}
+
+		// 初期配置は選択順（選択先頭の味方が最前列）
+		_allyFormation.assign(_allies.rbegin(), _allies.rend());
+		ApplyAllyFormation(false);
 		for (const auto& enemy : _enemies) {
 			enemy->StatChanged.Connect([this]() {
 				_hud->UpdateView();

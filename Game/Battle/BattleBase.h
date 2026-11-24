@@ -28,6 +28,11 @@ namespace Game {
 			CHARACTER_Y = 600,
 			CHARACTER_GRID_HEIGHT = 500;
 
+		// 味方の横一列フォーメーション（間隔と移動アニメーション時間、暗さ）
+		static constexpr double ALLY_SPACING = 160.0;
+		static constexpr double FORMATION_ANIMATION_TIME = 0.45;
+		static constexpr int FORMATION_DIM_VALUE = 128;
+
 		StateMachine _state;
 		std::vector<SkillInfo> _selectedSkills;
 		std::vector<std::vector<SharedPtr<BattleCharacter>>> _selectedTargets;
@@ -43,11 +48,19 @@ namespace Game {
 		std::vector<QueuedAction> _actionQueue;
 		size_t _actionIndex = 0;
 
+		// 味方の並び（左→右。最後尾が最前列）
+		std::vector<SharedPtr<BattleCharacter>> _allyFormation;
+		SharedPtr<Scene> _alliesRow;
+
 		std::vector<SharedPtr<BattleCharacter>> GetTargetCandidates(const SharedPtr<BattleCharacter>& actor, const SkillInfo& skill) const;
 		void AdvanceSelection();
 		void ShowTargetSelect(const SkillInfo& skill, const std::vector<SharedPtr<BattleCharacter>>& candidates);
 		void BuildActionQueue();
 		void ExecuteNextAction();
+		void SetAllyFront(const SharedPtr<BattleCharacter>& character);
+		void ApplyAllyFormation(bool animate);
+		void ApplyAllyDimming();
+		void AdvanceAllyFormationAfterAction();
 		std::optional<SkillInfo> ChooseEnemySkill(const SharedPtr<BattleCharacter>& enemy) const;
 		std::vector<SharedPtr<BattleCharacter>> ChooseEnemyTargets(const SharedPtr<BattleCharacter>& enemy, const SkillInfo& skill) const;
 		bool IsEnemyCharacter(const SharedPtr<BattleCharacter>& character) const;
