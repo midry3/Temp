@@ -59,6 +59,7 @@ namespace Game {
 		static constexpr double COOP_ICON_SIZE_RATIO = 0.32;
 		static constexpr double COOP_ICON_TOP_MARGIN = 2.0;
 		SharedPtr<Scene> _coopIconLayer;
+		SharedPtr<Scene> _hintLayer;
 		std::vector<SharedPtr<Sprite2D>> _coopIcons;
 		std::vector<std::pair<SharedPtr<BoardUnit>, SharedPtr<BattleCharacter>>> _battleParticipants;
 

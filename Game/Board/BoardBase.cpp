@@ -250,6 +250,11 @@ namespace Game {
 		BuildTiles(textures, tiles);
 		BuildObjects(objects);
 		BuildUnits(units);
+		// タイルの点滅はオブジェクトやユニットより上に描く（共闘アイコンはさらに上）
+		if (not _hintLayer) _hintLayer = CreateScene<Scene>();
+		for (const auto& tile : _tiles) {
+			if (tile) tile->SetHintLayer(_hintLayer);
+		}
 		// 共闘ミニアイコンは盤面の一番上に描く
 		if (not _coopIconLayer) _coopIconLayer = CreateScene<Scene>();
 		UpdateEnemyIntentVisuals();
