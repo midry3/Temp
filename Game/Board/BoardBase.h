@@ -49,6 +49,7 @@ namespace Game {
 		std::function<void()> _pendingTransition;
 		SharedPtr<CoopSelectModal> _coopModal;
 		SharedPtr<BoardUnit> _battleEnemyUnit;
+		std::vector<SharedPtr<BoardUnit>> _battleEnemyGroupUnits;
 		SharedPtr<BoardUnit> _battleWarningEnemy;
 		SharedPtr<SoundPlayer> _bgmPlayer;
 		bool _battleStartedInEnemyTurn = false;
@@ -65,6 +66,10 @@ namespace Game {
 		void CancelSelection();
 		void UpdateMoveHints();
 		void ExecuteEnemyTurn();
+		void MoveEnemyAction(const BoardEnemyAction& action);
+		void AnimateUnitMove(const SharedPtr<BoardUnit>& unit, int x, int y, const std::function<void()>& onComplete = nullptr);
+		[[nodiscard]] bool CanGroupMemberMoveTo(const BoardUnit& member, int x, int y, const std::vector<SharedPtr<BoardUnit>>& group) const;
+		void RemoveEnemyUnits(const std::vector<SharedPtr<BoardUnit>>& units, size_t index, const std::function<void()>& onComplete);
 		void ClearEnemyIntentVisuals();
 		bool IsBlockedBeyondUnit(const BoardUnit& unit, int dx, int dy) const;
 		void OnReturnedFromBattle();
@@ -84,6 +89,8 @@ namespace Game {
 		[[nodiscard]] virtual std::optional<BoardEnemyAction> DecideEnemyAction();
 
 		[[nodiscard]] bool CanReachTile(const BoardUnit& unit, int targetX, int targetY) const;
+		// 敵ユニットが属するグループの全員（グループなしならそのユニットのみ）
+		[[nodiscard]] std::vector<SharedPtr<BoardUnit>> GetEnemyGroupUnits(const SharedPtr<BoardUnit>& unit) const;
 		virtual void OpenCoopSelect(const SharedPtr<BoardUnit>& primaryAlly, const SharedPtr<BoardUnit>& enemy);
 		virtual void SetupBattle(BattleBase& battle, const SharedPtr<BoardUnit>& allyUnit, const SharedPtr<BoardUnit>& enemyUnit, const std::vector<SharedPtr<BoardUnit>>& coopAllies = {});
 		virtual void StartBattle(const SharedPtr<BoardUnit>& allyUnit, const SharedPtr<BoardUnit>& enemyUnit, const std::vector<SharedPtr<BoardUnit>>& coopAllies = {});

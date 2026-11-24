@@ -215,6 +215,7 @@ namespace Game {
 					unit.texture = ReadString(state, -1, "icon", ReadString(state, -1, "texture"));
 					unit.x = ReadInteger(state, -1, "x");
 					unit.y = ReadInteger(state, -1, "y");
+					unit.group = ReadString(state, -1, "group");
 					units.push_back(unit);
 				}
 				lua_pop(state, 1);
@@ -401,7 +402,10 @@ namespace Game {
 		_nextEnemyAction = DecideEnemyAction();
 		if (_nextEnemyAction.has_value()) {
 			if (_nextEnemyAction->enemy) {
-				_nextEnemyAction->enemy->SetIntentHint(true);
+				// グループの敵はメンバー全員が一緒に動くため、全員に予告を出す
+				for (const auto& member : GetEnemyGroupUnits(_nextEnemyAction->enemy)) {
+					member->SetIntentHint(true);
+				}
 			}
 			const auto targetTile = GetTile(_nextEnemyAction->targetX, _nextEnemyAction->targetY);
 			if (targetTile) {
@@ -422,35 +426,13 @@ namespace Game {
 		}
 
 		if (action.has_value() && action->enemy) {
-			const auto targetUnit = GetUnitAt(action->targetX, action->targetY);
-			const bool isAllyEncounter = targetUnit && targetUnit->IsAlly();
 			if (CanMoveTo(*action->enemy, action->targetX, action->targetY, true)) {
-				MoveUnit(action->enemy, action->targetX, action->targetY, true, [this, enemy = action->enemy, targetUnit, isAllyEncounter]() {
-					if (isAllyEncounter) {
-						OpenCoopSelect(targetUnit, enemy);
-					}
-					else {
-						_turn++;
-						_isEnemyTurn = false;
-						UpdateEnemyIntentVisuals();
-					}
-				});
+				MoveEnemyAction(action.value());
 				return;
 			}
 			const auto fallbackAction = DecideEnemyAction();
 			if (fallbackAction.has_value() && fallbackAction->enemy && CanMoveTo(*fallbackAction->enemy, fallbackAction->targetX, fallbackAction->targetY, true)) {
-				const auto fallbackTarget = GetUnitAt(fallbackAction->targetX, fallbackAction->targetY);
-				const bool fallbackEncounter = fallbackTarget && fallbackTarget->IsAlly();
-				MoveUnit(fallbackAction->enemy, fallbackAction->targetX, fallbackAction->targetY, true, [this, enemy = fallbackAction->enemy, fallbackTarget, fallbackEncounter]() {
-					if (fallbackEncounter) {
-						OpenCoopSelect(fallbackTarget, enemy);
-					}
-					else {
-						_turn++;
-						_isEnemyTurn = false;
-						UpdateEnemyIntentVisuals();
-					}
-				});
+				MoveEnemyAction(fallbackAction.value());
 				return;
 			}
 		}
@@ -458,6 +440,68 @@ namespace Game {
 		_turn++;
 		_isEnemyTurn = false;
 		UpdateEnemyIntentVisuals();
+	}
+
+	void BoardBase::MoveEnemyAction(const BoardEnemyAction& action) {
+		const auto targetUnit = GetUnitAt(action.targetX, action.targetY);
+		const bool isAllyEncounter = targetUnit && targetUnit->IsAlly();
+		auto postProcess = [this, enemy = action.enemy, targetUnit, isAllyEncounter]() {
+			if (isAllyEncounter) {
+				OpenCoopSelect(targetUnit, enemy);
+			}
+			else {
+				_turn++;
+				_isEnemyTurn = false;
+				UpdateEnemyIntentVisuals();
+			}
+		};
+
+		const auto groupUnits = GetEnemyGroupUnits(action.enemy);
+		if (groupUnits.size() <= 1) {
+			MoveUnit(action.enemy, action.targetX, action.targetY, true, postProcess);
+			return;
+		}
+
+		// グループの敵は、リーダーと同じ変位でひとかたまりとして動く。
+		// 移動先が塞がっているメンバーはその場に残る
+		const int dx = action.targetX - action.enemy->GetData().x;
+		const int dy = action.targetY - action.enemy->GetData().y;
+		std::vector<std::pair<SharedPtr<BoardUnit>, std::pair<int, int>>> movers;
+		movers.push_back({ action.enemy, { action.targetX, action.targetY } });
+		for (const auto& member : groupUnits) {
+			if (member == action.enemy) continue;
+			const int destX = member->GetData().x + dx;
+			const int destY = member->GetData().y + dy;
+			if (CanGroupMemberMoveTo(*member, destX, destY, groupUnits)) {
+				movers.push_back({ member, { destX, destY } });
+			}
+		}
+		auto remaining = std::make_shared<int>(static_cast<int>(movers.size()));
+		for (const auto& [unit, dest] : movers) {
+			AnimateUnitMove(unit, dest.first, dest.second, [this, remaining, postProcess]() {
+				if (*remaining <= 1) {
+					postProcess();
+				}
+				else {
+					*remaining -= 1;
+					_isAnimating = true;
+				}
+			});
+		}
+	}
+
+	bool BoardBase::CanGroupMemberMoveTo(const BoardUnit& member, int x, int y, const std::vector<SharedPtr<BoardUnit>>& group) const {
+		if (not IsInside(x, y)) return false;
+		const auto tile = GetTile(x, y);
+		if (not tile || not tile->IsPassable()) return false;
+		const auto occupant = GetUnitAt(x, y);
+		if (not occupant) return true;
+		if (occupant.get() == &member) return true;
+		// 同じグループのメンバーがいるマスは、そのメンバーも同時に動くので進める
+		for (const auto& groupUnit : group) {
+			if (groupUnit == occupant) return true;
+		}
+		return false;
 	}
 
 	void BoardBase::EndTurn() {
@@ -531,7 +575,10 @@ namespace Game {
 				addParticipant(coopUnit, false);
 			}
 		}
-		addParticipant(enemyUnit, true);
+		// 対象の敵がグループに属する場合は、グループ全員が戦闘に参加する
+		for (const auto& member : GetEnemyGroupUnits(enemyUnit)) {
+			addParticipant(member, true);
+		}
 
 		// 戦闘シーンのロード完了後（各キャラの初期化後）に、Board 側の永続状態を引き継ぐ
 		const auto participants = _battleParticipants;
@@ -546,6 +593,7 @@ namespace Game {
 
 	void BoardBase::StartBattle(const SharedPtr<BoardUnit>& allyUnit, const SharedPtr<BoardUnit>& enemyUnit, const std::vector<SharedPtr<BoardUnit>>& coopAllies) {
 		_battleEnemyUnit = enemyUnit;
+		_battleEnemyGroupUnits = GetEnemyGroupUnits(enemyUnit);
 		_battleWarningEnemy = _nextEnemyAction.has_value() ? _nextEnemyAction->enemy : nullptr;
 		_battleStartedInEnemyTurn = _isEnemyTurn;
 		CommonData::LastBattleEnemyDefeated = false;
@@ -576,7 +624,9 @@ namespace Game {
 				addIcon(coopUnit, false);
 			}
 		}
-		addIcon(enemyUnit, true);
+		for (const auto& member : _battleEnemyGroupUnits) {
+			addIcon(member, true);
+		}
 
 		const auto startScene = MakeShared<BattleStartScene>();
 		startScene->Setup(icons, [this, battleScene]() {
@@ -619,16 +669,19 @@ namespace Game {
 		}
 
 		const auto battleEnemy = _battleEnemyUnit;
+		auto defeatedUnits = _battleEnemyGroupUnits;
+		if (defeatedUnits.empty() && battleEnemy) defeatedUnits.push_back(battleEnemy);
 		const auto warningEnemy = _battleWarningEnemy;
 		const bool startedInEnemyTurn = _battleStartedInEnemyTurn;
 		_battleEnemyUnit.reset();
+		_battleEnemyGroupUnits.clear();
 		_battleWarningEnemy.reset();
 		_battleStartedInEnemyTurn = false;
 
 		const bool defeated = CommonData::LastBattleEnemyDefeated;
 		CommonData::LastBattleEnemyDefeated = false;
 
-		auto resumeFlow = [this, battleEnemy, warningEnemy, defeated, startedInEnemyTurn]() {
+		auto resumeFlow = [this, defeatedUnits, warningEnemy, defeated, startedInEnemyTurn]() {
 			if (GetEnemyUnits().empty()) {
 				ShowWinScreen();
 				return;
@@ -640,8 +693,10 @@ namespace Game {
 				UpdateEnemyIntentVisuals();
 				return;
 			}
-			if (defeated && warningEnemy && warningEnemy == battleEnemy) {
-				// 警告を出していた敵を倒したので、敵は動かずに次のターンへ
+			const bool warningDefeated = defeated && warningEnemy
+				&& std::find(defeatedUnits.begin(), defeatedUnits.end(), warningEnemy) != defeatedUnits.end();
+			if (warningDefeated) {
+				// 警告を出していた敵（のグループ）を倒したので、敵は動かずに次のターンへ
 				_turn++;
 				UpdateEnemyIntentVisuals();
 				return;
@@ -651,11 +706,21 @@ namespace Game {
 		};
 
 		if (defeated) {
-			RemoveEnemyUnit(battleEnemy, resumeFlow);
+			RemoveEnemyUnits(defeatedUnits, 0, resumeFlow);
 		}
 		else {
 			resumeFlow();
 		}
+	}
+
+	void BoardBase::RemoveEnemyUnits(const std::vector<SharedPtr<BoardUnit>>& units, size_t index, const std::function<void()>& onComplete) {
+		if (units.size() <= index) {
+			if (onComplete) onComplete();
+			return;
+		}
+		RemoveEnemyUnit(units[index], [this, units, index, onComplete]() {
+			RemoveEnemyUnits(units, index + 1, onComplete);
+		});
 	}
 
 	void BoardBase::RemoveEnemyUnit(const SharedPtr<BoardUnit>& enemy, const std::function<void()>& onComplete) {
@@ -701,6 +766,11 @@ namespace Game {
 
 	bool BoardBase::MoveUnit(const SharedPtr<BoardUnit>& unit, int x, int y, bool allowOccupiedByTarget, const std::function<void()>& onComplete) {
 		if (not IsMoveAllowed(*unit, x, y, allowOccupiedByTarget)) return false;
+		AnimateUnitMove(unit, x, y, onComplete);
+		return true;
+	}
+
+	void BoardBase::AnimateUnitMove(const SharedPtr<BoardUnit>& unit, int x, int y, const std::function<void()>& onComplete) {
 		_isAnimating = true;
 		unit->SetBoardPosition(x, y);
 		const auto& targetPos = GetTilePosition(x, y);
@@ -719,7 +789,21 @@ namespace Game {
 			_isAnimating = false;
 			if (onComplete) onComplete();
 		});
-		return true;
+	}
+
+	std::vector<SharedPtr<BoardUnit>> BoardBase::GetEnemyGroupUnits(const SharedPtr<BoardUnit>& unit) const {
+		std::vector<SharedPtr<BoardUnit>> result;
+		if (not unit) return result;
+		result.push_back(unit);
+		if (unit->IsAlly()) return result;
+		const std::string& group = unit->GetData().group;
+		if (group.empty()) return result;
+		for (const auto& other : _units) {
+			if (other && other != unit && not other->IsAlly() && other->GetData().group == group) {
+				result.push_back(other);
+			}
+		}
+		return result;
 	}
 
 	std::vector<SharedPtr<BoardUnit>> BoardBase::GetUnitsByTeam(BoardTeam team) const {

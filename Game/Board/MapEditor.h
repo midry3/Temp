@@ -42,6 +42,7 @@ namespace Game {
 		std::string moveType = "adjacent";
 		int x = 0;
 		int y = 0;
+		std::string group;
 	};
 
 	struct MapEditorCharacterInfo {
@@ -98,6 +99,9 @@ namespace Game {
 		std::array<char, 512> _objectTextureInput{};
 		std::array<char, 128> _characterNameInput{};
 		std::array<char, 512> _characterIconInput{};
+		std::array<char, 64> _groupInput{};
+		std::array<char, 64> _characterGroupInput{};
+		int _groupEditIndex = -1;
 		std::array<char, 128> _assetSearch{};
 		std::map<std::string, MapEditorAssetThumbnail> _thumbnailCache;
 		float _thumbnailSize = 96.0f;

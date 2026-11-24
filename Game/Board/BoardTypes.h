@@ -59,5 +59,7 @@ namespace Game {
 		std::string texture;
 		int x = 0;
 		int y = 0;
+		// 敵グループ名（空欄はグループなし）。同じ名前の敵はひとかたまりで動き、戦闘も一緒になる
+		std::string group;
 	};
 }
