@@ -145,7 +145,6 @@ namespace Game {
 		auto& s = _info.currentState;
 		const auto& base = _info.stats;
 		if (stat == "CurrentHP") {
-			DebuggerWriteLine("BattleCharacter::ModifyStat: CurrentHP changed by " + std::to_string(delta));
 			s.currentHP = Clamp(s.currentHP + delta, 0, base.maxHP);
 			if (0 < delta) {
 				_powerUpSoundPlayer->Play();

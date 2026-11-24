@@ -6,7 +6,7 @@ namespace Game {
 		EnemyBattleCharacter::_Load();
 		SetInfo({
 			"レアスライム",
-			"enemy/slime/icon.png",
+			"enemy/rare_slime/icon.png",
 			{
 				DEFAULT_MAX_HP, 0, DEFAULT_ATK, DEFAULT_DEF, DEFAULT_MDEF, DEFAULT_SPEED
 			},
@@ -14,25 +14,22 @@ namespace Game {
 				DEFAULT_MAX_HP, 0, DEFAULT_ATK, DEFAULT_DEF, DEFAULT_MDEF, DEFAULT_SPEED
 			},
 			{
-				{ RareSlimeAnimation::Idle, "enemy/slime/idle.png" },
-				{ RareSlimeAnimation::Attack, "enemy/slime/idle.png" },
-				{ RareSlimeAnimation::Damage, "enemy/slime/idle.png" },
-				{ RareSlimeAnimation::Death, "enemy/slime/idle.png" }
+				{ RareSlimeAnimation::Idle, "enemy/rare_slime/idle.png" },
+				{ RareSlimeAnimation::Attack, "enemy/rare_slime/idle.png" },
+				{ RareSlimeAnimation::Damage, "enemy/rare_slime/idle.png" },
+				{ RareSlimeAnimation::Death, "enemy/rare_slime/idle.png" }
 			},
-			CoreBackend::Drawing::Color(100, 160, 200)
+			CoreBackend::Drawing::Color(150, 200, 100)
 		});
 		SetStats({
 			DEFAULT_MAX_HP, DEFAULT_MAX_MP, DEFAULT_ATK, DEFAULT_DEF, DEFAULT_MDEF, DEFAULT_SPEED
 		});
 		SetSkills({
-			{ "たいあたり", "physical", "normal", "chara/slime/attack/attack_1.lua" }
+			{ "たいあたり", "physical", "normal", "chara/rare_slime/attack/attack_1.lua" }
 		});
 		SetRustleParams(20.0, 4, 0.12);
 
 		Initialize();
-
-		// 上位種は元のテクスチャを赤系に染めて区別する
-		SetModulateAll(Vector3D(255, 120, 120));
 	}
 
 	std::optional<SkillInfo> RareSlime::SelectSkill(const SharedPtr<BattleCharacter>& target) {

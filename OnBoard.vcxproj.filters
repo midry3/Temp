@@ -383,6 +383,9 @@
     <None Include="Assets\board\map2.lua" />
     <None Include="Assets\board\map4.lua" />
     <None Include="Assets\chara\golem\attack\attack_1.lua" />
+    <None Include="Assets\chara\rare_slime\attack\attack_1.lua" />
+    <None Include="Assets\board\map5.lua" />
+    <None Include="Assets\board\map6.lua" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shader\BlurInShader.hlsl" />

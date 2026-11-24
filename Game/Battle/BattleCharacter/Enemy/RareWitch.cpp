@@ -5,8 +5,8 @@ namespace Game {
 	void RareWitch::_Load() {
 		EnemyBattleCharacter::_Load();
 		SetInfo({
-			"レアウィッチ",
-			"enemy/witch/icon.png",
+			"上位ウィッチ",
+			"enemy/rare_witch/icon.png",
 			{
 				DEFAULT_MAX_HP, 0, DEFAULT_ATK, DEFAULT_DEF, DEFAULT_MDEF, DEFAULT_SPEED
 			},
@@ -14,10 +14,10 @@ namespace Game {
 				DEFAULT_MAX_HP, 0, DEFAULT_ATK, DEFAULT_DEF, DEFAULT_MDEF, DEFAULT_SPEED
 			},
 			{
-				{ RareWitchAnimation::Idle, "enemy/witch/idle.png" },
-				{ RareWitchAnimation::Attack, "enemy/witch/idle.png" },
-				{ RareWitchAnimation::Damage, "enemy/witch/idle.png" },
-				{ RareWitchAnimation::Death, "enemy/witch/idle.png" }
+				{ RareWitchAnimation::Idle, "enemy/rare_witch/idle.png" },
+				{ RareWitchAnimation::Attack, "enemy/rare_witch/idle.png" },
+				{ RareWitchAnimation::Damage, "enemy/rare_witch/idle.png" },
+				{ RareWitchAnimation::Death, "enemy/rare_witch/idle.png" }
 			},
 			CoreBackend::Drawing::Color(100, 160, 200)
 			});
@@ -30,9 +30,6 @@ namespace Game {
 		SetRustleParams(20.0, 4, 0.12);
 
 		Initialize();
-
-		// 上位種は元のテクスチャを赤系に染めて区別する
-		SetModulateAll(Vector3D(255, 120, 120));
 	}
 
 	std::optional<SkillInfo> RareWitch::SelectSkill(const SharedPtr<BattleCharacter>& target) {

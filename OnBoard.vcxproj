@@ -270,6 +270,8 @@
     <None Include="Assets\board\map2.lua" />
     <None Include="Assets\board\map3.lua" />
     <None Include="Assets\board\map4.lua" />
+    <None Include="Assets\board\map5.lua" />
+    <None Include="Assets\board\map6.lua" />
     <None Include="Assets\chara\golem\attack\attack_1.lua" />
     <None Include="Assets\chara\gou\attack.png.anim" />
     <None Include="Assets\chara\gou\attack\swing.lua" />
@@ -283,6 +285,7 @@
     <None Include="Assets\chara\plea\attack_front.png.anim" />
     <None Include="Assets\chara\plea\chanting.png.anim" />
     <None Include="Assets\chara\plea\idle.png.anim" />
+    <None Include="Assets\chara\rare_slime\attack\attack_1.lua" />
     <None Include="Assets\chara\reko\alpha_beam.png.anim" />
     <None Include="Assets\chara\reko\alpha_sword_attack.png.anim" />
     <None Include="Assets\chara\reko\alpha_sword_prepare.png.anim" />
