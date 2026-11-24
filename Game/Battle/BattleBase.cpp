@@ -63,9 +63,8 @@ namespace Game {
 			};
 
 		_skillSelect->BackPressed += [this]() {
-			// スキル選択からコマンド選択に戻る
-			_skillSelect->Out();
-			_battleUI->In();
+			// スキル選択から、そのキャラのコマンド選択に戻る
+			ReturnToCommandSelection();
 			};
 
 		_battleUI->PassPressed += [this]() {
@@ -440,6 +439,20 @@ namespace Game {
 	void BattleBase::UpdateBackButton() {
 		// 「戻る」は二番目以降のキャラの選択時にだけ有効
 		_battleUI->SetBackEnabled(not _selectedAllyIndices.empty());
+	}
+
+	void BattleBase::ReturnToCommandSelection() {
+		// 選択中のキャラ（_currentCharacterIndex）は変えず、そのキャラのコマンド選択に戻る。
+		// 前のキャラの選択は取り消さない。
+		_targetSelect->Hide();
+		_skillSelect->Out();
+		if (0 <= _currentCharacterIndex && _currentCharacterIndex < static_cast<int>(_allies.size())
+			&& _allies[_currentCharacterIndex]) {
+			SetAllyFront(_allies[_currentCharacterIndex]);
+			ApplyAllyFormation(true);
+		}
+		UpdateBackButton();
+		_battleUI->In();
 	}
 
 	void BattleBase::GoBackSelection() {

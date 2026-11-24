@@ -68,6 +68,7 @@ namespace Game {
 		std::vector<SharedPtr<BattleCharacter>> GetTargetCandidates(const SharedPtr<BattleCharacter>& actor, const SkillInfo& skill) const;
 		void AdvanceSelection();
 		void GoBackSelection();
+		void ReturnToCommandSelection();
 		void UpdateBackButton();
 		void ShowTargetSelect(const SkillInfo& skill, const std::vector<SharedPtr<BattleCharacter>>& candidates);
 		void BuildActionQueue();
