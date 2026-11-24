@@ -22,32 +22,32 @@ namespace Game {
 		_hpLabel->BeginSetting()
 			->SetFontSize(14)
 			->EndSetting()
-			->SetPosition({ 8, 36 });
+			->SetPosition({ 50, 36 });
 
 		_hpBarBackground = CreateScene<Sprite2D>();
 		_hpBarBackground->SetTexture(LoadAsset<Texture>("UI/hp_bar.png"))
 			->SetModulate({ 255, 100, 100 })
-			->SetPosition({ 8, 54 });
+			->SetPosition({ 50, 54 });
 		_hpBar = CreateScene<ProgressSprite2D>();
 		_hpBar->SetTexture(LoadAsset<Texture>("UI/hp_bar.png"))
 			->SetModulate({ 100, 255, 100 })
-			->SetPosition({ 8, 54 });
+			->SetPosition({ 50, 54 });
 		_hpBar->SetProgress(1.0);
 
 		_mpLabel = CreateScene<TextLabel>();
 		_mpLabel->BeginSetting()
 			->SetFontSize(14)
 			->EndSetting()
-			->SetPosition({ 8, 70 });
+			->SetPosition({ 50, 70 });
 
 		_mpBarBackground = CreateScene<Sprite2D>();
 		_mpBarBackground->SetTexture(LoadAsset<Texture>("UI/hp_bar.png"))
 			->SetModulate({ 100, 100, 100 })
-			->SetPosition({ 8, 88 });
+			->SetPosition({ 50, 88 });
 		_mpBar = CreateScene<ProgressSprite2D>();
 		_mpBar->SetTexture(LoadAsset<Texture>("UI/hp_bar.png"))
 			->SetModulate({ 200, 100, 50 })
-			->SetPosition({ 8, 88 });
+			->SetPosition({ 50, 88 });
 		_mpBar->SetProgress(1.0);
 
 		_otherLabel = CreateScene<TextLabel>();
