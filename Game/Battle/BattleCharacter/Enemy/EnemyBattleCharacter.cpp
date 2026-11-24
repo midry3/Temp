@@ -90,7 +90,7 @@ namespace Game {
 			if (not weak_from_this().expired()) {
 				selfChar = std::dynamic_pointer_cast<BattleCharacter>(shared_from_this());
 			}
-			_attackScene->Start(selfChar, target, skill);
+			_attackScene->Start(selfChar, { target }, skill);
 		}
 		else {
 			PlayRustleAnimation(_rustleWidth, _rustleRoundTrips, _rustleDurationPerTrip, [this, target, onComplete]() {

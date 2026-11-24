@@ -25,9 +25,9 @@ namespace Game {
 			});
 		SetSkills({
 			{ "爆破魔法", "special", "fire", "chara/plea/attack/fire.lua", 50 },
-			{ "流星魔法", "special", "", "chara/plea/attack/shooting_star.lua", 100 },
+			{ "流星魔法", "special", "", "chara/plea/attack/shooting_star.lua", 100, SkillTargetScope::All },
 			{ "二重詠唱", "special", "", "chara/plea/attack/chanting.lua", 10 },
-			{ "転送魔法", "special", "", "chara/plea/attack/teleport.lua", 20 }
+			{ "転送魔法", "special", "", "chara/plea/attack/teleport.lua", 20, SkillTargetScope::Single, SkillTargetSide::Ally }
 			});
 
 		Initialize();
