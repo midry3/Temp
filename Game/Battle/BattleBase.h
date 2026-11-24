@@ -24,6 +24,7 @@ namespace Game {
 
 		static constexpr int
 			ALLIES_X = 100,
+			ALLIES_X_2 = 300,
 			ENEMIES_X = 1000,
 			CHARACTER_Y = 550,
 			CHARACTER_GRID_HEIGHT = 500;
@@ -51,6 +52,8 @@ namespace Game {
 		// 味方の並び（左→右。最後尾が最前列）
 		std::vector<SharedPtr<BattleCharacter>> _allyFormation;
 		SharedPtr<Scene> _alliesRow;
+		// 最前列のX座標（通常は ALLIES_X、敵の攻撃時は ALLIES_X_2）
+		double _formationFrontX = ALLIES_X;
 
 		std::vector<SharedPtr<BattleCharacter>> GetTargetCandidates(const SharedPtr<BattleCharacter>& actor, const SkillInfo& skill) const;
 		void AdvanceSelection();

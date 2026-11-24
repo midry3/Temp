@@ -71,6 +71,7 @@ namespace Game {
 			_selectedSkills.clear();
 			_selectedTargets.clear();
 			// 並びを選択順に戻す（選択先頭の味方が最前列）
+			_formationFrontX = ALLIES_X;
 			_allyFormation.assign(_allies.rbegin(), _allies.rend());
 			ApplyAllyFormation(true);
 			_usingSkillView->Out();
@@ -168,6 +169,16 @@ namespace Game {
 	}
 
 	void BattleBase::ApplyAllyFormation(bool animate) {
+		// 最前列の位置（行全体の原点）を必要に応じてずらす
+		if (_alliesRow) {
+			if (animate) {
+				auto rowTween = _alliesRow->CreateTweenGroup();
+				rowTween->CreateTween(&_alliesRow->position.x, _formationFrontX, FORMATION_ANIMATION_TIME, Easing::EaseInOutQuad);
+			}
+			else {
+				_alliesRow->position.x = _formationFrontX;
+			}
+		}
 		for (size_t i = 0; i < _allyFormation.size(); ++i) {
 			const auto& ally = _allyFormation[i];
 			if (not ally) continue;
@@ -206,8 +217,9 @@ namespace Game {
 				ApplyAllyDimming();
 			}
 			else {
+				// 位置の適用は ExecuteNextAction 側で行う（最前列Xの切り替えとまとめるため）
 				SetAllyFront(actor);
-				ApplyAllyFormation(true);
+				ApplyAllyDimming();
 			}
 			return;
 		}
@@ -258,6 +270,9 @@ namespace Game {
 		_state >> Direction;
 		_allySkillPanel->SetSkill(queued.skill);
 		_usingSkillView->In();
+		// 敵の攻撃時は味方の列を右へ寄せて見やすくする
+		_formationFrontX = IsEnemyCharacter(queued.actor) ? ALLIES_X_2 : ALLIES_X;
+		ApplyAllyFormation(true);
 		_attack->Start(queued.actor, queued.targets, queued.skill);
 	}
 
