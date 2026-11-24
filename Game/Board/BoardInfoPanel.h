@@ -14,8 +14,8 @@ namespace Game {
 	// 幅と高さは BoardBase のレイアウト計算から SetPanelSize で受け取る。
 	class BoardInfoPanel : public Scene {
 	private:
-		// 倒れた味方のパネルにかける薄黒
-		static constexpr int PANEL_DEAD_DIM_VALUE = 128;
+		// 倒れた味方のパネルにかける薄黒の割合（元の色味に掛ける）
+		static constexpr double PANEL_DEAD_DIM_RATE = 0.5;
 
 		SharedPtr<ColorRect> _background;
 		SharedPtr<GridContainer> _allyGrid;

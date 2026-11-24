@@ -4,12 +4,14 @@
 
 namespace Game {
 	namespace {
-		// パネル全体（子シーンを含む）に色味を適用する
-		void SetModulateAll(const SharedPtr<Scene>& scene, const Vector3D& color) {
+		// パネル全体（子シーンを含む）の色味に割合を掛ける。
+		// HPバーなどは modulate で色付けされているため、上書きせずに暗くする
+		void MultiplyModulateAll(const SharedPtr<Scene>& scene, double rate) {
 			if (not scene) return;
-			scene->modulate = color;
+			const auto base = scene->modulate;
+			scene->modulate = Vector3D(base.x * rate, base.y * rate, base.z * rate);
 			for (const auto& child : scene->GetChildScenes()) {
-				SetModulateAll(child, color);
+				MultiplyModulateAll(child, rate);
 			}
 		}
 	}
@@ -80,7 +82,7 @@ namespace Game {
 			const auto& panel = _allyGrid->CreateScene<BoardStatusPanel>();
 			panel->SetCharacter(character);
 			panel->UpdateView();
-			SetModulateAll(panel, Vector3D(PANEL_DEAD_DIM_VALUE, PANEL_DEAD_DIM_VALUE, PANEL_DEAD_DIM_VALUE));
+			MultiplyModulateAll(panel, PANEL_DEAD_DIM_RATE);
 			_allyPanels.push_back(panel);
 		}
 	}

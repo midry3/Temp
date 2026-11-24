@@ -4,16 +4,21 @@
 #include "EnemyStatsPanel.h"
 #include <Scene/Container/Grid/GridContainer.h>
 #include "BattleCharacter/BattleCharacter.h"
+#include <map>
 #include <optional>
 #include <utility>
 
 namespace Game {
 	class Hud : public Scene {
 	private:
-		// 死亡したキャラクターのパネルにかける薄黒
-		static constexpr int PANEL_DEAD_DIM_VALUE = 128;
+		// 死亡したキャラクターのパネルにかける薄黒の割合（元の色味に掛ける）
+		static constexpr double PANEL_DEAD_DIM_RATE = 0.5;
 
 		std::vector<SharedPtr<BattleCharacter>> _allies, _enemies;
+		// 薄黒を戻すために控える、パネル各シーンの元の色味
+		std::map<Scene*, Vector3D> _panelDimRestore;
+
+		void ApplyPanelDim(const SharedPtr<Scene>& panel, bool dim);
 		std::vector<SharedPtr<StatusPanel>> _allyStatusPanels;
 		std::vector<SharedPtr<EnemyStatsPanel>> _enemyStatusPanels;
 		SharedPtr<GridContainer> _allyStatusGrid, _enemyStatusGrid;

@@ -2,12 +2,12 @@
 
 namespace Game {
 	namespace {
-		// パネル全体（子シーンを含む）に色味を適用する
-		void SetModulateAll(const SharedPtr<Scene>& scene, const Vector3D& color) {
+		// パネル全体（子シーンを含む）を列挙する
+		void CollectScenes(const SharedPtr<Scene>& scene, std::vector<Scene*>& out) {
 			if (not scene) return;
-			scene->modulate = color;
+			out.push_back(scene.get());
 			for (const auto& child : scene->GetChildScenes()) {
-				SetModulateAll(child, color);
+				CollectScenes(child, out);
 			}
 		}
 	}
@@ -23,6 +23,7 @@ namespace Game {
 	}
 
 	void Hud::SetAllies(const std::vector<SharedPtr<BattleCharacter>>& allies) {
+		_panelDimRestore.clear();
 		_allies = allies;
 
 		_allyStatusGrid->SetMatrixSize({ 1, static_cast<double>(_allies.size()) });
@@ -35,6 +36,7 @@ namespace Game {
 	}
 
 	void Hud::SetEnemies(const std::vector<SharedPtr<BattleCharacter>>& enemies) {
+		_panelDimRestore.clear();
 		_enemies = enemies;
 		_enemyStatusGrid->SetMatrixSize({ 1, static_cast<double>(_enemies.size()) });
 		_enemyStatusPanels.clear();
@@ -67,16 +69,35 @@ namespace Game {
 		for (size_t i = 0; i < _allyStatusPanels.size(); ++i) {
 			_allyStatusPanels[i]->UpdateView();
 			const bool dead = i < _allies.size() && _allies[i] && _allies[i]->IsDead();
-			SetModulateAll(_allyStatusPanels[i], dead
-				? Vector3D(PANEL_DEAD_DIM_VALUE, PANEL_DEAD_DIM_VALUE, PANEL_DEAD_DIM_VALUE)
-				: Vector3D(255, 255, 255));
+			ApplyPanelDim(_allyStatusPanels[i], dead);
 		}
 		for (size_t i = 0; i < _enemyStatusPanels.size(); ++i) {
 			_enemyStatusPanels[i]->UpdateView();
 			const bool dead = i < _enemies.size() && _enemies[i] && _enemies[i]->IsDead();
-			SetModulateAll(_enemyStatusPanels[i], dead
-				? Vector3D(PANEL_DEAD_DIM_VALUE, PANEL_DEAD_DIM_VALUE, PANEL_DEAD_DIM_VALUE)
-				: Vector3D(255, 255, 255));
+			ApplyPanelDim(_enemyStatusPanels[i], dead);
+		}
+	}
+
+	void Hud::ApplyPanelDim(const SharedPtr<Scene>& panel, bool dim) {
+		// HPバーなどは modulate で色付けされているため、白や灰色で上書きせず、
+		// 元の色味を控えたうえで割合を掛けて暗くする（バーの色を保ったまま薄黒にする）
+		std::vector<Scene*> nodes;
+		CollectScenes(panel, nodes);
+		for (auto* node : nodes) {
+			if (dim) {
+				if (_panelDimRestore.count(node) == 0) {
+					_panelDimRestore[node] = node->modulate;
+				}
+				const auto base = _panelDimRestore[node];
+				node->modulate = Vector3D(base.x * PANEL_DEAD_DIM_RATE, base.y * PANEL_DEAD_DIM_RATE, base.z * PANEL_DEAD_DIM_RATE);
+			}
+			else {
+				const auto it = _panelDimRestore.find(node);
+				if (it != _panelDimRestore.end()) {
+					node->modulate = it->second;
+					_panelDimRestore.erase(it);
+				}
+			}
 		}
 	}
 }
