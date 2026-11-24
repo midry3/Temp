@@ -34,15 +34,15 @@ namespace Game {
 		_guideLabel->SetFontSize(16)->SetForegroundColor(CoreBackend::Drawing::Color(220, 235, 255));
 		_guideLabel->SetText("参戦する仲間の選択")->SetPosition({ 380.0, 24.0 });
 
-		// 画面下部 戦闘開始ボタン
+		// 画面下部 戦闘開始ボタン（当たり判定は下の背景矩形と一致させる）
 		_startButton = CreateScene<Button>();
 		_startButton->SetArea({
 			Vector2D(0.0, 0.0),
-			Vector2D(200.0, 0.0),
-			Vector2D(200.0, 80.0),
-			Vector2D(0.0, 80.0)
+			Vector2D(260.0, 0.0),
+			Vector2D(260.0, 48.0),
+			Vector2D(0.0, 48.0)
 		});
-		_startButton->SetPosition({ 510.0, 400.0 });
+		_startButton->SetPosition({ 510.0, 650.0 });
 		const auto& startSE = CreateSelectSePlayer(_startButton.get());
 		_startButton->LeftPressed += [startSE](const MouseEvent& event) {
 			if (event.just) startSE->Play();
@@ -58,7 +58,7 @@ namespace Game {
 
 		_startButtonLabel = CreateScene<TextLabel>();
 		_startButtonLabel->SetFontSize(18)->SetForegroundColor(CoreBackend::Drawing::Color(255, 255, 255));
-		_startButtonLabel->SetText("戦闘開始 (単独)")->SetPosition({ 570.0, 400.0 });
+		_startButtonLabel->SetText("戦闘開始 (単独)")->SetPosition({ 570.0, 662.0 });
 
 		_startButton->Entered += [this](const MouseEvent&) {
 			_startButtonBg->SetColor(Vector3D(220, 70, 60));
