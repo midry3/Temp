@@ -48,6 +48,7 @@ namespace Game {
 		SharedPtr<ColorRect> _startButtonBg;
 		SharedPtr<ColorRect> _startButtonBorder;
 		SharedPtr<TextLabel> _startButtonLabel;
+		Vector2D _startButtonPos = Vector2D(510.0, 650.0);
 
 		CoopEncounterMarker _encounterMarker;
 		std::vector<CoopCandidateItem> _candidates;

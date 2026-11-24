@@ -105,6 +105,16 @@ namespace Game {
 		_encounterMarker.badgeLabel->SetFontSize(12)->SetForegroundColor(CoreBackend::Drawing::Color(255, 230, 230));
 		_encounterMarker.badgeLabel->SetText("【交戦マス】")->SetPosition({ battlePos.x - 4.0, battlePos.y - 22.0 });
 
+		// 戦闘開始ボタンは交戦マスの上に表示する（画面外に出る場合はマスの下）
+		_startButtonPos = Vector2D(battlePos.x + tileSize.x * 0.5 - 130.0, battlePos.y - 78.0);
+		if (_startButtonPos.y < 0.0) {
+			_startButtonPos.y = battlePos.y + tileSize.y + 6.0;
+		}
+		_startButton->SetPosition(_startButtonPos);
+		_startButtonBorder->SetPosition({ _startButtonPos.x - 2.0, _startButtonPos.y - 2.0 });
+		_startButtonBg->SetPosition(_startButtonPos);
+		UpdateStartButtonText();
+
 		// 交戦マス内のアバター表示（左: 先頭味方, 右: 敵）
 		if (primaryAlly) {
 			const auto& data = primaryAlly->GetData();
@@ -254,11 +264,11 @@ namespace Game {
 		}
 		if (selectedCount == 0) {
 			_startButtonLabel->SetText("戦闘開始 (単独)");
-			_startButtonLabel->SetPosition({ 570.0, 662.0 });
+			_startButtonLabel->SetPosition({ _startButtonPos.x + 60.0, _startButtonPos.y + 12.0 });
 		}
 		else {
 			_startButtonLabel->SetText("戦闘開始 (共闘 " + std::to_string(selectedCount) + "人)");
-			_startButtonLabel->SetPosition({ 550.0, 662.0 });
+			_startButtonLabel->SetPosition({ _startButtonPos.x + 40.0, _startButtonPos.y + 12.0 });
 		}
 	}
 
