@@ -59,6 +59,15 @@ namespace Game {
 			->EndSetting()
 			->SetPosition({ 825, 350 });
 
+		// 技の説明文（パネル内側に収まるよう幅を設定する。パネルは x=800・幅380、
+		// ラベル開始 x=825 のため幅は 350 まで）
+		_descriptionLabel = CreateScene<TextLabel>();
+		_descriptionLabel->BeginSetting()
+			->SetFontSize(18)
+			->SetWidth(350)
+			->EndSetting()
+			->SetPosition({ 825, 425 });
+
 		_buttonGrid = CreateScene<GridContainer>();
 		_buttonGrid->SetMatrixSize({ 1, 1 })
 			->SetSpace({ 0, 20 })
@@ -147,6 +156,7 @@ namespace Game {
 		_primaryAttributeLabel->SetText(GetPrimaryAttributeDescription(skill.primaryAttribute));
 		_secondaryAttributeLabel->SetText(GetSecondaryAttributeDescription(skill.secondaryAttribute));
 		_mpCostLabel->SetText(std::format("必要MP: {}", skill.mpCost));
+		_descriptionLabel->SetText(skill.description);
 	}
 
 	void SkillSelect::_Update(float dt) {

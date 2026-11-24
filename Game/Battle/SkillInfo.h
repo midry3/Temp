@@ -23,5 +23,7 @@ namespace Game {
 		int mpCost = 10;
 		SkillTargetScope targetScope = SkillTargetScope::Single;
 		SkillTargetSide targetSide = SkillTargetSide::Enemy;
+		// 技の説明文（スキル選択パネルに表示される）
+		std::string description;
 	};
 }
