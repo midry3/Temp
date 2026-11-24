@@ -348,8 +348,7 @@ namespace Game {
 						team == "enemy" ? BoardTeam::Enemy : BoardTeam::Ally,
 						ReadString(state, -1, "move", "adjacent"),
 						ReadInteger(state, -1, "x"),
-						ReadInteger(state, -1, "y"),
-						ReadString(state, -1, "group")
+						ReadInteger(state, -1, "y")
 					});
 				}
 				lua_pop(state, 1);
@@ -418,11 +417,7 @@ namespace Game {
 				<< EscapeLua(character.displayName) << "\", icon = \"" << EscapeLua(character.icon)
 				<< "\", team = \"" << (character.team == BoardTeam::Ally ? "ally" : "enemy")
 				<< "\", move = \"" << EscapeLua(character.moveType) << "\", x = "
-				<< character.x << ", y = " << character.y;
-			if (not character.group.empty()) {
-				output << ", group = \"" << EscapeLua(character.group) << "\"";
-			}
-			output << " },\n";
+				<< character.x << ", y = " << character.y << " },\n";
 		}
 		output << "    }\n}\n";
 		if (not output.good()) {
@@ -550,10 +545,7 @@ namespace Game {
 				_characterSprites.push_back(sprite);
 			}
 			const auto& label = CreateScene<TextLabel>();
-			const std::string labelText = character.group.empty()
-				? character.displayName
-				: character.displayName + " [" + character.group + "]";
-			label->SetFontSize(13)->SetText(labelText)->SetWidth(_tileSize);
+			label->SetFontSize(13)->SetText(character.displayName)->SetWidth(_tileSize);
 			label->SetForegroundColor({ 0, 0, 0 });
 			label->SetPosition(TilePosition(character.x, character.y) + Vector2D(2.0, _tileSize * 0.76));
 			_characterLabels.push_back(label);
@@ -644,7 +636,7 @@ namespace Game {
 						RebuildObjectSprites();
 					}
 				}
-				// このタイルに置かれたキャラクターの削除とグループ設定
+				// このタイルに置かれたキャラクターの削除
 				for (int index = 0; index < static_cast<int>(_characters.size()); ++index) {
 					auto& character = _characters[index];
 					if (character.x != _selectedX || character.y != _selectedY) continue;
@@ -652,22 +644,8 @@ namespace Game {
 					ImGui::Separator();
 					ImGui::Text("%s (%s / %s)", character.displayName.c_str(), BoardCharacterTypeKey(character.type),
 						character.team == BoardTeam::Ally ? "味方" : "敵");
-					if (character.team == BoardTeam::Enemy) {
-						if (_groupEditIndex != index) {
-							CopyToBuffer(_characterGroupInput, character.group);
-							_groupEditIndex = index;
-						}
-						ImGui::InputText("グループ", _characterGroupInput.data(), _characterGroupInput.size());
-						ImGui::SameLine();
-						if (ImGui::Button("設定")) {
-							character.group = _characterGroupInput.data();
-							_isDirty = true;
-							RebuildCharacterSprites();
-						}
-					}
 					if (ImGui::Button("このキャラクターを削除")) {
 						_characters.erase(_characters.begin() + index);
-						_groupEditIndex = -1;
 						_isDirty = true;
 						RebuildCharacterSprites();
 						ImGui::PopID();
@@ -771,8 +749,7 @@ namespace Game {
 				ImGui::RadioButton("味方", &_characterTeam, 0);
 				ImGui::SameLine();
 				ImGui::RadioButton("敵", &_characterTeam, 1);
-				ImGui::InputText("敵グループ名（空欄=なし）", _groupInput.data(), _groupInput.size());
-				ImGui::TextWrapped("同じグループ名の敵は、盤面でひとかたまりとして動き、戦闘でもまとめて相手にします。配置済みの敵のグループは、タイル選択時のキャラクター欄からも変更できます。");
+				ImGui::TextWrapped("同じタイルに配置した敵同士は「グループ」として扱われ、盤面でひとかたまりとして動き、戦闘でもまとめて相手にします。");
 				if (ImGui::Button("直前のキャラクターを削除")) {
 					if (not _characters.empty()) {
 						_characters.pop_back();
@@ -1228,7 +1205,6 @@ namespace Game {
 			character.moveType = moveType;
 			character.x = x;
 			character.y = y;
-			character.group = team == BoardTeam::Enemy ? std::string(_groupInput.data()) : std::string();
 			_characters.push_back(character);
 			_isDirty = true;
 			RebuildCharacterSprites();

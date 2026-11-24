@@ -59,7 +59,8 @@ namespace Game {
 		std::string texture;
 		int x = 0;
 		int y = 0;
-		// 敵グループ名（空欄はグループなし）。同じ名前の敵はひとかたまりで動き、戦闘も一緒になる
-		std::string group;
+		// 初期配置タイル。初期配置が同じタイルの敵同士は同じグループとして扱う
+		int initialX = -1;
+		int initialY = -1;
 	};
 }

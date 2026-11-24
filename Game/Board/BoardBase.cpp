@@ -215,7 +215,8 @@ namespace Game {
 					unit.texture = ReadString(state, -1, "icon", ReadString(state, -1, "texture"));
 					unit.x = ReadInteger(state, -1, "x");
 					unit.y = ReadInteger(state, -1, "y");
-					unit.group = ReadString(state, -1, "group");
+					unit.initialX = unit.x;
+					unit.initialY = unit.y;
 					units.push_back(unit);
 				}
 				lua_pop(state, 1);
@@ -796,10 +797,13 @@ namespace Game {
 		if (not unit) return result;
 		result.push_back(unit);
 		if (unit->IsAlly()) return result;
-		const std::string& group = unit->GetData().group;
-		if (group.empty()) return result;
+		const auto& data = unit->GetData();
+		if (data.initialX < 0 || data.initialY < 0) return result;
+		// 初期配置タイルが同じ敵同士を同じグループとして扱う
 		for (const auto& other : _units) {
-			if (other && other != unit && not other->IsAlly() && other->GetData().group == group) {
+			if (other && other != unit && not other->IsAlly()
+				&& other->GetData().initialX == data.initialX
+				&& other->GetData().initialY == data.initialY) {
 				result.push_back(other);
 			}
 		}
