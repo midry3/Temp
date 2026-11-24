@@ -230,6 +230,12 @@ namespace Game {
 						}
 					}
 					lua_pop(state, 1);
+					lua_getfield(state, -1, "iconOffset");
+					if (lua_istable(state, -1)) {
+						unit.iconOffsetX = ReadNumber(state, -1, "x");
+						unit.iconOffsetY = ReadNumber(state, -1, "y");
+					}
+					lua_pop(state, 1);
 					units.push_back(unit);
 				}
 				lua_pop(state, 1);
@@ -701,7 +707,7 @@ namespace Game {
 			const auto boardScale = GetScale().x;
 			icons.push_back({
 				texture,
-				GetGlobalPosition() + GetTilePosition(data.x, data.y) * boardScale,
+				GetGlobalPosition() + (GetTilePosition(data.x, data.y) + Vector2D(data.iconOffsetX, data.iconOffsetY)) * boardScale,
 				_tileSize.x * boardScale,
 				isEnemy
 			});

@@ -386,6 +386,12 @@ namespace Game {
 						}
 					}
 					lua_pop(state, 1);
+					lua_getfield(state, -1, "iconOffset");
+					if (lua_istable(state, -1)) {
+						character.iconOffsetX = ReadNumber(state, -1, "x");
+						character.iconOffsetY = ReadNumber(state, -1, "y");
+					}
+					lua_pop(state, 1);
 					_characters.push_back(character);
 				}
 				lua_pop(state, 1);
@@ -462,6 +468,9 @@ namespace Game {
 					output << " { x = " << (extra.first - character.x) << ", y = " << (extra.second - character.y) << " },";
 				}
 				output << " }";
+			}
+			if (character.iconOffsetX != 0.0 || character.iconOffsetY != 0.0) {
+				output << ", iconOffset = { x = " << character.iconOffsetX << ", y = " << character.iconOffsetY << " }";
 			}
 			output << " },\n";
 		}
@@ -589,7 +598,8 @@ namespace Game {
 					const auto scale = Min(_tileSize / textureSize.x, _tileSize / textureSize.y) * 0.8;
 					sprite->SetScale(scale);
 				}
-				sprite->SetPosition(TilePosition(character.x, character.y) + Vector2D(_tileSize * 0.1, _tileSize * 0.05));
+				sprite->SetPosition(TilePosition(character.x, character.y) + Vector2D(_tileSize * 0.1, _tileSize * 0.05)
+					+ Vector2D(character.iconOffsetX, character.iconOffsetY));
 				_characterSprites.push_back(sprite);
 			}
 			const auto& label = CreateScene<TextLabel>();
@@ -706,6 +716,13 @@ namespace Game {
 					ImGui::Text("%s (%s / %s)", character.displayName.c_str(), BoardCharacterTypeKey(character.type),
 						character.team == BoardTeam::Ally ? "味方" : "敵");
 					ImGui::Text("占有マス: %d", static_cast<int>(character.extraTiles.size()));
+					float iconOffset[2] = { static_cast<float>(character.iconOffsetX), static_cast<float>(character.iconOffsetY) };
+					if (ImGui::InputFloat2("アイコンオフセット", iconOffset)) {
+						character.iconOffsetX = iconOffset[0];
+						character.iconOffsetY = iconOffset[1];
+						_isDirty = true;
+						RebuildCharacterSprites();
+					}
 					if (_occupyEditIndex == index) {
 						ImGui::TextUnformatted("占有マス編集中: タイルをクリックで追加 / 削除");
 						if (ImGui::Button("占有マス編集を終了")) {
@@ -1284,6 +1301,8 @@ namespace Game {
 				? std::string("ally_") + BoardCharacterTypeKey(info.type) : std::string();
 			std::string moveType = "adjacent";
 			std::vector<std::pair<int, int>> extraTiles;
+			double iconOffsetX = 0.0;
+			double iconOffsetY = 0.0;
 			if (team == BoardTeam::Ally) {
 				const auto existing = std::find_if(_characters.begin(), _characters.end(), [&info](const auto& character) {
 					return character.team == BoardTeam::Ally && character.type == info.type;
@@ -1291,6 +1310,8 @@ namespace Game {
 				if (existing != _characters.end()) {
 					id = existing->id;
 					moveType = existing->moveType;
+					iconOffsetX = existing->iconOffsetX;
+					iconOffsetY = existing->iconOffsetY;
 					// 再配置では占有マスも同じだけずらして引き継ぐ
 					for (const auto& extra : existing->extraTiles) {
 						extraTiles.push_back({ extra.first + (x - existing->x), extra.second + (y - existing->y) });
@@ -1318,6 +1339,8 @@ namespace Game {
 			character.x = x;
 			character.y = y;
 			character.extraTiles = extraTiles;
+			character.iconOffsetX = iconOffsetX;
+			character.iconOffsetY = iconOffsetY;
 			_characters.push_back(character);
 			_isDirty = true;
 			RebuildCharacterSprites();

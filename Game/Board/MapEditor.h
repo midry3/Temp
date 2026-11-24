@@ -44,6 +44,9 @@ namespace Game {
 		int y = 0;
 		// 本体以外に占有するマス（絶対座標）。保存時は本体からの相対オフセットになる
 		std::vector<std::pair<int, int>> extraTiles;
+		// キャラクターアイコンの表示位置オフセット（ピクセル）
+		double iconOffsetX = 0.0;
+		double iconOffsetY = 0.0;
 	};
 
 	struct MapEditorCharacterInfo {

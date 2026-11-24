@@ -69,5 +69,8 @@ namespace Game {
 		int initialY = -1;
 		// 本体のマス以外に占有するマス（本体からの相対オフセット）。移動に合わせて一緒に動く
 		std::vector<BoardOffset> extraTiles;
+		// キャラクターアイコンの表示位置オフセット（ピクセル）
+		double iconOffsetX = 0.0;
+		double iconOffsetY = 0.0;
 	};
 }
