@@ -4,7 +4,7 @@ namespace Game {
 	void Gou::_Load() {
 		BattleCharacter::_Load();
 		SetInfo({
-			"業",
+			"ゴウ",
 			"chara/gou/icon.png",
 			{
 			DEFAULT_MAX_HP, DEFAULT_MAX_MP, DEFAULT_ATK, DEFAULT_DEF, DEFAULT_MDEF, DEFAULT_SPEED
@@ -25,7 +25,7 @@ namespace Game {
 			CoreBackend::Drawing::Color(255, 100, 100)
 			});
 		SetSkills({
-			{ "金棒スイング", "special", "fire", "chara/gou/attack/swing.lua", 20 },
+			{ "金棒スイング", "special", "fire", "chara/gou/attack/swing.lua", 50 },
 			});
 
 		Initialize();
