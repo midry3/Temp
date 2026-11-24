@@ -229,6 +229,43 @@ namespace Game {
 		ApplyAllyDimming();
 	}
 
+	void BattleBase::ApplyAttackDimming(const SharedPtr<BattleCharacter>& actor, const std::vector<SharedPtr<BattleCharacter>>& targets) {
+		// 攻撃者と被弾対象以外を薄黒にする。元の色味は控えておき、演出後に戻す
+		// （レア種の赤系 modulate など、キャラクター固有の色味を消さないため）
+		_attackDimRestore.clear();
+		auto applyTo = [this, &actor, &targets](const SharedPtr<BattleCharacter>& character) {
+			if (not character) return;
+			bool active = character == actor;
+			if (not active) {
+				for (const auto& target : targets) {
+					if (target == character) active = true;
+				}
+			}
+			_attackDimRestore[character.get()] = character->modulate;
+			if (not active) {
+				const auto base = character->modulate;
+				character->SetModulateAll(Vector3D(base.x * ATTACK_DIM_RATE, base.y * ATTACK_DIM_RATE, base.z * ATTACK_DIM_RATE));
+			}
+		};
+		for (const auto& ally : _allies) applyTo(ally);
+		for (const auto& enemy : _enemies) applyTo(enemy);
+	}
+
+	void BattleBase::ClearAttackDimming() {
+		auto restore = [this](const SharedPtr<BattleCharacter>& character) {
+			if (not character) return;
+			const auto it = _attackDimRestore.find(character.get());
+			if (it != _attackDimRestore.end()) {
+				character->SetModulateAll(it->second);
+			}
+		};
+		for (const auto& ally : _allies) restore(ally);
+		for (const auto& enemy : _enemies) restore(enemy);
+		_attackDimRestore.clear();
+		// 味方はフォーメーション側の薄黒（最前列以外）を改めて適用する
+		ApplyAllyDimming();
+	}
+
 	void BattleBase::ExecuteNextAction() {
 		if (IsDefeatedAllEnemies()) {
 			_state >> Won;
@@ -242,6 +279,7 @@ namespace Game {
 			_attack = CreateScene<BattleAttack>();
 			_attack->Completed().Connect([this]() {
 				_hud->UpdateView();
+				ClearAttackDimming();
 				AdvanceAllyFormationAfterAction();
 				ExecuteNextAction();
 				});
@@ -276,6 +314,8 @@ namespace Game {
 		// 敵の攻撃時は味方の列を右へ寄せて見やすくする
 		_formationFrontX = IsEnemyCharacter(queued.actor) ? ALLIES_X_2 : ALLIES_X;
 		ApplyAllyFormation(true);
+		// 攻撃の場面では攻撃者と被弾対象以外を薄黒にする
+		ApplyAttackDimming(queued.actor, queued.targets);
 		_attack->Start(queued.actor, queued.targets, queued.skill);
 	}
 
