@@ -662,8 +662,7 @@ namespace Game {
 		const auto absX = std::abs(dx);
 		const auto absY = std::abs(dy);
 		if (data.moveType == BoardMoveType::Adjacent) return not (1 < absX) && not (1 < absY);
-		// 共闘判定ではレコの「奥側通行不可」を適用せず、移動範囲内かどうかだけで判定する
-		// （実際の移動では IsMoveAllowed 側で引き続き適用される）
+		// レコの「奥側通行不可」は廃止済みのため、範囲内かどうかだけで判定する
 		if (data.moveType == BoardMoveType::RangeTwo) return not (2 < absX) && not (2 < absY);
 		if (data.moveType == BoardMoveType::DiagonalUnlimited) {
 			if (dx == 0 || dy == 0) return not (1 < absX) && not (1 < absY);
@@ -1245,7 +1244,8 @@ namespace Game {
 		const auto absX = std::abs(dx);
 		const auto absY = std::abs(dy);
 		if (data.moveType == BoardMoveType::Adjacent) return not (1 < absX) && not (1 < absY);
-		if (data.moveType == BoardMoveType::RangeTwo) return not (2 < absX) && not (2 < absY) && not IsBlockedBeyondUnit(unit, dx, dy);
+		// レコは周囲24マスまで移動可。味方のいるマスは上の占有判定で既に通行不可
+		if (data.moveType == BoardMoveType::RangeTwo) return not (2 < absX) && not (2 < absY);
 		if (data.moveType == BoardMoveType::DiagonalUnlimited) {
 			if (dx == 0 || dy == 0) return not (1 < absX) && not (1 < absY);
 			if (absX != absY) return false;
@@ -1253,27 +1253,6 @@ namespace Game {
 		}
 		if (dx != 0 && dy != 0) return false;
 		return IsPathClear(data.x, data.y, x, y);
-	}
-
-	bool BoardBase::IsBlockedBeyondUnit(const BoardUnit& unit, int dx, int dy) const {
-		// 移動先が、他のユニットから見て「そのユニットより奥側」にあるかを軸ごとに判定する。
-		// 軸の値が 0 のユニットについては、その軸の移動先も 0 でなければならない。
-		auto isBeyondAxis = [](int target, int blocker) {
-			if (blocker == 0) return target == 0;
-			if (target == 0) return false;
-			if ((target < 0) != (blocker < 0)) return false;
-			return not (std::abs(target) < std::abs(blocker));
-		};
-		const auto& data = unit.GetData();
-		for (const auto& other : _units) {
-			if (other.get() == &unit) continue;
-			const int blockerX = other->GetData().x - data.x;
-			const int blockerY = other->GetData().y - data.y;
-			if (blockerX == 0 && blockerY == 0) continue;
-			if (dx == blockerX && dy == blockerY) continue; // そのユニット自体のマスは対象外（占有ルールで判定）
-			if (isBeyondAxis(dx, blockerX) && isBeyondAxis(dy, blockerY)) return true;
-		}
-		return false;
 	}
 
 	bool BoardBase::IsPathClear(int startX, int startY, int endX, int endY) const {

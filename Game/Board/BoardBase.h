@@ -82,7 +82,6 @@ namespace Game {
 		[[nodiscard]] bool CanGroupMemberMoveTo(const BoardUnit& member, int x, int y, const std::vector<SharedPtr<BoardUnit>>& group) const;
 		void RemoveEnemyUnits(const std::vector<SharedPtr<BoardUnit>>& units, size_t index, const std::function<void()>& onComplete);
 		void ClearEnemyIntentVisuals();
-		bool IsBlockedBeyondUnit(const BoardUnit& unit, int dx, int dy) const;
 		void OnReturnedFromBattle();
 		void ShowWinScreen();
 		void ShowEnemyInfo(int x, int y);
