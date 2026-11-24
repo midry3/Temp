@@ -17,7 +17,32 @@ namespace Game {
 		_sprite->AnimationChanged += [this](int anim) {
 			const auto& s = _sprite->GetRawSize();
 			_powerUpEffect->SetPosition({s.x/2, s.y/1.5});
+			UpdateSpriteAlignment();
 			};
+		_sprite->FrameChanged.Connect([this](int frame) {
+			UpdateSpriteAlignment();
+			});
+	}
+
+	// スプライトの表示位置を、テクスチャの左上ではなく下端が
+	// キャラの位置に合うようずらす（position 自体は動かさない）
+	void BattleCharacter::UpdateSpriteAlignment() {
+		if (not _sprite) return;
+		const auto frameSize = _sprite->GetCurrentFrameSize();
+		_sprite->offset.y = -frameSize.y * _sprite->scale.y;
+	}
+
+	// 被弾時の赤点滅（modulate を赤と白で数回切り替える）
+	void BattleCharacter::PlayDamagedFlash() {
+		const int serial = ++_damagedFlashSerial;
+		modulate = Vector3D(255, 0, 0);
+		for (int i = 1; i <= 5; ++i) {
+			const bool toRed = i % 2 == 0;
+			CreateTimer(0.075 * i, [this, serial, toRed]() {
+				if (serial != _damagedFlashSerial) return;
+				modulate = toRed ? Vector3D(255, 0, 0) : Vector3D(255, 255, 255);
+				});
+		}
 	}
 
 	void BattleCharacter::Initialize() {
@@ -66,7 +91,10 @@ namespace Game {
 		const bool wasDead = IsDead();
 		const int appliedDamage = Max(0, damage);
 		_info.currentState.currentHP = Max(0, _info.currentState.currentHP - appliedDamage);
-		if (0 < appliedDamage) Damaged.Emit();
+		if (0 < appliedDamage) {
+			Damaged.Emit();
+			PlayDamagedFlash();
+		}
 		if (not wasDead && IsDead()) Died.Emit();
 		if (IsDead()) {
 			// 死亡演出

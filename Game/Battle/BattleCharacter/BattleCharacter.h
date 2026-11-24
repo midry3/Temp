@@ -49,6 +49,10 @@ namespace Game
 		std::vector<SkillInfo> _skills;
 
 		double _statsScale = 1.0;
+		int _damagedFlashSerial = 0;
+
+		void PlayDamagedFlash();
+		void UpdateSpriteAlignment();
 	protected:
 		SharedPtr<AnimatedSprite2D> _sprite;
 		SharedPtr<EffekseerEmitter2D> _powerUpEffect;
