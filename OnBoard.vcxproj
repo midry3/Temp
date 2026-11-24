@@ -154,6 +154,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Game\Battle\BattleCharacter\DamagedEffect.cpp" />
+    <ClCompile Include="Game\Battle\BattleCharacter\Enemy\Witch.cpp" />
     <ClCompile Include="Game\Battle\BattleCharacter\Gou.cpp" />
     <ClCompile Include="Game\Battle\BattleCharacter\Zon.cpp" />
     <ClCompile Include="Game\Battle\EnemyStatsPanel.cpp" />
@@ -201,6 +202,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Game\Battle\BattleCharacter\DamagedEffect.h" />
+    <ClInclude Include="Game\Battle\BattleCharacter\Enemy\Witch.h" />
     <ClInclude Include="Game\Battle\BattleCharacter\Gou.h" />
     <ClInclude Include="Game\Battle\BattleCharacter\Zon.h" />
     <ClInclude Include="Game\Battle\EnemyStatsPanel.h" />
@@ -255,6 +257,8 @@
   <ItemGroup>
     <None Include="Assets\board\default.lua" />
     <None Include="Assets\board\map1.lua" />
+    <None Include="Assets\board\map2.lua" />
+    <None Include="Assets\board\map3.lua" />
     <None Include="Assets\chara\gou\attack.png.anim" />
     <None Include="Assets\chara\gou\attack\swing.lua" />
     <None Include="Assets\chara\gou\attack_prepare.png.anim" />
@@ -279,6 +283,7 @@
     <None Include="Assets\chara\reko\pc.png.anim" />
     <None Include="Assets\chara\reko\pc_open.png.anim" />
     <None Include="Assets\chara\slime\attack\attack_1.lua" />
+    <None Include="Assets\chara\witch\attack\attack_1.lua" />
     <None Include="Assets\chara\zon\attack\bomb.lua" />
     <None Include="Assets\chara\zon\attack\gun_shot.lua" />
     <None Include="Assets\chara\zon\attack\supply.lua" />

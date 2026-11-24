@@ -25,7 +25,8 @@ namespace Game {
 		Reko,
 		Zon,
 		Gou,
-		Slime
+		Slime,
+		Witch
 	};
 
 	struct BoardOffset {
