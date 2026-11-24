@@ -2,3 +2,4 @@ SE
 - 魔王魂
 - 効果音ラボ
 - OtoLogic
+- red bears

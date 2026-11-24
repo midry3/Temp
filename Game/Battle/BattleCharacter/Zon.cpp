@@ -29,10 +29,10 @@ namespace Game {
 			DEFAULT_MAX_HP, DEFAULT_MAX_MP, DEFAULT_ATK, DEFAULT_DEF, DEFAULT_MDEF, DEFAULT_SPEED
 			});
 		SetSkills({
-			{ "射撃", "special", "fire", "chara/zon/attack/gun_shot.lua", 20 },
-			{ "特製手りゅう弾", "special", "fire", "chara/zon/attack/bomb.lua", 20, SkillTargetScope::All },
+			{ "射撃", "physical", "fire", "chara/zon/attack/gun_shot.lua", 20 },
+			{ "特製手りゅう弾", "physical", "fire", "chara/zon/attack/bomb.lua", 20, SkillTargetScope::All },
 			{ "補給物資", "special", "water", "chara/zon/attack/supply.lua", 20, SkillTargetScope::Single, SkillTargetSide::Ally },
-			{ "Heal", "special", "nature", "battle/heal.lua", 20 }
+			//{ "Heal", "special", "nature", "battle/heal.lua", 20 }
 			});
 
 		Initialize();

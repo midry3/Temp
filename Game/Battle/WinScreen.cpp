@@ -3,6 +3,7 @@
 #include <Scene/Text/TextLabel.h>
 #include <Scene/Button/Button.h>
 #include <Game/Data/CommonData.h>
+#include <Scene/Sound/SoundPlayer.h>
 
 namespace Game {
 	void WinScreen::_Load() {
@@ -25,6 +26,11 @@ namespace Game {
 			->EndSetting()
 			->SetText("You Win!")
 			->SetPosition({ 300, 300 });
+
+		CreateScene<SoundPlayer>()
+			->SetSound(LoadAsset<Sound>("sound/one_shot/clear_1.mp3"))
+			->SetVolume(0.8f)
+			->Play();
 
 		CreateTweenGroup()->CreateTween(&background->alpha, 150, 0.5)->From(0);
 		CreateTweenGroup()->CreateTween(&label->offset.x, 0, 1.0, Easing::EaseInCubic)->From(1500);
