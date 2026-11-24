@@ -169,6 +169,7 @@
     <ClCompile Include="Game\Board\BoardWinScreen.cpp" />
     <ClCompile Include="Game\Board\CoopSelectModal.cpp" />
     <ClCompile Include="Game\Board\BoardTile.cpp" />
+    <ClCompile Include="Game\Board\CoopLine.cpp" />
     <ClCompile Include="Game\Board\BoardUnit.cpp" />
     <ClCompile Include="Game\Board\MapEditor.cpp" />
     <ClCompile Include="Game\Battle\BattleCharacter\BattleCharacterFactory.cpp" />
@@ -218,6 +219,7 @@
     <ClInclude Include="Game\Board\BoardWinScreen.h" />
     <ClInclude Include="Game\Board\CoopSelectModal.h" />
     <ClInclude Include="Game\Board\BoardTile.h" />
+    <ClInclude Include="Game\Board\CoopLine.h" />
     <ClInclude Include="Game\Board\BoardTypes.h" />
     <ClInclude Include="Game\Board\BoardUnit.h" />
     <ClInclude Include="Game\Board\MapEditor.h" />

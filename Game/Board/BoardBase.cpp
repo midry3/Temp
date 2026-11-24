@@ -11,6 +11,7 @@
 #include <Asset/AssetManager.h>
 #include <Scene/Texture/Sprite2D.h>
 #include <Game/Data/CommonData.h>
+#include <Game/Data/SoundEffects.h>
 #include <SceneManager.h>
 #include <lua.hpp>
 #include <algorithm>
@@ -83,7 +84,10 @@ namespace Game {
 		_bgmPlayer->SetSound(LoadAsset<Sound>("sound/bgm/bgm1.oga"))
 			->SetLoop()
 			->SetVolume(0.5);
-		
+
+		_coopLineSePlayer = CreateScene<SoundPlayer>();
+		_coopLineSePlayer->SetSound(LoadAsset<Sound>(COOP_LINE_SE));
+
 		EnteredMainScene.Connect([this]() {
 			OnReturnedFromBattle();
 			_bgmPlayer->FadeAndPlay(0.5f);
@@ -230,9 +234,68 @@ namespace Game {
 		UpdateLayout();
 		BuildTiles(textures, tiles);
 		BuildObjects(objects);
+		// 共闘ラインはタイル・オブジェクトより上、ユニットより下に描く
+		if (not _coopLineLayer) _coopLineLayer = CreateScene<Scene>();
 		BuildUnits(units);
 		UpdateEnemyIntentVisuals();
+		UpdateCoopLines(nullptr, false);
 		return true;
+	}
+
+	bool BoardBase::CanCooperate(const SharedPtr<BoardUnit>& a, const SharedPtr<BoardUnit>& b) const {
+		if (not a || not b || a == b) return false;
+		// 同じ敵のマスへ両者とも到達できる場合に共闘可能とみなす
+		for (const auto& enemy : GetEnemyUnits()) {
+			const auto& enemyData = enemy->GetData();
+			if (CanReachTile(*a, enemyData.x, enemyData.y) && CanReachTile(*b, enemyData.x, enemyData.y)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	void BoardBase::UpdateCoopLines(const SharedPtr<BoardUnit>& movedUnit, bool playSound) {
+		if (not _coopLineLayer) return;
+		const auto allies = GetAllyUnits();
+		std::vector<std::pair<SharedPtr<BoardUnit>, SharedPtr<BoardUnit>>> relations;
+		for (size_t i = 0; i < allies.size(); ++i) {
+			for (size_t j = i + 1; j < allies.size(); ++j) {
+				if (CanCooperate(allies[i], allies[j])) {
+					relations.push_back({ allies[i], allies[j] });
+				}
+			}
+		}
+		auto isSamePair = [](const SharedPtr<BoardUnit>& a, const SharedPtr<BoardUnit>& b,
+			const SharedPtr<BoardUnit>& x, const SharedPtr<BoardUnit>& y) {
+				return (a == x && b == y) || (a == y && b == x);
+			};
+		// 共闘関係でなくなったラインはアニメーションなしで即座に消す
+		std::erase_if(_coopLines, [this, &relations, &isSamePair](const CoopLineEntry& entry) {
+			const bool alive = std::any_of(relations.begin(), relations.end(), [&entry, &isSamePair](const auto& relation) {
+				return isSamePair(entry.a, entry.b, relation.first, relation.second);
+				});
+			if (not alive && entry.line) DeleteScene(entry.line);
+			return not alive;
+			});
+		// 新しく共闘関係になったペアにラインを引く
+		bool formed = false;
+		for (const auto& relation : relations) {
+			const bool exists = std::any_of(_coopLines.begin(), _coopLines.end(), [&relation, &isSamePair](const CoopLineEntry& entry) {
+				return isSamePair(entry.a, entry.b, relation.first, relation.second);
+				});
+			if (exists) continue;
+			const auto& line = _coopLineLayer->CreateScene<CoopLine>();
+			const auto extendFrom = (movedUnit == relation.first || movedUnit == relation.second) ? movedUnit : SharedPtr<BoardUnit>();
+			line->Setup(relation.first, relation.second, extendFrom, [this](const SharedPtr<BoardUnit>& unit) {
+				const auto boardScale = GetScale().x;
+				return GetGlobalPosition() + (unit->position + _tileSize * 0.5) * boardScale;
+				});
+			_coopLines.push_back({ relation.first, relation.second, line });
+			formed = true;
+		}
+		if (formed && playSound && _coopLineSePlayer) {
+			_coopLineSePlayer->Play();
+		}
 	}
 
 	void BoardBase::UpdateLayout() {
@@ -360,6 +423,7 @@ namespace Game {
 			const bool isEnemyEncounter = targetUnit && not targetUnit->IsAlly();
 			CancelSelection();
 			MoveUnit(movingUnit, x, y, true, [this, movingUnit, targetUnit, isEnemyEncounter]() {
+				UpdateCoopLines(movingUnit, true);
 				if (isEnemyEncounter) {
 					OpenCoopSelect(movingUnit, targetUnit);
 				}
@@ -448,6 +512,7 @@ namespace Game {
 		const auto targetUnit = GetUnitAt(action.targetX, action.targetY);
 		const bool isAllyEncounter = targetUnit && targetUnit->IsAlly();
 		auto postProcess = [this, enemy = action.enemy, targetUnit, isAllyEncounter]() {
+			UpdateCoopLines(nullptr, true);
 			if (isAllyEncounter) {
 				OpenCoopSelect(targetUnit, enemy);
 			}
@@ -684,6 +749,7 @@ namespace Game {
 		CommonData::LastBattleEnemyDefeated = false;
 
 		auto resumeFlow = [this, defeatedUnits, warningEnemy, defeated, startedInEnemyTurn]() {
+			UpdateCoopLines(nullptr, false);
 			if (GetEnemyUnits().empty()) {
 				ShowWinScreen();
 				return;
