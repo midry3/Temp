@@ -30,6 +30,12 @@ namespace Game {
 		_targetSelect = CreateScene<TargetSelect>();
 		_targetSelect->SetUIMode(true);
 
+		_targetSelect->BackPressed += [this]() {
+			// 対象選択からスキル選択に戻る
+			_targetSelect->Hide();
+			_skillSelect->In();
+			};
+
 		_skillSelect->SkillSelected += [this](const SkillInfo& skill) {
 			const auto candidates = GetTargetCandidates(_allies[_currentCharacterIndex], skill);
 			if (skill.targetScope == SkillTargetScope::All || not (1 < static_cast<int>(candidates.size()))) {

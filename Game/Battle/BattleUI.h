@@ -9,7 +9,7 @@ namespace Game {
 		// 「戻る」ボタンの配置（降参ボタンの右下あたりに小さめに置く）
 		static constexpr double BACK_BUTTON_X = 608.0;
 		static constexpr double BACK_BUTTON_Y = 420.0;
-		static constexpr double BACK_BUTTON_SCALE = 1.0;
+		static constexpr double BACK_BUTTON_SCALE = 0.7;
 
 		OutLineShaderBuffer _outlineBuffer;
 		SharedPtr<TextureButton> _backButton;

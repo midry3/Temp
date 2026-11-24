@@ -77,9 +77,9 @@ namespace Game {
 
 		RebuildButtons();
 
-		// 「戻る」ボタン（コマンド選択に戻る。テクスチャはスキルと共通で仮置き）
+		// 「戻る」ボタン（コマンド選択に戻る。全画面で ui/back.png・0.7倍に統一）
 		const auto& backButton = CreateScene<TextureButton>();
-		backButton->SetTexture(LoadAsset<Texture>("ui/skill.png"))
+		backButton->SetTexture(LoadAsset<Texture>("ui/back.png"))
 			->SetScale(BACK_BUTTON_SCALE)
 			->SetPosition({ BACK_BUTTON_X, BACK_BUTTON_Y })
 			->SetPixelShader<OutLineShader>()

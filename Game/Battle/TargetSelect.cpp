@@ -3,11 +3,27 @@
 #include <cmath>
 
 namespace Game {
+	void TargetSelect::_Load() {
+		// 「戻る」ボタン（対象選択中だけ表示する）
+		_backButton = CreateScene<TextureButton>();
+		_backButton->SetTexture(LoadAsset<Texture>("ui/back.png"))
+			->SetScale(BACK_BUTTON_SCALE)
+			->SetPosition({ BACK_BUTTON_X, BACK_BUTTON_Y });
+		const auto& backSE = CreateSelectSePlayer(_backButton.get());
+		_backButton->LeftPressed += [this, backSE](const MouseEvent& event) {
+			if (not event.just) return;
+			backSE->Play();
+			BackPressed.Emit();
+			};
+		_backButton->Hide();
+	}
+
 	void TargetSelect::Show(const std::vector<std::pair<SharedPtr<BattleCharacter>, std::pair<Vector2D, Vector2D>>>& candidates,
 		const std::function<void(SharedPtr<BattleCharacter>)>& onSelected) {
 		Hide();
 		_onSelected = onSelected;
 		if (candidates.empty()) return;
+		if (_backButton) _backButton->Show();
 
 		Vector2D window = PropertyManager.GetSettingWindowSize();
 		if (not (0.0 < window.x) || not (0.0 < window.y)) {
@@ -116,6 +132,7 @@ namespace Game {
 			DeleteScene(button);
 		}
 		_buttons.clear();
+		if (_backButton) _backButton->Hide();
 		_onSelected = nullptr;
 		_blinkTime = 0.0;
 	}

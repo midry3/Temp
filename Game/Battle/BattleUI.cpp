@@ -60,7 +60,7 @@ namespace Game {
 
 		// 「戻る」は降参の右下あたりに少し小さめに置く（テクスチャはスキルのもので仮置き）
 		_backButton = CreateScene<TextureButton>();
-		_backButton->SetTexture(LoadAsset<Texture>("ui/skill.png"))
+		_backButton->SetTexture(LoadAsset<Texture>("ui/back.png"))
 			->SetScale(BACK_BUTTON_SCALE)
 			->SetPosition({ BACK_BUTTON_X, BACK_BUTTON_Y });
 		const auto& backSE = CreateSelectSePlayer(_backButton.get());

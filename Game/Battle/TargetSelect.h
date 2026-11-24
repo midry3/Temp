@@ -1,6 +1,7 @@
 #pragma once
 #include <Scene.h>
 #include <Scene/Button/Button.h>
+#include <Scene/Button/TextureButton.h>
 #include <Scene/Shape/ColorRect.h>
 #include <functional>
 #include <utility>
@@ -21,17 +22,25 @@ namespace Game {
 		static constexpr double HighlightBlinkSpeed = 6.0;
 		static constexpr double HighlightBorderWidth = 3.0;
 
+		// 「戻る」ボタンの配置（スキル選択と同じ位置。全画面で ui/back.png・0.7倍に統一）
+		static constexpr double BACK_BUTTON_X = 400.0;
+		static constexpr double BACK_BUTTON_Y = 612.0;
+		static constexpr double BACK_BUTTON_SCALE = 0.7;
+
 		std::vector<SharedPtr<ColorRect>> _dims;
 		std::vector<SharedPtr<ColorRect>> _glows;
 		std::vector<SharedPtr<ColorRect>> _borders;
 		std::vector<SharedPtr<Button>> _buttons;
+		SharedPtr<TextureButton> _backButton;
 		std::function<void(SharedPtr<BattleCharacter>)> _onSelected;
 		double _blinkTime = 0.0;
 
 		void Select(const SharedPtr<BattleCharacter>& character);
 	protected:
+		void _Load() override;
 		void _Update(float dt) override;
 	public:
+		Signal<> BackPressed;
 		// candidates は (対象キャラ, パネルの左上座標と大きさ) の一覧
 		void Show(const std::vector<std::pair<SharedPtr<BattleCharacter>, std::pair<Vector2D, Vector2D>>>& candidates,
 			const std::function<void(SharedPtr<BattleCharacter>)>& onSelected);

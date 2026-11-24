@@ -14,7 +14,7 @@ namespace Game {
 		// 「戻る」ボタンの配置（スキル一覧の下）
 		static constexpr double BACK_BUTTON_X = 400.0;
 		static constexpr double BACK_BUTTON_Y = 612.0;
-		static constexpr double BACK_BUTTON_SCALE = 2.0;
+		static constexpr double BACK_BUTTON_SCALE = 0.7;
 
 		// スキル名ラベル（各スキルボタンの中央）のデザイン定数
 		static constexpr int SKILL_NAME_FONT_SIZE = 18;
