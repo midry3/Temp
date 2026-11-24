@@ -1,6 +1,17 @@
 #include "Hud.h"
 
 namespace Game {
+	namespace {
+		// パネル全体（子シーンを含む）に色味を適用する
+		void SetModulateAll(const SharedPtr<Scene>& scene, const Vector3D& color) {
+			if (not scene) return;
+			scene->modulate = color;
+			for (const auto& child : scene->GetChildScenes()) {
+				SetModulateAll(child, color);
+			}
+		}
+	}
+
 	void Hud::_Load() {
 		_allyStatusGrid = CreateScene<GridContainer>();
 		_allyStatusGrid->SetSpace({ 0, 115 })
@@ -52,11 +63,20 @@ namespace Game {
 	}
 
 	void Hud::UpdateView() {
-		for (const auto& panel : _allyStatusPanels) {
-			panel->UpdateView();
+		// 死亡したキャラクターのパネルは薄黒にする
+		for (size_t i = 0; i < _allyStatusPanels.size(); ++i) {
+			_allyStatusPanels[i]->UpdateView();
+			const bool dead = i < _allies.size() && _allies[i] && _allies[i]->IsDead();
+			SetModulateAll(_allyStatusPanels[i], dead
+				? Vector3D(PANEL_DEAD_DIM_VALUE, PANEL_DEAD_DIM_VALUE, PANEL_DEAD_DIM_VALUE)
+				: Vector3D(255, 255, 255));
 		}
-		for (const auto& panel : _enemyStatusPanels) {
-			panel->UpdateView();
+		for (size_t i = 0; i < _enemyStatusPanels.size(); ++i) {
+			_enemyStatusPanels[i]->UpdateView();
+			const bool dead = i < _enemies.size() && _enemies[i] && _enemies[i]->IsDead();
+			SetModulateAll(_enemyStatusPanels[i], dead
+				? Vector3D(PANEL_DEAD_DIM_VALUE, PANEL_DEAD_DIM_VALUE, PANEL_DEAD_DIM_VALUE)
+				: Vector3D(255, 255, 255));
 		}
 	}
 }

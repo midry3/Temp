@@ -166,6 +166,7 @@
     <ClCompile Include="Game\Battle\StatusPanel.cpp" />
     <ClCompile Include="Game\Battle\UsingSkillPanel.cpp" />
     <ClCompile Include="Game\Battle\WinScreen.cpp" />
+    <ClCompile Include="Game\Battle\LoseScreen.cpp" />
     <ClCompile Include="Game\Board\BoardBase.cpp" />
     <ClCompile Include="Game\Board\BoardInfoPanel.cpp" />
     <ClCompile Include="Game\Board\BoardStatusPanel.cpp" />
@@ -218,6 +219,7 @@
     <ClInclude Include="Game\Battle\StatusPanel.h" />
     <ClInclude Include="Game\Battle\UsingSkillPanel.h" />
     <ClInclude Include="Game\Battle\WinScreen.h" />
+    <ClInclude Include="Game\Battle\LoseScreen.h" />
     <ClInclude Include="Game\Battle\BattleStartScene.h" />
     <ClInclude Include="Game\Board\BoardBase.h" />
     <ClInclude Include="Game\Board\BoardInfoPanel.h" />
