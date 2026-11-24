@@ -14,8 +14,8 @@ namespace Game {
 		using SkillSelector = std::function<std::optional<SkillInfo>(const EnemyBattleCharacter&, const SharedPtr<BattleCharacter>&)>;
 
 	private:
-		double _rustleWidth = 16.0;
-		int _rustleRoundTrips = 3;
+		double _rustleWidth = 80.0;
+		int _rustleRoundTrips = 4;
 		double _rustleDurationPerTrip = 0.16;
 		SkillSelector _skillSelector;
 		SharedPtr<BattleAttack> _attackScene;
