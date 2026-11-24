@@ -9,6 +9,7 @@
 #include <Scene/Text/TextLabel.h>
 
 #include "Game/Board/Map/Map1.h"
+#include "Game/Board/Map/Map3.h"
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
@@ -26,7 +27,7 @@ void NovotSetup() {
 	FontManager.AddFont("font/JF-Dot-jiskan16.ttf");
 	TextLabel::DefaultFont = FontManager.GetFont(0);
 
-	SceneManager.SetCurrentScene<Game::MapEditor>();
+	SceneManager.SetCurrentScene<Game::Map3>();
 }
 
 int NovotMain() {
