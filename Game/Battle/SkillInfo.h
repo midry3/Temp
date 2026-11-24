@@ -11,7 +11,8 @@ namespace Game {
 	// 技の対象陣営（敵／味方）。デフォルトは敵。
 	enum class SkillTargetSide {
 		Enemy,
-		Ally
+		Ally,
+		Self
 	};
 
 	struct SkillInfo {

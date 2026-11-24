@@ -303,6 +303,11 @@ namespace Game {
 	}
 
 	std::vector<SharedPtr<BattleCharacter>> BattleBase::GetTargetCandidates(const SharedPtr<BattleCharacter>& actor, const SkillInfo& skill) const {
+		// Self の対象は行動者自身のみ（候補が1体になるため、対象選択は自動的にスキップされる）
+		if (skill.targetSide == SkillTargetSide::Self) {
+			if (actor && not actor->IsDead()) return { actor };
+			return {};
+		}
 		// targetSide は行動者から見た陣営（Enemy = 相手側、Ally = 自分側）
 		const bool actorIsEnemy = IsEnemyCharacter(actor);
 		const auto& opponentSide = actorIsEnemy ? _allies : _enemies;
