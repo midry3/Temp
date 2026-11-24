@@ -883,15 +883,44 @@ namespace Game {
 
 	void BoardBase::ShowEnemyInfo(int x, int y) {
 		if (not _infoPanel) return;
-		std::vector<SharedPtr<BattleCharacter>> enemies;
+		std::vector<SharedPtr<BoardUnit>> matchedUnits;
 		for (const auto& unit : _units) {
 			if (not unit || unit->IsAlly() || not unit->GetCharacter()) continue;
 			for (const auto& tile : GetOccupiedTiles(*unit)) {
 				if (tile.first == x && tile.second == y) {
-					enemies.push_back(unit->GetCharacter());
+					matchedUnits.push_back(unit);
 					break;
 				}
 			}
+		}
+		// グループは代表の1体だけを表示する（ATK・DEF・MDEF・SPDの平均値が最も高い敵）
+		std::vector<SharedPtr<BattleCharacter>> enemies;
+		std::vector<std::pair<int, int>> shownGroupTiles;
+		for (const auto& unit : matchedUnits) {
+			const auto groupUnits = GetEnemyGroupUnits(unit);
+			if (static_cast<int>(groupUnits.size()) <= 1) {
+				enemies.push_back(unit->GetCharacter());
+				continue;
+			}
+			const auto groupKey = std::make_pair(unit->GetData().initialX, unit->GetData().initialY);
+			bool alreadyShown = false;
+			for (const auto& shown : shownGroupTiles) {
+				if (shown == groupKey) alreadyShown = true;
+			}
+			if (alreadyShown) continue;
+			shownGroupTiles.push_back(groupKey);
+			SharedPtr<BoardUnit> representative = nullptr;
+			double bestAverage = 0.0;
+			for (const auto& member : groupUnits) {
+				if (not member || not member->GetCharacter()) continue;
+				const auto state = member->GetCharacter()->GetState();
+				const double average = (state.atk + state.def + state.mdef + state.speed) / 4.0;
+				if (not representative || bestAverage < average) {
+					representative = member;
+					bestAverage = average;
+				}
+			}
+			if (representative) enemies.push_back(representative->GetCharacter());
 		}
 		_infoPanel->ShowEnemies(enemies);
 	}
