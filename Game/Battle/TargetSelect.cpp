@@ -1,5 +1,6 @@
 #include "TargetSelect.h"
 #include <Game/Data/SoundEffects.h>
+#include <cmath>
 
 namespace Game {
 	void TargetSelect::Show(const std::vector<std::pair<SharedPtr<BattleCharacter>, std::pair<Vector2D, Vector2D>>>& candidates,
@@ -39,6 +40,30 @@ namespace Game {
 		addDim({ left, 0.0 }, { right - left, top });
 		addDim({ left, bottom }, { right - left, window.y - bottom });
 
+		// 候補パネルをハイライト色で縁取りし、パネル全体を発光点滅させる
+		const CoreBackend::Drawing::Color highlightColor(HighlightColorR, HighlightColorG, HighlightColorB);
+		for (const auto& [character, rect] : candidates) {
+			const auto& glow = CreateScene<ColorRect>();
+			glow->SetSize(rect.second)
+				->SetColor(highlightColor)
+				->SetAlpha(static_cast<int>(HighlightAlphaMin))
+				->SetPosition(rect.first);
+			_glows.push_back(glow);
+
+			const double w = HighlightBorderWidth;
+			auto addBorder = [this, &highlightColor](const Vector2D& position, const Vector2D& size) {
+				const auto& border = CreateScene<ColorRect>();
+				border->SetSize(size)
+					->SetColor(highlightColor)
+					->SetPosition(position);
+				_borders.push_back(border);
+				};
+			addBorder({ rect.first.x - w, rect.first.y - w }, { rect.second.x + w * 2.0, w });
+			addBorder({ rect.first.x - w, rect.first.y + rect.second.y }, { rect.second.x + w * 2.0, w });
+			addBorder({ rect.first.x - w, rect.first.y }, { w, rect.second.y });
+			addBorder({ rect.first.x + rect.second.x, rect.first.y }, { w, rect.second.y });
+		}
+
 		for (const auto& [character, rect] : candidates) {
 			const auto& button = CreateScene<Button>();
 			button->SetArea({
@@ -58,6 +83,16 @@ namespace Game {
 		}
 	}
 
+	void TargetSelect::_Update(float dt) {
+		if (_glows.empty()) return;
+		_blinkTime += dt;
+		const double phase = (std::sin(_blinkTime * HighlightBlinkSpeed) + 1.0) * 0.5;
+		const int alpha = static_cast<int>(HighlightAlphaMin + (HighlightAlphaMax - HighlightAlphaMin) * phase);
+		for (const auto& glow : _glows) {
+			glow->SetAlpha(alpha);
+		}
+	}
+
 	void TargetSelect::Select(const SharedPtr<BattleCharacter>& character) {
 		const auto onSelected = _onSelected;
 		Hide();
@@ -69,10 +104,19 @@ namespace Game {
 			DeleteScene(dim);
 		}
 		_dims.clear();
+		for (const auto& glow : _glows) {
+			DeleteScene(glow);
+		}
+		_glows.clear();
+		for (const auto& border : _borders) {
+			DeleteScene(border);
+		}
+		_borders.clear();
 		for (const auto& button : _buttons) {
 			DeleteScene(button);
 		}
 		_buttons.clear();
 		_onSelected = nullptr;
+		_blinkTime = 0.0;
 	}
 }

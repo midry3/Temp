@@ -36,6 +36,7 @@ namespace Game {
 			std::string target;
 			std::string value;
 			std::string effect;
+			bool targetOrigin = false;
 			std::string sound;
 			double volume = 1.0;
 			std::vector<std::string> pickupTextures;
@@ -86,6 +87,7 @@ namespace Game {
 		};
 		SharedPtr<BattleCharacter> _actor;
 		SharedPtr<BattleCharacter> _target;
+		SkillInfo _skill;
 		std::vector<SharedPtr<BattleCharacter>> _targets;
 		Vector2D _actorInitialAnimationPosition;
 		std::map<SharedPtr<BattleCharacter>, Vector2D> _initialAnimationPositions;

@@ -55,7 +55,7 @@ attack = {
 - `targetScope`：`Single`（単体）または `All`（全体）。既定値は `Single` です。
 - `targetSide`：`Enemy`（敵）または `Ally`（味方）。既定値は `Enemy` です。
 
-単体対象の技を選ぶと対象選択画面になります。対象候補の情報パネル（味方は左上、敵は右上）以外は薄く暗くなり、パネルをクリックして対象を選びます。候補が1体だけの場合は選択をスキップして自動でその対象になります。全体対象の技は選択なしで、対象陣営の生存者全員が対象になります。対象候補は生存しているキャラのみです。
+単体対象の技を選ぶと対象選択画面になります。対象候補の情報パネル（味方は左上、敵は右上）以外は薄く暗くなり、候補パネルは縁取りと発光点滅でハイライトされます（色や点滅の調整値は `TargetSelect` の `Highlight` 系定数）。パネルをクリックして対象を選びます。候補が1体だけの場合は選択をスキップして自動でその対象になります。全体対象の技は選択なしで、対象陣営の生存者全員が対象になります。対象候補は生存しているキャラのみです。
 
 演出側では `target = "target"` が、単体対象では選んだ相手、全体対象では対象全員を指します（`damage`、`animation`、`position`、`position_tween`、`rustle`、`stat_changes` に適用）。
 
@@ -77,6 +77,7 @@ attack = {
 | `after` | table | `animation` | アニメーション終了時に実行する位置変更。`position`、`offset`、`duration`、`easing`を指定できます。 |
 | `amount` | integer | `damage` | 与えるダメージ量。0 未満の場合は 0 として扱われます。 |
 | `effect` | string | `effect` | 再生する Effekseer エフェクトのアセットパス。 |
+| `targetOrigin` | boolean | `effect` | `true` の場合、エフェクトの原点を攻撃者ではなく対象の位置にします。単体対象スキルのときのみ有効です（全体対象では無視され、攻撃者の位置になります）。既定値は `false` です。 |
 | `trigger` | integer | `effect` | エフェクト再生中に送信するEffekseerトリガー番号。 |
 | `triggerTime` | number | `effect` | 単一`trigger`を送信するエフェクト再生からの相対時刻。既定値は `0` 秒です。 |
 | `triggers` | table[] | `effect` | 複数トリガーの `{ time = 相対秒, trigger = 番号 }` 配列。 |

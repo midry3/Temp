@@ -214,6 +214,7 @@ namespace Game {
 			if (action.soundPlayer) DeleteScene(action.soundPlayer);
 		}
 		_actor = actor;
+		_skill = skill;
 		_targets.clear();
 		for (const auto& target : targets) {
 			if (target) _targets.push_back(target);
@@ -376,6 +377,7 @@ namespace Game {
 					action.target = ReadString(state, -1, "target");
 					action.value = ReadString(state, -1, "value");
 					action.effect = ReadString(state, -1, "effect");
+					action.targetOrigin = ReadBool(state, -1, "targetOrigin", false);
 					action.sound = ReadString(state, -1, "sound");
 					action.volume = ReadNumber(state, -1, "volume", 1.0);
 					action.pickupTextures = ReadStringArray(state, -1, "textures");
@@ -516,7 +518,15 @@ namespace Game {
 		else if (action.type == "effect" && not action.effect.empty()) {
 			auto effect = CreateScene<EffekseerEmitter2D>();
 			effect->SetEffect(action.effect);
-			if (_actor) effect->SetGlobalPosition(_actor->GetGlobalPosition() + action.offset);
+			// targetOrigin は単体対象スキルのときだけ有効で、原点を対象の位置にする
+			const bool useTargetOrigin = action.targetOrigin
+				&& _skill.targetScope == SkillTargetScope::Single && _target;
+			if (useTargetOrigin) {
+				effect->SetGlobalPosition(_target->GetGlobalPosition() + action.offset);
+			}
+			else if (_actor) {
+				effect->SetGlobalPosition(_actor->GetGlobalPosition() + action.offset);
+			}
 			effect->Play();
 			_effects.push_back(effect);
 			if (action.trigger >= 0) {
