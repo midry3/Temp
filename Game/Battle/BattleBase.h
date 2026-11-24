@@ -9,6 +9,7 @@
 #include "TargetSelect.h"
 #include "UsingSkillPanel.h"
 #include <Event/StateMachine.h>
+#include <map>
 #include <optional>
 
 namespace Game {
@@ -33,6 +34,11 @@ namespace Game {
 		static constexpr double ALLY_SPACING = 160.0;
 		static constexpr double FORMATION_ANIMATION_TIME = 0.45;
 		static constexpr int FORMATION_DIM_VALUE = 128;
+
+		// 攻撃演出中、攻撃者と対象以外にかける薄黒の割合（元の色味に掛ける）
+		static constexpr double ATTACK_DIM_RATE = 0.5;
+		// 薄黒を戻すために控える、演出前の各キャラクターの色味
+		std::map<BattleCharacter*, Vector3D> _attackDimRestore;
 
 		StateMachine _state;
 		std::vector<SkillInfo> _selectedSkills;
@@ -64,6 +70,8 @@ namespace Game {
 		void ApplyAllyFormation(bool animate);
 		void ApplyAllyDimming();
 		void AdvanceAllyFormationAfterAction();
+		void ApplyAttackDimming(const SharedPtr<BattleCharacter>& actor, const std::vector<SharedPtr<BattleCharacter>>& targets);
+		void ClearAttackDimming();
 		std::optional<SkillInfo> ChooseEnemySkill(const SharedPtr<BattleCharacter>& enemy) const;
 		std::vector<SharedPtr<BattleCharacter>> ChooseEnemyTargets(const SharedPtr<BattleCharacter>& enemy, const SkillInfo& skill) const;
 		bool IsEnemyCharacter(const SharedPtr<BattleCharacter>& character) const;
