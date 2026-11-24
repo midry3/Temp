@@ -23,8 +23,11 @@ namespace Game {
 			DEFAULT_DEF = 50,
 			DEFAULT_MDEF = 0,
 			DEFAULT_SPEED = 10;
+		// 最前列でない間、Alphaに設定しておく透明度
+		static constexpr int ALPHA_NOT_FRONT = 50;
 		SharedPtr<RekoAlpha> _alphaAnim;
 	protected:
 		void _Load() override;
+		void OnFormationFront(bool isFront) override;
 	};
 }

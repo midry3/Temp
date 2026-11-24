@@ -1,6 +1,12 @@
 #include "Reko.h"
 
 namespace Game {
+	void Reko::OnFormationFront(bool isFront) {
+		if (_alphaAnim) {
+			_alphaAnim->alpha = isFront ? 255 : ALPHA_NOT_FRONT;
+		}
+	}
+
 	void Reko::_Load() {
 		BattleCharacter::_Load();
 		_alphaAnim = CreateScene<RekoAlpha>();

@@ -188,9 +188,10 @@ namespace Game {
 			const auto& ally = _allyFormation[i];
 			if (not ally) continue;
 			const bool isFront = i + 1 == _allyFormation.size();
-			ally->modulate = isFront
+			ally->SetModulateAll(isFront
 				? Vector3D(255, 255, 255)
-				: Vector3D(FORMATION_DIM_VALUE, FORMATION_DIM_VALUE, FORMATION_DIM_VALUE);
+				: Vector3D(FORMATION_DIM_VALUE, FORMATION_DIM_VALUE, FORMATION_DIM_VALUE));
+			ally->OnFormationFront(isFront);
 		}
 	}
 

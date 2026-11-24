@@ -73,6 +73,10 @@ namespace Game
 		Signal<int> AnimationFinished;
 		void PlayAnimation(int animation, std::optional<bool> loop = std::nullopt, bool reverse = false);
 		[[nodiscard]] Vector2D* GetAnimationPositionPointer();
+		// modulate は子シーンへ継承されないため、自分と子孫すべてに適用する
+		void SetModulateAll(const Vector3D& value);
+		// フォーメーションで最前列かどうかが変わったときに呼ばれる
+		virtual void OnFormationFront(bool isFront) {}
 		void ApplyDamage(int damage);
 		void UseMP(int amount);
 		[[nodiscard]] bool CanUseSkill(int mp);

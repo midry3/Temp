@@ -32,15 +32,29 @@ namespace Game {
 		_sprite->offset.y = -frameSize.y * _sprite->scale.y;
 	}
 
+	namespace {
+		void ApplyModulateRecursive(Scene* scene, const Vector3D& value) {
+			if (not scene) return;
+			scene->modulate = value;
+			for (const auto& child : scene->GetChildScenes()) {
+				ApplyModulateRecursive(child.get(), value);
+			}
+		}
+	}
+
+	void BattleCharacter::SetModulateAll(const Vector3D& value) {
+		ApplyModulateRecursive(this, value);
+	}
+
 	// 被弾時の赤点滅（modulate を赤と白で数回切り替える）
 	void BattleCharacter::PlayDamagedFlash() {
 		const int serial = ++_damagedFlashSerial;
-		modulate = Vector3D(255, 0, 0);
+		SetModulateAll(Vector3D(255, 0, 0));
 		for (int i = 1; i <= 5; ++i) {
 			const bool toRed = i % 2 == 0;
 			CreateTimer(0.075 * i, [this, serial, toRed]() {
 				if (serial != _damagedFlashSerial) return;
-				modulate = toRed ? Vector3D(255, 0, 0) : Vector3D(255, 255, 255);
+				SetModulateAll(toRed ? Vector3D(255, 0, 0) : Vector3D(255, 255, 255));
 				});
 		}
 	}
