@@ -940,6 +940,8 @@ namespace Game {
 		if (_winScreen) return;
 		CancelSelection();
 		ClearEnemyIntentVisuals();
+		// 勝利画面では BGM を止める
+		if (_bgmPlayer) _bgmPlayer->FadeAndPause(0.5f);
 		_winScreen = CreateScene<BoardWinScreen>();
 	}
 
