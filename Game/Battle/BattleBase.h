@@ -25,7 +25,7 @@ namespace Game {
 		static constexpr int
 			ALLIES_X = 100,
 			ENEMIES_X = 1000,
-			CHARACTER_Y = 600,
+			CHARACTER_Y = 550,
 			CHARACTER_GRID_HEIGHT = 500;
 
 		// 味方の横一列フォーメーション（間隔と移動アニメーション時間、暗さ）

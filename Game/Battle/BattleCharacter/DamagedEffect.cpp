@@ -2,7 +2,7 @@
 
 namespace Game {
 	void DamagedEffect::_Load() {
-		const double x = GetRandomInt(-200, 200);
+		const double x = GetRandomInt(-100, 100);
 		_label = CreateScene<TextLabel>();
 		_label->BeginSetting()
 			->SetFontSize(40)
