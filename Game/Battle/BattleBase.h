@@ -45,6 +45,8 @@ namespace Game {
 		std::vector<std::vector<SharedPtr<BattleCharacter>>> _selectedTargets;
 		// _selectedSkills と同じ順序で、選択した味方の _allies 上のインデックス（死亡キャラは選択を飛ばすため）
 		std::vector<int> _selectedAllyIndices;
+		// _selectedSkills と同じ順序で、「何もしない」を選んだかどうか
+		std::vector<bool> _selectedPasses;
 		int _currentCharacterIndex = 0;
 		bool _charactersPut = false;
 
@@ -65,6 +67,8 @@ namespace Game {
 
 		std::vector<SharedPtr<BattleCharacter>> GetTargetCandidates(const SharedPtr<BattleCharacter>& actor, const SkillInfo& skill) const;
 		void AdvanceSelection();
+		void GoBackSelection();
+		void UpdateBackButton();
 		void ShowTargetSelect(const SkillInfo& skill, const std::vector<SharedPtr<BattleCharacter>>& candidates);
 		void BuildActionQueue();
 		void ExecuteNextAction();

@@ -37,6 +37,7 @@ namespace Game {
 				_selectedSkills.push_back(skill);
 				_selectedTargets.push_back(candidates);
 				_selectedAllyIndices.push_back(_currentCharacterIndex);
+				_selectedPasses.push_back(false);
 				AdvanceSelection();
 			}
 			else {
@@ -53,6 +54,25 @@ namespace Game {
 			CreateTimer(0.5, [this]() {
 				_skillSelect->In();
 			});
+			};
+
+		_battleUI->PassPressed += [this]() {
+			// 「何もしない」: スキルを選ばず、このキャラは行動しない
+			_selectedSkills.push_back(SkillInfo{});
+			_selectedTargets.emplace_back();
+			_selectedAllyIndices.push_back(_currentCharacterIndex);
+			_selectedPasses.push_back(true);
+			AdvanceSelection();
+			};
+
+		_battleUI->SurrenderPressed += [this]() {
+			// 「降参」: 敗北として扱う
+			_targetSelect->Hide();
+			_state >> Lost;
+			};
+
+		_battleUI->BackPressed += [this]() {
+			GoBackSelection();
 			};
 
 		_usingSkillView = CreateScene<AnimatedUI>();
@@ -72,6 +92,8 @@ namespace Game {
 			_selectedSkills.clear();
 			_selectedTargets.clear();
 			_selectedAllyIndices.clear();
+			_selectedPasses.clear();
+			UpdateBackButton();
 			// 死亡した味方のコマンドは飛ばす（最初の生存味方から選択を始める）
 			_currentCharacterIndex = 0;
 			while (_currentCharacterIndex < static_cast<int>(_allies.size())
@@ -127,6 +149,8 @@ namespace Game {
 		// 味方分は選択済みのスキルと対象を使う（選択した味方のインデックスと対応付ける）
 		for (size_t k = 0; k < _selectedSkills.size(); ++k) {
 			if (_selectedAllyIndices.size() <= k) continue;
+			// 「何もしない」を選んだキャラは行動しない
+			if (k < _selectedPasses.size() && _selectedPasses[k]) continue;
 			const int allyIndex = _selectedAllyIndices[k];
 			if (allyIndex < 0 || static_cast<int>(_allies.size()) <= allyIndex || not _allies[allyIndex]) continue;
 			QueuedAction queued;
@@ -390,13 +414,33 @@ namespace Game {
 			// 選択が終わったキャラは後ろへ、次のキャラが最前列へ
 			SetAllyFront(_allies[_currentCharacterIndex]);
 			ApplyAllyFormation(true);
+			UpdateBackButton();
 			_battleUI->In();
 		}
 		else {
 			_currentCharacterIndex = 0;
+			_battleUI->Out();
 			BuildActionQueue();
 			ExecuteNextAction();
 		}
+	}
+
+	void BattleBase::UpdateBackButton() {
+		// 「戻る」は二番目以降のキャラの選択時にだけ有効
+		_battleUI->SetBackEnabled(not _selectedAllyIndices.empty());
+	}
+
+	void BattleBase::GoBackSelection() {
+		if (_selectedAllyIndices.empty()) return;
+		// 一つ前のキャラの選択を取り消して、そのキャラの選択に戻る
+		_currentCharacterIndex = _selectedAllyIndices.back();
+		_selectedSkills.pop_back();
+		_selectedTargets.pop_back();
+		_selectedAllyIndices.pop_back();
+		if (not _selectedPasses.empty()) _selectedPasses.pop_back();
+		SetAllyFront(_allies[_currentCharacterIndex]);
+		ApplyAllyFormation(true);
+		UpdateBackButton();
 	}
 
 	void BattleBase::ShowTargetSelect(const SkillInfo& skill, const std::vector<SharedPtr<BattleCharacter>>& candidates) {
@@ -415,6 +459,7 @@ namespace Game {
 				? std::vector<SharedPtr<BattleCharacter>>{}
 				: std::vector<SharedPtr<BattleCharacter>>{ candidates.front() });
 			_selectedAllyIndices.push_back(_currentCharacterIndex);
+			_selectedPasses.push_back(false);
 			AdvanceSelection();
 			return;
 		}
@@ -422,6 +467,7 @@ namespace Game {
 			_selectedSkills.push_back(skill);
 			_selectedTargets.push_back({ chosen });
 			_selectedAllyIndices.push_back(_currentCharacterIndex);
+			_selectedPasses.push_back(false);
 			AdvanceSelection();
 			});
 	}

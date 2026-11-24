@@ -127,10 +127,8 @@ namespace Game {
 			return;
 		}
 		HideHintOverlay();
-		if (_terrain == BoardTerrain::Disabled) {
-			_sprite->SetModulate({ 80, 80, 80 });
-		}
-		else if (_terrain == BoardTerrain::Other) {
+		// 通行不可マスも Board 上では通常マスと同じ色で表示する（黒くしない）
+		if (_terrain == BoardTerrain::Other) {
 			_sprite->SetModulate({ 180, 140, 80 });
 		}
 		else {
