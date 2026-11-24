@@ -2,6 +2,7 @@
 #include <Scene/Shape/ColorRect.h>
 #include <Scene/Text/TextLabel.h>
 #include <Scene/Button/Button.h>
+#include <Game/StageSelect.h>
 
 namespace Game {
 	void BoardWinScreen::_Load() {
@@ -12,8 +13,8 @@ namespace Game {
 		button->SetArea({ {0, 0}, {wsize.x, 0}, {wsize.x, wsize.y}, {0, wsize.y} });
 		button->LeftPressed += [this](const MouseEvent& e) {
 			if (e.just && _isButtonEnabled) {
-				// 盤面側では遷移先が未定のため、シーン遷移は行わない
-				// SceneManager.TransSceneTo(CommonData::CurrentBoard, 1.0, 0.3);
+				// ステージクリア後はステージ選択へ戻る
+				SceneManager.TransSceneTo(MakeShared<StageSelect>(), 1.0, 0.3, true, SceneTransitionBehavior::Ignore);
 			}
 			};
 
