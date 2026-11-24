@@ -197,6 +197,7 @@
     <ClCompile Include="Game\LoadingScene.cpp" />
     <ClCompile Include="Game\Battle\BattleLoadingScene.cpp" />
     <ClCompile Include="Game\TestScene.cpp" />
+    <ClCompile Include="Game\StageSelect.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="ThirdParty\imgui-1.92.9b\imgui.cpp" />
     <ClCompile Include="ThirdParty\imgui-1.92.9b\imgui_draw.cpp" />
@@ -233,6 +234,8 @@
     <ClInclude Include="Game\Board\MapEditor.h" />
     <ClInclude Include="Game\Battle\BattleCharacter\BattleCharacterFactory.h" />
     <ClInclude Include="Game\Board\Map\Map1.h" />
+    <ClInclude Include="Game\Board\Map\StageBoard.h" />
+    <ClInclude Include="Game\StageSelect.h" />
     <ClInclude Include="Game\Board\Map\Map3.h" />
     <ClInclude Include="Game\Board\Map\Map4.h" />
     <ClInclude Include="Game\Data\CommonData.h" />

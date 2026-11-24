@@ -8,8 +8,7 @@
 #include <DxLib.h>
 #include <Scene/Text/TextLabel.h>
 
-#include "Game/Board/Map/Map1.h"
-#include "Game/Board/Map/Map4.h"
+#include "Game/StageSelect.h"
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
@@ -27,7 +26,7 @@ void NovotSetup() {
 	FontManager.AddFont("font/JF-Dot-jiskan16.ttf");
 	TextLabel::DefaultFont = FontManager.GetFont(0);
 
-	SceneManager.SetCurrentScene<Game::Map4>();
+	SceneManager.SetCurrentScene<Game::StageSelect>();
 }
 
 int NovotMain() {
