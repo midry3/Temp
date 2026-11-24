@@ -42,6 +42,8 @@ namespace Game {
 		std::string moveType = "adjacent";
 		int x = 0;
 		int y = 0;
+		// 本体以外に占有するマス（絶対座標）。保存時は本体からの相対オフセットになる
+		std::vector<std::pair<int, int>> extraTiles;
 	};
 
 	struct MapEditorCharacterInfo {
@@ -69,6 +71,8 @@ namespace Game {
 		std::vector<MapEditorCharacterData> _characters;
 		std::vector<SharedPtr<Sprite2D>> _characterSprites;
 		std::vector<SharedPtr<TextLabel>> _characterLabels;
+		std::vector<SharedPtr<Sprite2D>> _extraTileSprites;
+		int _occupyEditIndex = -1;
 		std::vector<MapEditorCharacterInfo> _characterCatalog;
 		std::vector<std::string> _assetFiles;
 		std::string _mapPath = "board/default.lua";
@@ -125,6 +129,7 @@ namespace Game {
 		bool PaintLine(int x0, int y0, int x1, int y1);
 		void PlaceAt(int x, int y);
 		void SelectAt(int x, int y);
+		void ToggleOccupiedTile(int x, int y);
 		Vector2D TilePosition(int x, int y) const;
 
 	protected:

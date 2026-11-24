@@ -359,7 +359,7 @@ namespace Game {
 						[type](const auto& entry) { return entry.type == type; });
 					const std::string icon = ReadString(state, -1, "icon",
 						ReadString(state, -1, "texture", catalogEntry == _characterCatalog.end() ? "" : catalogEntry->icon));
-					_characters.push_back({
+					MapEditorCharacterData character = {
 						ReadString(state, -1, "id"),
 						type,
 						ReadString(state, -1, "displayName", catalogEntry == _characterCatalog.end() ? typeName : catalogEntry->displayName),
@@ -368,7 +368,25 @@ namespace Game {
 						ReadString(state, -1, "move", "adjacent"),
 						ReadInteger(state, -1, "x"),
 						ReadInteger(state, -1, "y")
-					});
+					};
+					// 占有マスは本体からの相対オフセットで保存されているので絶対座標に戻す
+					lua_getfield(state, -1, "tiles");
+					if (lua_istable(state, -1)) {
+						const int tileCount = static_cast<int>(lua_rawlen(state, -1));
+						for (int tileIndex = 1; tileIndex <= tileCount; ++tileIndex) {
+							lua_rawgeti(state, -1, tileIndex);
+							if (lua_istable(state, -1)) {
+								const int extraX = character.x + ReadInteger(state, -1, "x");
+								const int extraY = character.y + ReadInteger(state, -1, "y");
+								if (not (extraX < 0) && not (extraY < 0) && extraX < _width && extraY < _height) {
+									character.extraTiles.push_back({ extraX, extraY });
+								}
+							}
+							lua_pop(state, 1);
+						}
+					}
+					lua_pop(state, 1);
+					_characters.push_back(character);
 				}
 				lua_pop(state, 1);
 			}
@@ -378,6 +396,7 @@ namespace Game {
 		_mapPath = path;
 		_selectedX = _selectedY = -1;
 		_selectedObject = -1;
+		_occupyEditIndex = -1;
 		_isDirty = false;
 		CopyToBuffer(_mapPathInput, _mapPath);
 		CopyToBuffer(_tileTextureInput, _tileTexture);
@@ -436,7 +455,15 @@ namespace Game {
 				<< EscapeLua(character.displayName) << "\", icon = \"" << EscapeLua(character.icon)
 				<< "\", team = \"" << (character.team == BoardTeam::Ally ? "ally" : "enemy")
 				<< "\", move = \"" << EscapeLua(character.moveType) << "\", x = "
-				<< character.x << ", y = " << character.y << " },\n";
+				<< character.x << ", y = " << character.y;
+			if (not character.extraTiles.empty()) {
+				output << ", tiles = {";
+				for (const auto& extra : character.extraTiles) {
+					output << " { x = " << (extra.first - character.x) << ", y = " << (extra.second - character.y) << " },";
+				}
+				output << " }";
+			}
+			output << " },\n";
 		}
 		output << "    }\n}\n";
 		if (not output.good()) {
@@ -549,8 +576,10 @@ namespace Game {
 	void MapEditor::RebuildCharacterSprites() {
 		for (const auto& sprite : _characterSprites) if (sprite) DeleteScene(sprite);
 		for (const auto& label : _characterLabels) if (label) DeleteScene(label);
+		for (const auto& sprite : _extraTileSprites) if (sprite) DeleteScene(sprite);
 		_characterSprites.clear();
 		_characterLabels.clear();
+		_extraTileSprites.clear();
 		for (const auto& character : _characters) {
 			if (not character.icon.empty()) {
 				const auto& sprite = CreateScene<Sprite2D>();
@@ -568,6 +597,19 @@ namespace Game {
 			label->SetForegroundColor({ 0, 0, 0 });
 			label->SetPosition(TilePosition(character.x, character.y) + Vector2D(2.0, _tileSize * 0.76));
 			_characterLabels.push_back(label);
+			// 占有マスは半透明の小さいアイコンで示す
+			for (const auto& extra : character.extraTiles) {
+				if (character.icon.empty()) continue;
+				const auto& ghost = CreateScene<Sprite2D>();
+				ghost->SetTexture(LoadAsset<Texture>(character.icon));
+				const auto ghostSize = ghost->GetRawSize();
+				if (not (ghostSize.x <= 0.0) && not (ghostSize.y <= 0.0)) {
+					ghost->SetScale(Min(_tileSize / ghostSize.x, _tileSize / ghostSize.y) * 0.5);
+				}
+				ghost->alpha = 110;
+				ghost->SetPosition(TilePosition(extra.first, extra.second) + Vector2D(_tileSize * 0.25, _tileSize * 0.25));
+				_extraTileSprites.push_back(ghost);
+			}
 		}
 	}
 
@@ -663,8 +705,20 @@ namespace Game {
 					ImGui::Separator();
 					ImGui::Text("%s (%s / %s)", character.displayName.c_str(), BoardCharacterTypeKey(character.type),
 						character.team == BoardTeam::Ally ? "味方" : "敵");
+					ImGui::Text("占有マス: %d", static_cast<int>(character.extraTiles.size()));
+					if (_occupyEditIndex == index) {
+						ImGui::TextUnformatted("占有マス編集中: タイルをクリックで追加 / 削除");
+						if (ImGui::Button("占有マス編集を終了")) {
+							_occupyEditIndex = -1;
+						}
+					}
+					else if (ImGui::Button("占有マスを編集")) {
+						_occupyEditIndex = index;
+						_tool = MapEditorTool::Select;
+					}
 					if (ImGui::Button("このキャラクターを削除")) {
 						_characters.erase(_characters.begin() + index);
+						_occupyEditIndex = -1;
 						_isDirty = true;
 						RebuildCharacterSprites();
 						ImGui::PopID();
@@ -1119,8 +1173,42 @@ namespace Game {
 		}
 		if (not leftPressed) return;
 		if (x < 0 || y < 0 || not (x < _width) || not (y < _height)) return;
-		if (_tool == MapEditorTool::Select) SelectAt(x, y);
+		if (_tool == MapEditorTool::Select) {
+			if (0 <= _occupyEditIndex && _occupyEditIndex < static_cast<int>(_characters.size())) ToggleOccupiedTile(x, y);
+			else SelectAt(x, y);
+		}
 		else PlaceAt(x, y);
+	}
+
+	void MapEditor::ToggleOccupiedTile(int x, int y) {
+		auto& character = _characters[_occupyEditIndex];
+		if (x == character.x && y == character.y) {
+			_status = "本体のマスは占有マスにできません。";
+			return;
+		}
+		const auto existing = std::find(character.extraTiles.begin(), character.extraTiles.end(), std::make_pair(x, y));
+		if (existing != character.extraTiles.end()) {
+			character.extraTiles.erase(existing);
+			_isDirty = true;
+			RebuildCharacterSprites();
+			return;
+		}
+		// 他のキャラクターが使っているマスは占有マスにできない
+		for (int index = 0; index < static_cast<int>(_characters.size()); ++index) {
+			if (index == _occupyEditIndex) continue;
+			const auto& other = _characters[index];
+			if (other.x == x && other.y == y) {
+				_status = "そのマスは他のキャラクターが使っています。";
+				return;
+			}
+			if (std::find(other.extraTiles.begin(), other.extraTiles.end(), std::make_pair(x, y)) != other.extraTiles.end()) {
+				_status = "そのマスは他のキャラクターが使っています。";
+				return;
+			}
+		}
+		character.extraTiles.push_back({ x, y });
+		_isDirty = true;
+		RebuildCharacterSprites();
 	}
 
 	bool MapEditor::PaintTileAt(int x, int y) {
@@ -1195,6 +1283,7 @@ namespace Game {
 			std::string id = team == BoardTeam::Ally
 				? std::string("ally_") + BoardCharacterTypeKey(info.type) : std::string();
 			std::string moveType = "adjacent";
+			std::vector<std::pair<int, int>> extraTiles;
 			if (team == BoardTeam::Ally) {
 				const auto existing = std::find_if(_characters.begin(), _characters.end(), [&info](const auto& character) {
 					return character.team == BoardTeam::Ally && character.type == info.type;
@@ -1202,6 +1291,10 @@ namespace Game {
 				if (existing != _characters.end()) {
 					id = existing->id;
 					moveType = existing->moveType;
+					// 再配置では占有マスも同じだけずらして引き継ぐ
+					for (const auto& extra : existing->extraTiles) {
+						extraTiles.push_back({ extra.first + (x - existing->x), extra.second + (y - existing->y) });
+					}
 				}
 				std::erase_if(_characters, [&info](const auto& character) {
 					return character.team == BoardTeam::Ally && character.type == info.type;
@@ -1224,6 +1317,7 @@ namespace Game {
 			character.moveType = moveType;
 			character.x = x;
 			character.y = y;
+			character.extraTiles = extraTiles;
 			_characters.push_back(character);
 			_isDirty = true;
 			RebuildCharacterSprites();

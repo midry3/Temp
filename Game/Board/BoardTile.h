@@ -13,6 +13,7 @@ namespace Game {
 		bool _selected = false;
 		bool _moveHint = false;
 		bool _enemyTargetHint = false;
+		bool _occupiedHint = false;
 		double _hintTime = 0.0;
 
 		void UpdateColor();
@@ -29,5 +30,7 @@ namespace Game {
 		void SetMoveHint(bool moveHint);
 		void SetEnemyTargetHint(bool enemyTargetHint);
 		[[nodiscard]] bool HasEnemyTargetHint() const { return _enemyTargetHint; }
+		void SetOccupiedHint(bool occupiedHint);
+		[[nodiscard]] bool HasOccupiedHint() const { return _occupiedHint; }
 	};
 }

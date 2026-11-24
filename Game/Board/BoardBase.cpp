@@ -218,6 +218,18 @@ namespace Game {
 					unit.y = ReadInteger(state, -1, "y");
 					unit.initialX = unit.x;
 					unit.initialY = unit.y;
+					lua_getfield(state, -1, "tiles");
+					if (lua_istable(state, -1)) {
+						const int tileCount = static_cast<int>(lua_rawlen(state, -1));
+						for (int tileIndex = 1; tileIndex <= tileCount; tileIndex++) {
+							lua_rawgeti(state, -1, tileIndex);
+							if (lua_istable(state, -1)) {
+								unit.extraTiles.push_back({ ReadInteger(state, -1, "x"), ReadInteger(state, -1, "y") });
+							}
+							lua_pop(state, 1);
+						}
+					}
+					lua_pop(state, 1);
 					units.push_back(unit);
 				}
 				lua_pop(state, 1);
@@ -235,6 +247,7 @@ namespace Game {
 		if (not _coopIconLayer) _coopIconLayer = CreateScene<Scene>();
 		UpdateEnemyIntentVisuals();
 		UpdateCoopIcons();
+		UpdateOccupiedTileVisuals();
 		return true;
 	}
 
@@ -246,12 +259,13 @@ namespace Game {
 		}
 		_coopIcons.clear();
 
-		// 敵がいるタイルごとに、そのマスへ到達可能な味方を集める（同じタイルの敵は1行にまとめる）
+		// 敵が占有するタイルごとに、そのマスへ到達可能な味方を集める（同じタイルは1行にまとめる）
 		std::vector<std::pair<int, int>> enemyTiles;
 		for (const auto& enemy : GetEnemyUnits()) {
-			const auto tile = std::make_pair(enemy->GetData().x, enemy->GetData().y);
-			if (std::find(enemyTiles.begin(), enemyTiles.end(), tile) == enemyTiles.end()) {
-				enemyTiles.push_back(tile);
+			for (const auto& tile : GetOccupiedTiles(*enemy)) {
+				if (std::find(enemyTiles.begin(), enemyTiles.end(), tile) == enemyTiles.end()) {
+					enemyTiles.push_back(tile);
+				}
 			}
 		}
 		const auto allies = GetAllyUnits();
@@ -420,8 +434,13 @@ namespace Game {
 			CancelSelection();
 			MoveUnit(movingUnit, x, y, true, [this, movingUnit, targetUnit, isEnemyEncounter]() {
 				UpdateCoopIcons();
+				UpdateOccupiedTileVisuals();
 				if (isEnemyEncounter) {
 					OpenCoopSelect(movingUnit, targetUnit);
+				}
+				else if (const auto overlappedEnemy = FindFootprintOverlapEnemy(movingUnit)) {
+					// 占有マス同士が重なった場合も戦闘になる
+					OpenCoopSelect(movingUnit, overlappedEnemy);
 				}
 				else {
 					ExecuteEnemyTurn();
@@ -509,6 +528,7 @@ namespace Game {
 		const bool isAllyEncounter = targetUnit && targetUnit->IsAlly();
 		auto postProcess = [this, enemy = action.enemy, targetUnit, isAllyEncounter]() {
 			UpdateCoopIcons();
+			UpdateOccupiedTileVisuals();
 			if (isAllyEncounter) {
 				OpenCoopSelect(targetUnit, enemy);
 			}
@@ -554,17 +574,22 @@ namespace Game {
 	}
 
 	bool BoardBase::CanGroupMemberMoveTo(const BoardUnit& member, int x, int y, const std::vector<SharedPtr<BoardUnit>>& group) const {
-		if (not IsInside(x, y)) return false;
-		const auto tile = GetTile(x, y);
-		if (not tile || not tile->IsPassable()) return false;
-		const auto occupant = GetUnitAt(x, y);
-		if (not occupant) return true;
-		if (occupant.get() == &member) return true;
+		// メンバーの占有マス全体が移動先に収まること。
 		// 同じグループのメンバーがいるマスは、そのメンバーも同時に動くので進める
-		for (const auto& groupUnit : group) {
-			if (groupUnit == occupant) return true;
+		for (const auto& tile : GetFootprintTiles(member, x, y)) {
+			if (not IsInside(tile.first, tile.second)) return false;
+			const auto boardTile = GetTile(tile.first, tile.second);
+			if (not boardTile || not boardTile->IsPassable()) return false;
+			const auto occupant = GetUnitAt(tile.first, tile.second);
+			if (not occupant) continue;
+			if (occupant.get() == &member) continue;
+			bool inGroup = false;
+			for (const auto& groupUnit : group) {
+				if (groupUnit == occupant) inGroup = true;
+			}
+			if (not inGroup) return false;
 		}
-		return false;
+		return true;
 	}
 
 	void BoardBase::EndTurn() {
@@ -746,6 +771,7 @@ namespace Game {
 
 		auto resumeFlow = [this, defeatedUnits, warningEnemy, defeated, startedInEnemyTurn]() {
 			UpdateCoopIcons();
+			UpdateOccupiedTileVisuals();
 			if (GetEnemyUnits().empty()) {
 				ShowWinScreen();
 				return;
@@ -810,8 +836,12 @@ namespace Game {
 		if (not _infoPanel) return;
 		std::vector<SharedPtr<BattleCharacter>> enemies;
 		for (const auto& unit : _units) {
-			if (not unit->IsAlly() && unit->GetData().x == x && unit->GetData().y == y && unit->GetCharacter()) {
-				enemies.push_back(unit->GetCharacter());
+			if (not unit || unit->IsAlly() || not unit->GetCharacter()) continue;
+			for (const auto& tile : GetOccupiedTiles(*unit)) {
+				if (tile.first == x && tile.second == y) {
+					enemies.push_back(unit->GetCharacter());
+					break;
+				}
 			}
 		}
 		_infoPanel->ShowEnemies(enemies);
@@ -885,11 +915,70 @@ namespace Game {
 
 	SharedPtr<BoardUnit> BoardBase::GetUnitAt(int x, int y) const {
 		for (const auto& unit : _units) {
-			if (unit->GetData().x == x && unit->GetData().y == y) {
-				return unit;
+			if (not unit) continue;
+			for (const auto& tile : GetOccupiedTiles(*unit)) {
+				if (tile.first == x && tile.second == y) {
+					return unit;
+				}
 			}
 		}
 		return nullptr;
+	}
+
+	std::vector<std::pair<int, int>> BoardBase::GetFootprintTiles(const BoardUnit& unit, int baseX, int baseY) const {
+		std::vector<std::pair<int, int>> result;
+		result.push_back({ baseX, baseY });
+		for (const auto& offset : unit.GetData().extraTiles) {
+			result.push_back({ baseX + offset.dx, baseY + offset.dy });
+		}
+		return result;
+	}
+
+	std::vector<std::pair<int, int>> BoardBase::GetOccupiedTiles(const BoardUnit& unit) const {
+		return GetFootprintTiles(unit, unit.GetData().x, unit.GetData().y);
+	}
+
+	bool BoardBase::CanPlaceFootprint(const BoardUnit& unit, int x, int y, bool allowOccupiedByTarget) const {
+		for (const auto& tile : GetFootprintTiles(unit, x, y)) {
+			if (not IsInside(tile.first, tile.second)) return false;
+			if (not GetTile(tile.first, tile.second)->IsPassable()) return false;
+			const auto occupant = GetUnitAt(tile.first, tile.second);
+			if (occupant && occupant.get() != &unit) {
+				if (not allowOccupiedByTarget) return false;
+				if (unit.IsAlly() == occupant->IsAlly()) return false;
+			}
+		}
+		return true;
+	}
+
+	SharedPtr<BoardUnit> BoardBase::FindFootprintOverlapEnemy(const SharedPtr<BoardUnit>& unit) const {
+		if (not unit) return nullptr;
+		const auto ownTiles = GetOccupiedTiles(*unit);
+		for (const auto& enemy : GetEnemyUnits()) {
+			if (enemy == unit) continue;
+			for (const auto& tile : GetOccupiedTiles(*enemy)) {
+				if (std::find(ownTiles.begin(), ownTiles.end(), tile) != ownTiles.end()) {
+					return enemy;
+				}
+			}
+		}
+		return nullptr;
+	}
+
+	void BoardBase::UpdateOccupiedTileVisuals() {
+		for (const auto& tile : _tiles) {
+			tile->SetOccupiedHint(false);
+		}
+		for (const auto& unit : _units) {
+			if (not unit) continue;
+			const auto occupied = GetOccupiedTiles(*unit);
+			if (occupied.size() < 2) continue;
+			for (const auto& tile : occupied) {
+				if (IsInside(tile.first, tile.second)) {
+					GetTile(tile.first, tile.second)->SetOccupiedHint(true);
+				}
+			}
+		}
 	}
 
 	std::vector<BoardOffset> BoardBase::GetEnemyMoveOffsets(const BoardUnit& unit) const {
@@ -1048,6 +1137,9 @@ namespace Game {
 		const auto dy = y - data.y;
 		if (dx == 0 && dy == 0) return false;
 
+		// 占有マス全体が移動先に収まること
+		if (not CanPlaceFootprint(unit, x, y, allowOccupiedByTarget)) return false;
+
 		// 敵の場合は相対移動マス定義を判定
 		if (not unit.IsAlly()) {
 			const auto offsets = GetEnemyMoveOffsets(unit);
@@ -1113,7 +1205,10 @@ namespace Game {
 
 	bool BoardBase::IsOccupied(int x, int y, const BoardUnit* except) const {
 		for (const auto& unit : _units) {
-			if (unit.get() != except && unit->GetData().x == x && unit->GetData().y == y) return true;
+			if (not unit || unit.get() == except) continue;
+			for (const auto& tile : GetOccupiedTiles(*unit)) {
+				if (tile.first == x && tile.second == y) return true;
+			}
 		}
 		return false;
 	}

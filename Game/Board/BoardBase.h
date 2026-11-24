@@ -72,6 +72,9 @@ namespace Game {
 		void UpdateMoveHints();
 		void ExecuteEnemyTurn();
 		void UpdateCoopIcons();
+		void UpdateOccupiedTileVisuals();
+		[[nodiscard]] bool CanPlaceFootprint(const BoardUnit& unit, int x, int y, bool allowOccupiedByTarget) const;
+		[[nodiscard]] SharedPtr<BoardUnit> FindFootprintOverlapEnemy(const SharedPtr<BoardUnit>& unit) const;
 		void MoveEnemyAction(const BoardEnemyAction& action);
 		void AnimateUnitMove(const SharedPtr<BoardUnit>& unit, int x, int y, const std::function<void()>& onComplete = nullptr);
 		[[nodiscard]] bool CanGroupMemberMoveTo(const BoardUnit& member, int x, int y, const std::vector<SharedPtr<BoardUnit>>& group) const;
@@ -122,6 +125,9 @@ namespace Game {
 		[[nodiscard]] std::vector<SharedPtr<BoardUnit>> GetAllyUnits() const { return GetUnitsByTeam(BoardTeam::Ally); }
 		[[nodiscard]] std::vector<SharedPtr<BoardUnit>> GetEnemyUnits() const { return GetUnitsByTeam(BoardTeam::Enemy); }
 		[[nodiscard]] SharedPtr<BoardUnit> GetUnitAt(int x, int y) const;
+		// ユニットが占有する全マス（本体＋追加の占有マス）を、指定した本体位置で計算する
+		[[nodiscard]] std::vector<std::pair<int, int>> GetFootprintTiles(const BoardUnit& unit, int baseX, int baseY) const;
+		[[nodiscard]] std::vector<std::pair<int, int>> GetOccupiedTiles(const BoardUnit& unit) const;
 		[[nodiscard]] std::vector<BoardOffset> GetEnemyMoveOffsets(const BoardUnit& unit) const;
 		[[nodiscard]] std::vector<std::pair<int, int>> GetReachablePositions(const BoardUnit& unit, bool allowOccupiedByTarget = false) const;
 		[[nodiscard]] int GetManhattanDistance(int x1, int y1, int x2, int y2) const;

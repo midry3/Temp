@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <vector>
 
 namespace Game {
 	enum class BoardTerrain {
@@ -66,5 +67,7 @@ namespace Game {
 		// 初期配置タイル。初期配置が同じタイルの敵同士は同じグループとして扱う
 		int initialX = -1;
 		int initialY = -1;
+		// 本体のマス以外に占有するマス（本体からの相対オフセット）。移動に合わせて一緒に動く
+		std::vector<BoardOffset> extraTiles;
 	};
 }
