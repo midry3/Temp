@@ -5,8 +5,8 @@
 namespace Game {
 	void BattleUI::_Load() {
 		AnimatedUI::_Load();
-		SetInTime(0.5);
-		SetOutTime(0.2);
+		SetInTime(0.1);
+		SetOutTime(0.1);
 
 		_outlineBuffer = OutLineShader::CreateConstantBuffer();
 
@@ -31,7 +31,7 @@ namespace Game {
 
 		// 「何もしない」と「降参」を ATK の下に縦に並べる（テクスチャは ATK で仮置き）
 		const auto& passButton = commandGrid->CreateScene<TextureButton>();
-		passButton->SetTexture(LoadAsset<Texture>("ui/atk.png"))
+		passButton->SetTexture(LoadAsset<Texture>("ui/skip.png"))
 			->SetScale(2)
 			->SetPixelShader<OutLineShader>()
 			->SetPixelShaderConstantBuffer(_outlineBuffer.handle);
@@ -45,7 +45,7 @@ namespace Game {
 		SetButtonAnimation(passButton);
 
 		const auto& surrenderButton = commandGrid->CreateScene<TextureButton>();
-		surrenderButton->SetTexture(LoadAsset<Texture>("ui/atk.png"))
+		surrenderButton->SetTexture(LoadAsset<Texture>("ui/giveup.png"))
 			->SetScale(2)
 			->SetPixelShader<OutLineShader>()
 			->SetPixelShaderConstantBuffer(_outlineBuffer.handle);

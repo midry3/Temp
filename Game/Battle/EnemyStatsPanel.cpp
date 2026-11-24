@@ -40,7 +40,7 @@ namespace Game {
 		_otherLabel->BeginSetting()
 			->SetFontSize(20)
 			->EndSetting()
-			->SetPosition({ 40, 65 });
+			->SetPosition({ 120, 65 });
 
 		_icon = CreateScene<Sprite2D>();
 		_icon->SetScale(2)

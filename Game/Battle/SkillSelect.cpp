@@ -50,14 +50,15 @@ namespace Game {
 			->SetFontSize(20)
 			->SetWidth(360)
 			->EndSetting()
-			->SetPosition({ 825, 275 });
+			->SetPosition({ 825, 275 })
+			->Disable();
 
 		_mpCostLabel = CreateScene<TextLabel>();
 		_mpCostLabel->BeginSetting()
 			->SetFontSize(20)
 			->SetWidth(360)
 			->EndSetting()
-			->SetPosition({ 825, 350 });
+			->SetPosition({ 825, 275 });
 
 		// 技の説明文（パネル内側に収まるよう幅を設定する。パネルは x=800・幅380、
 		// ラベル開始 x=825 のため幅は 350 まで）
@@ -66,7 +67,7 @@ namespace Game {
 			->SetFontSize(18)
 			->SetWidth(350)
 			->EndSetting()
-			->SetPosition({ 825, 425 });
+			->SetPosition({ 825, 350 });
 
 		_buttonGrid = CreateScene<GridContainer>();
 		_buttonGrid->SetMatrixSize({ 1, 1 })

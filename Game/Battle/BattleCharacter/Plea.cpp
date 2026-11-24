@@ -24,9 +24,9 @@ namespace Game {
 			CoreBackend::Drawing::Color(80, 50, 150)
 			});
 		SetSkills({
-			{ "爆破魔法", "special", "fire", "chara/plea/attack/fire.lua", 50 },
-			{ "流星魔法", "special", "", "chara/plea/attack/shooting_star.lua", 100, SkillTargetScope::All },
-			{ "二重詠唱", "special", "", "chara/plea/attack/chanting.lua", 10, SkillTargetScope::Single, SkillTargetSide::Self },
+			{ "爆破魔法", "special", "fire", "chara/plea/attack/fire.lua", 50, SkillTargetScope::Single, SkillTargetSide::Enemy, "炎の魔法により敵一体にダメージを与える。"},
+			{ "流星魔法", "special", "", "chara/plea/attack/shooting_star.lua", 100, SkillTargetScope::All, SkillTargetSide::Enemy, "星の破片を放って敵全体にダメージを与える。" },
+			{ "二重詠唱", "special", "", "chara/plea/attack/chanting.lua", 10, SkillTargetScope::Single, SkillTargetSide::Self, "詠唱により攻撃力を 2 倍にする。" },
 			//{ "転送魔法", "special", "", "chara/plea/attack/teleport.lua", 20, SkillTargetScope::Single, SkillTargetSide::Ally }
 			});
 

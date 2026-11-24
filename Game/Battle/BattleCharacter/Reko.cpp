@@ -59,10 +59,10 @@ namespace Game {
 			CoreBackend::Drawing::Color(100, 255, 200)
 			});
 		SetSkills({
-			{ "ビーム", "physical", "", "chara/reko/attack/beam.lua", 20 },
+			{ "ビーム", "special", "", "chara/reko/attack/beam.lua", 20, SkillTargetScope::Single, SkillTargetSide::Enemy, "敵一体にビームを放つ。" },
 			//{ "Fire", "special", "fire", "battle/fire.lua" },
-			{ "セキュリティアップデート", "special", "water", "chara/reko/attack/security_update.lua", 20, SkillTargetScope::Single, SkillTargetSide::Self },
-			{ "ソード", "physical", "", "chara/reko/attack/sword.lua", 50 }
+			{ "セキュリティアップデート", "special", "water", "chara/reko/attack/security_update.lua", 20, SkillTargetScope::Single, SkillTargetSide::Self, "セキュリティをアップデートして防御力を高める。" },
+			{ "ソード", "physical", "", "chara/reko/attack/sword.lua", 50, SkillTargetScope::Single, SkillTargetSide::Enemy, "敵一体を剣で斬る。" }
 			});
 
 		Initialize();

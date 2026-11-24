@@ -58,10 +58,10 @@ namespace Game {
 				: Vector2D(window.x * 0.5 - slot - 6.0 + offsetInTile, slotY + offsetInTile);
 			_icons.push_back(icon);
 		}
-
+		/*
 		CreateScene<SoundPlayer>()->SetSound(LoadAsset<Sound>("sound/one_shot/start_battle_1.oga"))
 			->SetVolume(0.8f)
-			->Play();
+			->Play();*/
 		_vsSprite = CreateScene<Sprite2D>();
 		_vsSprite->SetTexture(LoadAsset<Texture>("UI/vs.png"))
 			->SetPosition({window.x * 0.47, window.y * 0.45})
