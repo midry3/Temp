@@ -100,7 +100,7 @@ attack = {
 | `restore` | boolean | `position_tween` | `true` の場合、指定位置へのTween完了後、同じ時間をかけて初期位置へ戻します。 |
 | `easing` | string | `position_tween` | Tweenのイージング。`linear`、`easeinquad`、`easeoutquad`、`easeinoutquad`、`easeincubic`、`easeoutcubic`、`easeinoutcubic` が指定できます。既定値は `linear` です。 |
 | `after` | table | `animation` | アニメーション終了時に実行する位置変更。`position`、`offset`、`duration`、`easing`を指定できます。 |
-| `amount` | integer | `damage` | 与えるダメージ量。0 未満の場合は 0 として扱われます。 |
+| `amount` | integer | `damage` | 与えるダメージ量。実際のダメージは、技の第一属性に応じて対象の防御を引いた値になります（`physical` の場合は DEF、`special` の場合は MDEF）。防御を引いた後も最低 10 ダメージは保証されます。 |
 | `effect` | string | `effect` | 再生する Effekseer エフェクトのアセットパス。 |
 | `targetOrigin` | boolean | `effect` | `true` の場合、エフェクトの原点を攻撃者ではなく対象の位置にします。単体対象スキルのときのみ有効です（全体対象では無視され、攻撃者の位置になります）。既定値は `false` です。 |
 | `trigger` | integer | `effect` | エフェクト再生中に送信するEffekseerトリガー番号。 |

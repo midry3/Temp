@@ -19,6 +19,8 @@ namespace Game {
 	namespace {
 		// サウンドの再生時間（duration）が過ぎた後のフェードアウト時間
 		constexpr double SOUND_FADE_OUT_SECONDS = 0.2;
+		// ダメージの最低保証（防御を引いた後にこの値を下回らない）
+		constexpr int MIN_DAMAGE = 10;
 
 		void TimeScaleController::_Update(float dt) {
 			_remaining -= dt;
@@ -483,7 +485,10 @@ namespace Game {
 	void BattleAttack::Execute(Action& action) {
 		if (action.type == "damage") {
 			for (const auto& target : ResolveTargets(action.target)) {
-				target->ApplyDamage(action.amount);
+				// 技の第一属性に応じて防御を引く（physical は DEF、special は MDEF）
+				const auto state = target->GetState();
+				const int defense = _skill.primaryAttribute == "special" ? state.mdef : state.def;
+				target->ApplyDamage(Max(MIN_DAMAGE, action.amount - defense));
 			}
 		}
 		else if (action.type == "animation") {
