@@ -7,7 +7,6 @@
 #include <vector>
 #include "BoardTile.h"
 #include "BoardUnit.h"
-#include "CoopLine.h"
 #include <Scene/Sound/SoundPlayer.h>
 
 class Sprite2D;
@@ -56,14 +55,11 @@ namespace Game {
 		bool _battleStartedInEnemyTurn = false;
 		SharedPtr<BoardWinScreen> _winScreen;
 		SharedPtr<BoardInfoPanel> _infoPanel;
-		struct CoopLineEntry {
-			SharedPtr<BoardUnit> a;
-			SharedPtr<BoardUnit> b;
-			SharedPtr<CoopLine> line;
-		};
-		std::vector<CoopLineEntry> _coopLines;
-		SharedPtr<Scene> _coopLineLayer;
-		SharedPtr<SoundPlayer> _coopLineSePlayer;
+		// 敵タイル上部に並べる共闘ミニアイコン（タイルサイズに対する比率と上端からの余白）
+		static constexpr double COOP_ICON_SIZE_RATIO = 0.32;
+		static constexpr double COOP_ICON_TOP_MARGIN = 2.0;
+		SharedPtr<Scene> _coopIconLayer;
+		std::vector<SharedPtr<Sprite2D>> _coopIcons;
 		std::vector<std::pair<SharedPtr<BoardUnit>, SharedPtr<BattleCharacter>>> _battleParticipants;
 
 		void UpdateLayout();
@@ -75,8 +71,7 @@ namespace Game {
 		void CancelSelection();
 		void UpdateMoveHints();
 		void ExecuteEnemyTurn();
-		[[nodiscard]] bool CanCooperate(const SharedPtr<BoardUnit>& a, const SharedPtr<BoardUnit>& b) const;
-		void UpdateCoopLines(const SharedPtr<BoardUnit>& movedUnit, bool playSound);
+		void UpdateCoopIcons();
 		void MoveEnemyAction(const BoardEnemyAction& action);
 		void AnimateUnitMove(const SharedPtr<BoardUnit>& unit, int x, int y, const std::function<void()>& onComplete = nullptr);
 		[[nodiscard]] bool CanGroupMemberMoveTo(const BoardUnit& member, int x, int y, const std::vector<SharedPtr<BoardUnit>>& group) const;
