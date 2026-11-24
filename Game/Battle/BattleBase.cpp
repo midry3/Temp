@@ -197,11 +197,14 @@ namespace Game {
 	}
 
 	void BattleBase::ApplyAllyDimming() {
+		// 敵の攻撃時（列が ALLIES_X_2 に寄っている間）は薄黒を解除する
+		const bool dimEnabled = _formationFrontX == ALLIES_X;
 		for (size_t i = 0; i < _allyFormation.size(); ++i) {
 			const auto& ally = _allyFormation[i];
 			if (not ally) continue;
 			const bool isFront = i + 1 == _allyFormation.size();
-			ally->SetModulateAll(isFront
+			const bool bright = isFront || not dimEnabled;
+			ally->SetModulateAll(bright
 				? Vector3D(255, 255, 255)
 				: Vector3D(FORMATION_DIM_VALUE, FORMATION_DIM_VALUE, FORMATION_DIM_VALUE));
 			ally->OnFormationFront(isFront);
