@@ -61,7 +61,7 @@ namespace Game {
 		SetSkills({
 			{ "ビーム", "special", "fire", "chara/reko/attack/beam.lua", 20 },
 			{ "Fire", "special", "fire", "battle/fire.lua" },
-			{ "セキュリティアップデート", "special", "water", "chara/reko/attack/security_update.lua", 20 },
+			{ "セキュリティアップデート", "special", "water", "chara/reko/attack/security_update.lua", 20, SkillTargetScope::Single, SkillTargetSide::Self },
 			{ "ソード", "special", "nature", "chara/reko/attack/sword.lua", 50 }
 			});
 
