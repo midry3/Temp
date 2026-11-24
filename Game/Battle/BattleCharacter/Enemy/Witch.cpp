@@ -4,7 +4,6 @@
 namespace Game {
 	void Witch::_Load() {
 		EnemyBattleCharacter::_Load();
-		SetStatsScale(3.0);
 		SetInfo({
 			"ウィッチ",
 			"enemy/witch/icon.png",

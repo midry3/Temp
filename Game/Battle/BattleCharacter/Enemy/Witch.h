@@ -11,8 +11,8 @@ namespace Game {
 	class Witch : public EnemyBattleCharacter {
 	private:
 		static constexpr int
-			DEFAULT_MAX_HP = 120,
-			DEFAULT_MAX_MP = 20,
+			DEFAULT_MAX_HP = 200,
+			DEFAULT_MAX_MP = 0,
 			DEFAULT_ATK = 100,
 			DEFAULT_DEF = 0,
 			DEFAULT_MDEF = 50,

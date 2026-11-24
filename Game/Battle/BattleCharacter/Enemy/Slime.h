@@ -11,12 +11,12 @@ namespace Game {
 	class Slime : public EnemyBattleCharacter {
 	private:
 		static constexpr int
-			DEFAULT_MAX_HP = 80,
-			DEFAULT_MAX_MP = 20,
+			DEFAULT_MAX_HP = 150,
+			DEFAULT_MAX_MP = 0,
 			DEFAULT_ATK = 40,
-			DEFAULT_DEF = 3,
-			DEFAULT_MDEF = 0,
-			DEFAULT_SPEED = 5;
+			DEFAULT_DEF = 10,
+			DEFAULT_MDEF = 10,
+			DEFAULT_SPEED = 15;
 
 	protected:
 		void _Load() override;
