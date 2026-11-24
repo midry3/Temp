@@ -336,8 +336,8 @@ namespace Game {
 			{ BoardCharacterType::Slime, "スライム", "enemy/slime/icon.png" },
 			{ BoardCharacterType::Witch, "ウィッチ", "enemy/witch/icon.png" },
 			{ BoardCharacterType::Golem, "ゴーレム", "enemy/golem/icon.png" },
-			{ BoardCharacterType::RareSlime, "レアスライム", "enemy/slime/icon.png" },
-			{ BoardCharacterType::RareWitch, "レアウィッチ", "enemy/witch/icon.png" },
+			{ BoardCharacterType::RareSlime, "レアスライム", "enemy/rare_slime/icon.png" },
+			{ BoardCharacterType::RareWitch, "レアウィッチ", "enemy/rare_witch/icon.png" },
 			{ BoardCharacterType::RareGolem, "レアゴーレム", "enemy/golem/icon.png" }
 		};
 		for (const auto& entry : defaultCatalog) {

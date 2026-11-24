@@ -437,6 +437,12 @@ namespace Game {
 			if (battleChara) {
 				battleChara->Load();
 				unit->SetCharacter(battleChara);
+				// タイル表示のアイコンはキャラクター側のアイコンを正とする
+				// （マップ側の icon が上位種などで通常種のまま保存されていても表示がずれないように）
+				const auto characterIcon = battleChara->GetInfo().icon.string();
+				if (not characterIcon.empty() && characterIcon != data.texture) {
+					unit->SetUnit(data, LoadAsset<Texture>(characterIcon), _tileSize);
+				}
 				if (const auto enemyChara = std::dynamic_pointer_cast<EnemyBattleCharacter>(battleChara)) {
 					unit->SetRelativeMoveOffsets(enemyChara->GetRelativeMoveOffsets());
 				}
