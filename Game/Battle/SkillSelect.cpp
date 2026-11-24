@@ -125,13 +125,13 @@ namespace Game {
 				->SetPixelShader<OutLineShader>()
 				->SetPixelShaderConstantBuffer(_outlineBuffer.handle);
 			// ボタンの中央にスキル名を表示する
-			const auto& nameLabel = skillButton->CreateScene<TextLabel>();
+			const auto& nameLabel = skillButton->GetSprite()->CreateScene<TextLabel>();
 			nameLabel->SetFontSize(SKILL_NAME_FONT_SIZE)
 				->SetForegroundColor(Vector3D(SKILL_NAME_COLOR_R, SKILL_NAME_COLOR_G, SKILL_NAME_COLOR_B))
 				->SetText(_skills[i].name);
 			const auto buttonSize = skillButton->GetSprite()->GetSize();
 			const auto textSize = nameLabel->GetRawSize();
-			nameLabel->SetPosition({ (buttonSize.x - textSize.x) * 0.5, (buttonSize.y - textSize.y) * 0.5 });
+			nameLabel->SetPosition({ (buttonSize.x - textSize.x) * 0.1, (buttonSize.y - textSize.y) * 0.2 });
 			if (not canUse) {
 				skillButton->SetAlpha(100)
 					->SetModulate({100, 100, 100});
