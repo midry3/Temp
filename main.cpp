@@ -27,7 +27,7 @@ void NovotSetup() {
 	FontManager.AddFont("font/JF-Dot-jiskan16.ttf");
 	TextLabel::DefaultFont = FontManager.GetFont(0);
 
-	SceneManager.SetCurrentScene<Game::Map1>();
+	SceneManager.SetCurrentScene<Game::Map3>();
 }
 
 int NovotMain() {

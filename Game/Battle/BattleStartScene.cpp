@@ -1,5 +1,6 @@
 #include "BattleStartScene.h"
 #include <Scene/Shape/ColorRect.h>
+#include <Scene/Sound/SoundPlayer.h>
 #include <Asset/AssetManager.h>
 
 namespace Game {
@@ -43,8 +44,8 @@ namespace Game {
 			const int index = data.isEnemy ? enemyIndex++ : allyIndex++;
 			const double slot = data.tileSize;
 			const double totalHeight = count * slot + (count - 1) * 12.0;
-			const double slotY = window.y * 0.5 - totalHeight * 0.5 + index * (slot + 12.0);
-			const double offsetInTile = slot * 0.1;
+			const double slotY = window.y * 0.5 - totalHeight * 0.5 + index * (slot + 5.0);
+			const double offsetInTile = slot * 0.05;
 
 			Icon icon;
 			icon.sprite = sprite;
@@ -57,6 +58,14 @@ namespace Game {
 				: Vector2D(window.x * 0.5 - slot - 6.0 + offsetInTile, slotY + offsetInTile);
 			_icons.push_back(icon);
 		}
+
+		CreateScene<SoundPlayer>()->SetSound(LoadAsset<Sound>("sound/one_shot/start_battle_1.oga"))
+			->SetVolume(0.8f)
+			->Play();
+		_vsSprite = CreateScene<Sprite2D>();
+		_vsSprite->SetTexture(LoadAsset<Texture>("UI/vs.png"))
+			->SetPosition({window.x * 0.47, window.y * 0.45})
+			->Disable();
 
 		CreateTimer(0.25, [this]() { MoveToFormation(); });
 	}
@@ -74,7 +83,18 @@ namespace Game {
 			const auto& tg = icon.sprite->CreateTweenGroup();
 			tg->CreateTween(&icon.sprite->position, icon.centerPosition, 0.4, Easing::EaseInCubic);
 		}
-		CreateTweenGroup()->CreateTween(&Camera.zoom, Vec2{ 3, 3 }, 0.7);
+		CreateTweenGroup()->CreateTween(&Camera.zoom, Vec2{ 3.5, 3.5 }, 0.7);
+		CreateTimer(0.2, [this]() {
+			CreateScene<SoundPlayer>()->SetSound(LoadAsset<Sound>("sound/one_shot/start_battle_2.mp3"))
+				->SetVolume(0.8f)
+				->Play();
+			_vsSprite->Enable();
+			const auto& tg = CreateTweenGroup();
+			tg->CreateTween(&_vsSprite->scale, Vec2{2.0, 2.0}, 0.2)->From(Vec2D_1);
+
+			const auto& tg2 = CreateTweenGroup();
+			tg2->CreateTween(&_vsSprite->offset, Vec2{ -20, -20 }, 0.2)->From(Vec2D_1);
+			});
 		CreateTimer(2.0, [this]() { Finish(); });
 	}
 

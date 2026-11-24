@@ -25,6 +25,7 @@ namespace Game {
 		std::vector<BattleStartIconData> _iconData;
 		std::vector<Icon> _icons;
 		std::function<void()> _onFinished;
+		SharedPtr<Sprite2D> _vsSprite;
 		bool _finished = false;
 
 		void MoveToFormation();
