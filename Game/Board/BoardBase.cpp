@@ -210,6 +210,7 @@ namespace Game {
 					unit.team = ParseTeam(ReadString(state, -1, "team", "ally"));
 					unit.moveType = ParseMoveType(ReadString(state, -1, "move", "adjacent"));
 					// キャラ固有の移動ルール（Lua の move 指定より優先する）
+					if (unit.characterType == BoardCharacterType::Plea) unit.moveType = BoardMoveType::DiagonalUnlimited;
 					if (unit.characterType == BoardCharacterType::Reko) unit.moveType = BoardMoveType::RangeTwo;
 					if (unit.characterType == BoardCharacterType::Gou) unit.moveType = BoardMoveType::OrthogonalUnlimited;
 					unit.texture = ReadString(state, -1, "icon", ReadString(state, -1, "texture"));
