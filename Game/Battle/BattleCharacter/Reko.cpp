@@ -7,8 +7,9 @@ namespace Game {
 		_alphaAnim->AddPart({
 			RekoAlphaPartGroup::Torso,
 			"chara/reko/alpha_idle.png",
-			{ 150, -150 }
+			{ 50, -150 }
 			});
+		_alphaAnim->SetOffset({ 0, -300 });
 		_sprite->AnimationChanged += [this](int animation) {
 			if (animation == RekoAnimation::AttackBeam) {
 				_alphaAnim->SetBeam();
