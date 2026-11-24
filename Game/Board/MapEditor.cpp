@@ -326,6 +326,25 @@ namespace Game {
 			}
 		}
 		lua_pop(state, 1);
+		// マップのカタログにないキャラも配置できるよう、組み込みの既定カタログで補う
+		// （マップ側の定義がある場合はそちらが優先される）
+		const std::vector<MapEditorCharacterInfo> defaultCatalog = {
+			{ BoardCharacterType::Plea, "プレア", "chara/plea/icon.png" },
+			{ BoardCharacterType::Reko, "レコ", "chara/reko/icon.png" },
+			{ BoardCharacterType::Zon, "ゾン", "chara/zon/icon.png" },
+			{ BoardCharacterType::Gou, "ゴウ", "chara/gou/icon.png" },
+			{ BoardCharacterType::Slime, "スライム", "enemy/slime/icon.png" },
+			{ BoardCharacterType::Witch, "ウィッチ", "enemy/witch/icon.png" },
+			{ BoardCharacterType::Golem, "ゴーレム", "enemy/golem/icon.png" },
+			{ BoardCharacterType::RareSlime, "レアスライム", "enemy/slime/icon.png" },
+			{ BoardCharacterType::RareWitch, "レアウィッチ", "enemy/witch/icon.png" },
+			{ BoardCharacterType::RareGolem, "レアゴーレム", "enemy/golem/icon.png" }
+		};
+		for (const auto& entry : defaultCatalog) {
+			const bool exists = std::any_of(_characterCatalog.begin(), _characterCatalog.end(),
+				[&entry](const auto& placed) { return placed.type == entry.type; });
+			if (not exists) _characterCatalog.push_back(entry);
+		}
 		_characters.clear();
 		lua_getfield(state, board, "units");
 		if (lua_istable(state, -1)) {

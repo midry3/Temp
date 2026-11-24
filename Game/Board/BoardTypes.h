@@ -26,7 +26,11 @@ namespace Game {
 		Zon,
 		Gou,
 		Slime,
-		Witch
+		Witch,
+		Golem,
+		RareSlime,
+		RareWitch,
+		RareGolem
 	};
 
 	struct BoardOffset {

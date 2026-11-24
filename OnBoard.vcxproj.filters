@@ -70,6 +70,18 @@
     <ClCompile Include="Game\Battle\BattleCharacter\Enemy\Witch.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="Game\Battle\BattleCharacter\Enemy\Golem.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\Battle\BattleCharacter\Enemy\RareSlime.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\Battle\BattleCharacter\Enemy\RareWitch.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\Battle\BattleCharacter\Enemy\RareGolem.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="ソース ファイル">
@@ -218,6 +230,18 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Game\Battle\BattleCharacter\Enemy\Slime.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\Battle\BattleCharacter\Enemy\Golem.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\Battle\BattleCharacter\Enemy\RareSlime.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\Battle\BattleCharacter\Enemy\RareWitch.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\Battle\BattleCharacter\Enemy\RareGolem.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Game\Battle\TestBattle.h">

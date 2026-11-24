@@ -20,6 +20,7 @@
 
 キャラクターの `displayName` と `icon`、マップ上のタイル画像・通行可否、オブジェクト、敵味方の配置は Lua ファイルに保存されます。キャラクターのクラス対応は `BoardCharacterType` と
 `CreateBattleCharacter` に集約し、新しいクラスを追加するときは enum とファクトリーの対応を追加します（詳細な手順は [add-character-and-skill.md](add-character-and-skill.md) を参照してください）。
+MapEditor は、マップの `characterCatalog` に定義がないキャラクターを組み込みの既定カタログで補うため、定義がないマップでも全キャラクターを配置できます（マップ側の定義がある場合はそちらが優先されます）。
 
 タイルは `tiles` 配列で従来どおり地形名文字列を使うほか、個別の画像と通行可否を持つテーブルを指定できます。
 
