@@ -95,7 +95,12 @@ namespace Game {
 
 		EnteredMainScene.Connect([this]() {
 			OnReturnedFromBattle();
-			_bgmPlayer->FadeAndPlay(0.5f);
+			// FadeAndPlay はフェード完了時に音が止まってしまうため使わず、
+			// 止まっている場合だけ通常再生で再開する
+			if (_bgmPlayer && not _bgmPlayer->IsPlaying()) {
+				_bgmPlayer->SetVolume(0.5);
+				_bgmPlayer->Play();
+			}
 			});
 	}
 
