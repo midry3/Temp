@@ -67,6 +67,22 @@ namespace Game {
 
 		RebuildButtons();
 
+		// 「戻る」ボタン（コマンド選択に戻る。テクスチャはスキルと共通で仮置き）
+		const auto& backButton = CreateScene<TextureButton>();
+		backButton->SetTexture(LoadAsset<Texture>("ui/skill.png"))
+			->SetScale(BACK_BUTTON_SCALE)
+			->SetPosition({ BACK_BUTTON_X, BACK_BUTTON_Y })
+			->SetPixelShader<OutLineShader>()
+			->SetPixelShaderConstantBuffer(_outlineBuffer.handle);
+		const auto& backSE = CreateSelectSePlayer(backButton.get());
+		backButton->LeftPressed += [this, backSE](const MouseEvent& e) {
+			if (e.just && not _isAlreadySelected) {
+				backSE->Play();
+				BackPressed.Emit();
+			}
+			};
+		SetButtonAnimation(backButton);
+
 		_outlineBuffer.param->glowColor[0] = 0.8f;
 		_outlineBuffer.param->glowColor[1] = 0.6f;
 		_outlineBuffer.param->glowColor[2] = 0.0f;

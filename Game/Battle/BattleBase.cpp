@@ -56,6 +56,12 @@ namespace Game {
 			});
 			};
 
+		_skillSelect->BackPressed += [this]() {
+			// スキル選択からコマンド選択に戻る
+			_skillSelect->Out();
+			_battleUI->In();
+			};
+
 		_battleUI->PassPressed += [this]() {
 			// 「何もしない」: スキルを選ばず、このキャラは行動しない
 			_selectedSkills.push_back(SkillInfo{});

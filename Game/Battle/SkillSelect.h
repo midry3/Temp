@@ -11,6 +11,11 @@ class GridContainer;
 namespace Game {
 	class SkillSelect : public AnimatedUI {
 	private:
+		// 「戻る」ボタンの配置（スキル一覧の下）
+		static constexpr double BACK_BUTTON_X = 400.0;
+		static constexpr double BACK_BUTTON_Y = 612.0;
+		static constexpr double BACK_BUTTON_SCALE = 2.0;
+
 		int _availableMP = 0;
 		bool _isAlreadySelected = false;
 		OutLineShaderBuffer _outlineBuffer;
@@ -29,6 +34,7 @@ namespace Game {
 		void _Update(float dt) override;
 	public:
 		Signal<SkillInfo> SkillSelected;
+		Signal<> BackPressed;
 		void SetSkills(const std::vector<SkillInfo>& skills);
 		void SetAvailableMP(int mp) { _availableMP = mp; }
 	};
