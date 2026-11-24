@@ -239,11 +239,12 @@ namespace Game {
 	}
 
 	void BoardBase::UpdateCoopIcons() {
+		if (not _coopIconLayer) return;
+		// アイコンはレイヤーの子シーンなので、削除もレイヤー経由で行う
 		for (const auto& icon : _coopIcons) {
-			if (icon) DeleteScene(icon);
+			if (icon) _coopIconLayer->DeleteScene(icon);
 		}
 		_coopIcons.clear();
-		if (not _coopIconLayer) return;
 
 		// 敵がいるタイルごとに、そのマスへ到達可能な味方を集める（同じタイルの敵は1行にまとめる）
 		std::vector<std::pair<int, int>> enemyTiles;
