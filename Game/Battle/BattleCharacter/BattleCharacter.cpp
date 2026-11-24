@@ -111,7 +111,13 @@ namespace Game {
 		}
 		if (not wasDead && IsDead()) Died.Emit();
 		if (IsDead()) {
-			// 死亡演出
+			const auto& tg = CreateTweenGroup();
+			tg->CreateTween(&offset.x, 20, 0.1);
+			tg->CreateTween(&offset.x, -20, 0.1);
+			tg->SetLoop(5);
+
+			const auto& tg2 = CreateTweenGroup();
+			tg2->CreateTween(&alpha, 0, 2.0);
 		}
 		else {
 			const auto& tg = CreateTweenGroup();
