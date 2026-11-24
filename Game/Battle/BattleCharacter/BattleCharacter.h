@@ -63,6 +63,9 @@ namespace Game
 		void SetStatsScale(double scale) { _statsScale = scale; }
 	public:
 		Signal<> StatChanged;
+		Signal<> AttackStarted;
+		Signal<> Damaged;
+		Signal<> Died;
 		Signal<int> AnimationFinished;
 		void PlayAnimation(int animation, std::optional<bool> loop = std::nullopt, bool reverse = false);
 		[[nodiscard]] Vector2D* GetAnimationPositionPointer();

@@ -3,6 +3,8 @@
 #include <Game/Data/CommonData.h>
 #include "WinScreen.h"
 #include <Scene/Sound/SoundPlayer.h>
+#include <Math/Utils.h>
+#include <algorithm>
 
 namespace Game {
 	void BattleBase::_Load() {
@@ -28,7 +30,7 @@ namespace Game {
 		_targetSelect->SetUIMode(true);
 
 		_skillSelect->SkillSelected += [this](const SkillInfo& skill) {
-			const auto candidates = GetTargetCandidates(skill);
+			const auto candidates = GetTargetCandidates(_allies[_currentCharacterIndex], skill);
 			if (skill.targetScope == SkillTargetScope::All || not (1 < static_cast<int>(candidates.size()))) {
 				// 全体対象、または単体対象でも候補が1体以下なら選択をスキップする
 				_selectedSkills.push_back(skill);
@@ -85,6 +87,11 @@ namespace Game {
 			CreateScene<WinScreen>();
 			};
 
+		_state[Lost].Entered += [this]() {
+			_usingSkillView->Out();
+			_battleUI->Out();
+			};
+
 		_state >> Opening;
 
 		if (not _allies.empty() || not _enemies.empty()) {
@@ -92,42 +99,130 @@ namespace Game {
 		}
 	}
 
-	void BattleBase::StartAttack() {
-		if (_allies.empty() || _enemies.empty()) return;
-		_skillSelect->Disable();
+	void BattleBase::BuildActionQueue() {
+		_actionQueue.clear();
+		_actionIndex = 0;
+
+		// 味方分は選択済みのスキルと対象を使う
+		for (size_t i = 0; i < _allies.size(); ++i) {
+			if (not _allies[i] || _selectedSkills.size() <= i) continue;
+			QueuedAction queued;
+			queued.actor = _allies[i];
+			queued.skill = _selectedSkills[i];
+			if (i < _selectedTargets.size()) queued.targets = _selectedTargets[i];
+			if (queued.targets.empty() && not _enemies.empty()) {
+				queued.targets.push_back(_enemies.front());
+			}
+			_actionQueue.push_back(queued);
+		}
+
+		// 敵分はAIがスキルと対象を選ぶ
+		for (const auto& enemy : _enemies) {
+			if (not enemy || enemy->IsDead()) continue;
+			const auto skill = ChooseEnemySkill(enemy);
+			if (not skill.has_value()) continue;
+			QueuedAction queued;
+			queued.actor = enemy;
+			queued.skill = skill.value();
+			queued.targets = ChooseEnemyTargets(enemy, queued.skill);
+			if (not queued.targets.empty()) {
+				_actionQueue.push_back(queued);
+			}
+		}
+
+		// 行動順は speed の大きい順。同速の場合は味方を優先する
+		std::stable_sort(_actionQueue.begin(), _actionQueue.end(),
+			[this](const QueuedAction& a, const QueuedAction& b) {
+				const int speedA = a.actor ? a.actor->GetState().speed : 0;
+				const int speedB = b.actor ? b.actor->GetState().speed : 0;
+				if (speedA != speedB) return speedB < speedA;
+				const bool aIsEnemy = IsEnemyCharacter(a.actor);
+				const bool bIsEnemy = IsEnemyCharacter(b.actor);
+				if (aIsEnemy != bIsEnemy) return bIsEnemy;
+				return false;
+			});
+	}
+
+	void BattleBase::ExecuteNextAction() {
+		if (IsDefeatedAllEnemies()) {
+			_state >> Won;
+			return;
+		}
+		if (IsDefeatedAllAllies()) {
+			_state >> Lost;
+			return;
+		}
 		if (not _attack) {
 			_attack = CreateScene<BattleAttack>();
 			_attack->Completed().Connect([this]() {
-				if (IsDefeatedAllEnemies()) {
-					_state >> Won;
-				}
-				else if (NextCharaExists()) {
-					_hud->UpdateView();
-					_currentCharacterIndex++;
-					StartAttack();
-				}
-				else {
-					_attack->Disable();
-					_state >> Command;
-				}
+				_hud->UpdateView();
+				ExecuteNextAction();
 				});
 		}
+
+		// 行動者が死亡している、または対象が全滅している行動は飛ばす
+		while (_actionIndex < _actionQueue.size()) {
+			auto& queued = _actionQueue[_actionIndex];
+			std::vector<SharedPtr<BattleCharacter>> aliveTargets;
+			for (const auto& target : queued.targets) {
+				if (target && not target->IsDead()) {
+					aliveTargets.push_back(target);
+				}
+			}
+			if (queued.actor && not queued.actor->IsDead() && not aliveTargets.empty()) {
+				queued.targets = aliveTargets;
+				break;
+			}
+			_actionIndex++;
+		}
+		if (_actionQueue.size() <= _actionIndex) {
+			_attack->Disable();
+			_state >> Command;
+			return;
+		}
+
+		const auto queued = _actionQueue[_actionIndex++];
+		_skillSelect->Disable();
 		_state >> Direction;
-		_allySkillPanel->SetSkill(_selectedSkills[_currentCharacterIndex]);
+		_allySkillPanel->SetSkill(queued.skill);
 		_usingSkillView->In();
-		std::vector<SharedPtr<BattleCharacter>> targets;
-		if (_currentCharacterIndex < static_cast<int>(_selectedTargets.size())) {
-			targets = _selectedTargets[_currentCharacterIndex];
-		}
-		if (targets.empty() && not _enemies.empty()) {
-			targets.push_back(_enemies.front());
-		}
-		_attack->Start(_allies[_currentCharacterIndex], targets, _selectedSkills[_currentCharacterIndex]);
+		_attack->Start(queued.actor, queued.targets, queued.skill);
 	}
 
-	std::vector<SharedPtr<BattleCharacter>> BattleBase::GetTargetCandidates(const SkillInfo& skill) const {
+	std::optional<SkillInfo> BattleBase::ChooseEnemySkill(const SharedPtr<BattleCharacter>& enemy) const {
+		std::vector<SkillInfo> usable;
+		for (const auto& skill : enemy->GetSkills()) {
+			if (skill.mpCost <= enemy->GetState().currentMP) {
+				usable.push_back(skill);
+			}
+		}
+		if (usable.empty()) return std::nullopt;
+		const int index = GetRandomInt(0, static_cast<int>(usable.size()));
+		return usable[index];
+	}
+
+	std::vector<SharedPtr<BattleCharacter>> BattleBase::ChooseEnemyTargets(const SharedPtr<BattleCharacter>& enemy, const SkillInfo& skill) const {
+		const auto candidates = GetTargetCandidates(enemy, skill);
+		if (skill.targetScope == SkillTargetScope::All) return candidates;
+		if (candidates.empty()) return {};
+		const int index = GetRandomInt(0, static_cast<int>(candidates.size()));
+		return { candidates[index] };
+	}
+
+	bool BattleBase::IsEnemyCharacter(const SharedPtr<BattleCharacter>& character) const {
+		for (const auto& enemy : _enemies) {
+			if (enemy == character) return true;
+		}
+		return false;
+	}
+
+	std::vector<SharedPtr<BattleCharacter>> BattleBase::GetTargetCandidates(const SharedPtr<BattleCharacter>& actor, const SkillInfo& skill) const {
+		// targetSide は行動者から見た陣営（Enemy = 相手側、Ally = 自分側）
+		const bool actorIsEnemy = IsEnemyCharacter(actor);
+		const auto& opponentSide = actorIsEnemy ? _allies : _enemies;
+		const auto& ownSide = actorIsEnemy ? _enemies : _allies;
+		const auto& source = skill.targetSide == SkillTargetSide::Enemy ? opponentSide : ownSide;
 		std::vector<SharedPtr<BattleCharacter>> result;
-		const auto& source = skill.targetSide == SkillTargetSide::Ally ? _allies : _enemies;
 		for (const auto& character : source) {
 			if (character && not character->IsDead()) {
 				result.push_back(character);
@@ -143,7 +238,8 @@ namespace Game {
 		}
 		else {
 			_currentCharacterIndex = 0;
-			StartAttack();
+			BuildActionQueue();
+			ExecuteNextAction();
 		}
 	}
 
@@ -200,6 +296,16 @@ namespace Game {
 
 	bool BattleBase::NextCharaExists() {
 		return _currentCharacterIndex + 1 < static_cast<int>(_allies.size());
+	}
+
+	bool BattleBase::IsDefeatedAllAllies() {
+		if (_allies.empty()) return false;
+		for (const auto& ally : _allies) {
+			if (ally && not ally->IsDead()) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	bool BattleBase::IsDefeatedAllEnemies() {

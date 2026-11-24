@@ -244,6 +244,7 @@ namespace Game {
 		_mainFinished = false;
 		_finished = false;
 
+		actor->AttackStarted.Emit();
 		actor->UseMP(skill.mpCost);
 		LoadTimeline(skill.directionFile);
 		PreloadAssets();

@@ -63,8 +63,11 @@ namespace Game {
 	}
 
 	void BattleCharacter::ApplyDamage(int damage) {
+		const bool wasDead = IsDead();
 		const int appliedDamage = Max(0, damage);
 		_info.currentState.currentHP = Max(0, _info.currentState.currentHP - appliedDamage);
+		if (0 < appliedDamage) Damaged.Emit();
+		if (not wasDead && IsDead()) Died.Emit();
 		if (IsDead()) {
 			// 死亡演出
 		}

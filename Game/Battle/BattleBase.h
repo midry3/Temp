@@ -9,6 +9,7 @@
 #include "TargetSelect.h"
 #include "UsingSkillPanel.h"
 #include <Event/StateMachine.h>
+#include <optional>
 
 namespace Game {
 	class BattleBase : public Scene {
@@ -33,9 +34,23 @@ namespace Game {
 		int _currentCharacterIndex = 0;
 		bool _charactersPut = false;
 
-		std::vector<SharedPtr<BattleCharacter>> GetTargetCandidates(const SkillInfo& skill) const;
+		// 1ターン分の行動（味方の選択分と敵のAI分をまとめて行動順に並べる）
+		struct QueuedAction {
+			SharedPtr<BattleCharacter> actor;
+			SkillInfo skill;
+			std::vector<SharedPtr<BattleCharacter>> targets;
+		};
+		std::vector<QueuedAction> _actionQueue;
+		size_t _actionIndex = 0;
+
+		std::vector<SharedPtr<BattleCharacter>> GetTargetCandidates(const SharedPtr<BattleCharacter>& actor, const SkillInfo& skill) const;
 		void AdvanceSelection();
 		void ShowTargetSelect(const SkillInfo& skill, const std::vector<SharedPtr<BattleCharacter>>& candidates);
+		void BuildActionQueue();
+		void ExecuteNextAction();
+		std::optional<SkillInfo> ChooseEnemySkill(const SharedPtr<BattleCharacter>& enemy) const;
+		std::vector<SharedPtr<BattleCharacter>> ChooseEnemyTargets(const SharedPtr<BattleCharacter>& enemy, const SkillInfo& skill) const;
+		bool IsEnemyCharacter(const SharedPtr<BattleCharacter>& character) const;
 
 	protected:
 		std::vector<SharedPtr<BattleCharacter>> _allies, _enemies;
@@ -49,9 +64,9 @@ namespace Game {
 		SharedPtr<TargetSelect> _targetSelect;
 
 		void _Load() override;
-		void StartAttack();
 		bool NextCharaExists();
 		bool IsDefeatedAllEnemies();
+		bool IsDefeatedAllAllies();
 	public:
 		void PutCharacters();
 		void SetAllies(std::vector<SharedPtr<BattleCharacter>> allies) { _allies = allies; }
