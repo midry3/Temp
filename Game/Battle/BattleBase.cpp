@@ -190,15 +190,11 @@ namespace Game {
 	}
 
 	std::optional<SkillInfo> BattleBase::ChooseEnemySkill(const SharedPtr<BattleCharacter>& enemy) const {
-		std::vector<SkillInfo> usable;
-		for (const auto& skill : enemy->GetSkills()) {
-			if (skill.mpCost <= enemy->GetState().currentMP) {
-				usable.push_back(skill);
-			}
-		}
-		if (usable.empty()) return std::nullopt;
-		const int index = GetRandomInt(0, static_cast<int>(usable.size()));
-		return usable[index];
+		// 敵はMPを無視して全スキルから選ぶ
+		const auto& skills = enemy->GetSkills();
+		if (skills.empty()) return std::nullopt;
+		const int index = GetRandomInt(0, static_cast<int>(skills.size()));
+		return skills[index];
 	}
 
 	std::vector<SharedPtr<BattleCharacter>> BattleBase::ChooseEnemyTargets(const SharedPtr<BattleCharacter>& enemy, const SkillInfo& skill) const {
