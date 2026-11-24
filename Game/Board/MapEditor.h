@@ -74,6 +74,8 @@ namespace Game {
 		std::vector<MapEditorObjectData> _objects;
 		std::vector<SharedPtr<Sprite2D>> _objectSprites;
 		std::vector<MapEditorCharacterData> _characters;
+		// ステージ開始時の会話（編集はせず、読み込んで保存時にそのまま書き戻す）
+		std::vector<std::string> _dialogueLines;
 		std::vector<SharedPtr<Sprite2D>> _characterSprites;
 		std::vector<SharedPtr<TextLabel>> _characterLabels;
 		std::vector<SharedPtr<Sprite2D>> _extraTileSprites;

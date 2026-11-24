@@ -306,6 +306,18 @@ namespace Game {
 		}
 		lua_pop(state, 1);
 
+		_dialogueLines.clear();
+		lua_getfield(state, board, "dialogue");
+		if (lua_istable(state, -1)) {
+			const int count = static_cast<int>(lua_rawlen(state, -1));
+			for (int index = 1; index <= count; ++index) {
+				lua_rawgeti(state, -1, index);
+				if (lua_isstring(state, -1)) _dialogueLines.emplace_back(lua_tostring(state, -1));
+				lua_pop(state, 1);
+			}
+		}
+		lua_pop(state, 1);
+
 		_characterCatalog.clear();
 		lua_getfield(state, board, "characterCatalog");
 		if (lua_istable(state, -1)) {
@@ -437,6 +449,13 @@ namespace Game {
 		output << "    textures = { normal = \"" << EscapeLua(_defaultTileTexture)
 			<< "\", disabled = \"" << EscapeLua(_defaultTileTexture)
 			<< "\", other = \"" << EscapeLua(_defaultTileTexture) << "\" },\n";
+		if (not _dialogueLines.empty()) {
+			output << "    dialogue = {\n";
+			for (const auto& line : _dialogueLines) {
+				output << "        \"" << EscapeLua(line) << "\",\n";
+			}
+			output << "    },\n";
+		}
 		output << "    characterCatalog = {\n";
 		for (const auto& entry : _characterCatalog) {
 			output << "        [\"" << BoardCharacterTypeKey(entry.type) << "\"] = { displayName = \""

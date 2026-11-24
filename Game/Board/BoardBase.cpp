@@ -2,6 +2,7 @@
 #include "BoardInfoPanel.h"
 #include "BoardWinScreen.h"
 #include "CoopSelectModal.h"
+#include "StageDialogue.h"
 #include "../Battle/BattleBase.h"
 #include "../Battle/BattleLoadingScene.h"
 #include "../Battle/BattleStartScene.h"
@@ -81,7 +82,7 @@ namespace Game {
 		_infoPanel = CreateScene<BoardInfoPanel>();
 		_infoPanel->SurrenderPressed += [this]() {
 			// 降参: ステージを諦めてステージ選択へ戻る
-			if (_winScreen || _isEnemyTurn || _isAnimating || _isCoopSelecting) return;
+			if (_winScreen || _isDialogueShowing || _isEnemyTurn || _isAnimating || _isCoopSelecting) return;
 			SceneManager.TransSceneTo(MakeShared<StageSelect>(), 1.0, 0.3, true, SceneTransitionBehavior::Ignore);
 			};
 
@@ -135,6 +136,19 @@ namespace Game {
 
 		_width = ReadInteger(state, -1, "width");
 		_height = ReadInteger(state, -1, "height");
+
+		// ステージ開始時の会話（任意。文字列の配列で指定する）
+		_dialogueLines.clear();
+		lua_getfield(state, -1, "dialogue");
+		if (lua_istable(state, -1)) {
+			const int dialogueCount = static_cast<int>(lua_rawlen(state, -1));
+			for (int index = 1; index <= dialogueCount; index++) {
+				lua_rawgeti(state, -1, index);
+				if (lua_isstring(state, -1)) _dialogueLines.emplace_back(lua_tostring(state, -1));
+				lua_pop(state, 1);
+			}
+		}
+		lua_pop(state, 1);
 		_tileSize.x = ReadInteger(state, -1, "tileSize", 64);
 		_tileSize.y = _tileSize.x;
 		double unusedX = 0.0;
@@ -274,7 +288,22 @@ namespace Game {
 		UpdateEnemyIntentVisuals();
 		UpdateCoopIcons();
 		UpdateOccupiedTileVisuals();
+		StartStageDialogue();
 		return true;
+	}
+
+	void BoardBase::StartStageDialogue() {
+		if (_dialogueLines.empty()) return;
+		_isDialogueShowing = true;
+		_dialogue = CreateScene<StageDialogue>();
+		_dialogue->Finished += [this]() {
+			_isDialogueShowing = false;
+			if (_dialogue) {
+				DeleteScene(_dialogue);
+				_dialogue = nullptr;
+			}
+			};
+		_dialogue->Setup(_dialogueLines);
 	}
 
 	void BoardBase::UpdateUnitIconVisibility() {
@@ -472,7 +501,7 @@ namespace Game {
 	}
 
 	void BoardBase::SelectUnit(const SharedPtr<BoardUnit>& unit) {
-		if (_winScreen || _isEnemyTurn || _isAnimating || _isCoopSelecting) return;
+		if (_winScreen || _isDialogueShowing || _isEnemyTurn || _isAnimating || _isCoopSelecting) return;
 		if (not unit->IsAlly()) {
 			if (_selectedUnit) {
 				SelectTile(unit->GetData().x, unit->GetData().y);
@@ -489,7 +518,7 @@ namespace Game {
 	}
 
 	void BoardBase::SelectTile(int x, int y) {
-		if (_winScreen || _isEnemyTurn || _isAnimating || _isCoopSelecting) return;
+		if (_winScreen || _isDialogueShowing || _isEnemyTurn || _isAnimating || _isCoopSelecting) return;
 		if (not _selectedUnit) {
 			ShowEnemyInfo(x, y);
 			return;
@@ -660,7 +689,7 @@ namespace Game {
 	}
 
 	void BoardBase::EndTurn() {
-		if (_winScreen || _isEnemyTurn || _isAnimating || _isCoopSelecting) return;
+		if (_winScreen || _isDialogueShowing || _isEnemyTurn || _isAnimating || _isCoopSelecting) return;
 		CancelSelection();
 		ExecuteEnemyTurn();
 	}

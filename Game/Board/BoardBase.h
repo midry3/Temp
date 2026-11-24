@@ -17,6 +17,7 @@ namespace Game {
 	class BoardInfoPanel;
 	class BoardWinScreen;
 	class CoopSelectModal;
+	class StageDialogue;
 
 	struct BoardEnemyAction {
 		SharedPtr<BoardUnit> enemy;
@@ -44,6 +45,9 @@ namespace Game {
 		bool _isEnemyTurn = false;
 		bool _isAnimating = false;
 		bool _isCoopSelecting = false;
+		bool _isDialogueShowing = false;
+		std::vector<std::string> _dialogueLines;
+		SharedPtr<StageDialogue> _dialogue;
 		std::optional<BoardEnemyAction> _nextEnemyAction;
 		EnemyActionDecider _customEnemyActionDecider;
 		std::function<void()> _pendingTransition;
@@ -84,6 +88,7 @@ namespace Game {
 		void ClearEnemyIntentVisuals();
 		void OnReturnedFromBattle();
 		void ShowWinScreen();
+		void StartStageDialogue();
 		void ShowEnemyInfo(int x, int y);
 
 	protected:

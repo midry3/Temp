@@ -119,6 +119,9 @@
     <ClCompile Include="Game\Board\CoopSelectModal.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="Game\Board\StageDialogue.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
     <ClCompile Include="Game\Board\BoardTile.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -209,6 +212,9 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Game\Board\CoopSelectModal.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\Board\StageDialogue.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Game\Board\BoardTile.h">
