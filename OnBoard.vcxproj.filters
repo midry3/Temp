@@ -64,6 +64,9 @@
     <ClCompile Include="Game\Data\CommonData.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="Game\Battle\TargetSelect.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="ソース ファイル">
@@ -136,9 +139,6 @@
     </ClCompile>
     <ClCompile Include="Game\Battle\BattleUI.cpp">
       <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="Game\Battle\TargetSelect.cpp">
-      <Filter>Game\Battle</Filter>
     </ClCompile>
     <ClCompile Include="Game\Battle\SkillSelect.cpp">
       <Filter>ソース ファイル</Filter>
@@ -229,9 +229,6 @@
     <ClInclude Include="Game\Battle\BattleUI.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="Game\Battle\TargetSelect.h">
-      <Filter>Game\Battle</Filter>
-    </ClInclude>
     <ClInclude Include="Game\Battle\SkillSelect.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
@@ -307,6 +304,9 @@
     <ClInclude Include="Game\Data\SoundEffects.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="Game\Battle\TargetSelect.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\board\default.lua" />
@@ -341,6 +341,7 @@
     <None Include="Assets\chara\reko\alpha_sword_prepare.png.anim" />
     <None Include="Assets\chara\reko\alpha_sword_attack.png.anim" />
     <None Include="Assets\board\map1.lua" />
+    <None Include="Assets\chara\slime\attack\attack_1.lua" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shader\BlurInShader.hlsl" />

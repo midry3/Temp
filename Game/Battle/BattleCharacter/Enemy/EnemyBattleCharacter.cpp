@@ -10,10 +10,6 @@ namespace Game {
 			PlayRustleAnimation(_rustleWidth, _rustleRoundTrips, _rustleDurationPerTrip);
 			};
 
-		SkillExecuted += [this](const SkillInfo& skill, const SharedPtr<BattleCharacter>& target) {
-			PlayRustleAnimation(_rustleWidth, _rustleRoundTrips, _rustleDurationPerTrip);
-			};
-
 		Died += [this]() {
 			PlayRustleAnimation(_rustleWidth, 3.0, _rustleDurationPerTrip*4);
 			CreateTweenGroup()->CreateTween(&alpha, 0, 3.0, Easing::EaseInCubic);

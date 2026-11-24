@@ -26,7 +26,7 @@ namespace Game {
 			DEFAULT_MAX_HP, DEFAULT_MAX_MP, DEFAULT_ATK, DEFAULT_DEF, DEFAULT_MDEF, DEFAULT_SPEED
 		});
 		SetSkills({
-			{ "たいあたり", "physical", "normal", "" }
+			{ "たいあたり", "physical", "normal", "chara/slime/attack/attack_1.lua" }
 		});
 		SetRustleParams(20.0, 4, 0.12);
 

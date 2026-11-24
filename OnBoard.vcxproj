@@ -278,6 +278,7 @@
     <None Include="Assets\chara\reko\idle.png.anim" />
     <None Include="Assets\chara\reko\pc.png.anim" />
     <None Include="Assets\chara\reko\pc_open.png.anim" />
+    <None Include="Assets\chara\slime\attack\attack_1.lua" />
     <None Include="Assets\chara\zon\attack\bomb.lua" />
     <None Include="Assets\chara\zon\attack\gun_shot.lua" />
     <None Include="Assets\chara\zon\attack\supply.lua" />
