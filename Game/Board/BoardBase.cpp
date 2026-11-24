@@ -236,6 +236,7 @@ namespace Game {
 						unit.iconOffsetY = ReadNumber(state, -1, "y");
 					}
 					lua_pop(state, 1);
+					unit.iconScale = ReadNumber(state, -1, "iconScale", 1.0);
 					units.push_back(unit);
 				}
 				lua_pop(state, 1);
@@ -708,7 +709,7 @@ namespace Game {
 			icons.push_back({
 				texture,
 				GetGlobalPosition() + (GetTilePosition(data.x, data.y) + Vector2D(data.iconOffsetX, data.iconOffsetY)) * boardScale,
-				_tileSize.x * boardScale,
+				_tileSize.x * boardScale * data.iconScale,
 				isEnemy
 			});
 		};

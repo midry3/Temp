@@ -47,6 +47,8 @@ namespace Game {
 		// キャラクターアイコンの表示位置オフセット（ピクセル）
 		double iconOffsetX = 0.0;
 		double iconOffsetY = 0.0;
+		// キャラクターアイコンの表示スケール（1.0が通常サイズ）
+		double iconScale = 1.0;
 	};
 
 	struct MapEditorCharacterInfo {

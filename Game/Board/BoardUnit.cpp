@@ -60,7 +60,7 @@ namespace Game {
 		else _nameLabel->Hide();
 		const auto textureSize = _sprite->GetRawSize();
 		if (not (textureSize.x <= 0) && not (textureSize.y <= 0)) {
-			const auto scale = Min(tileSize.x / textureSize.x, tileSize.y / textureSize.y) * 0.8;
+			const auto scale = Min(tileSize.x / textureSize.x, tileSize.y / textureSize.y) * 0.8 * data.iconScale;
 			_sprite->SetScale(scale);
 			_sprite->SetPosition(tileSize * 0.1 + Vector2D(data.iconOffsetX, data.iconOffsetY));
 		}

@@ -392,6 +392,7 @@ namespace Game {
 						character.iconOffsetY = ReadNumber(state, -1, "y");
 					}
 					lua_pop(state, 1);
+					character.iconScale = ReadNumber(state, -1, "iconScale", 1.0);
 					_characters.push_back(character);
 				}
 				lua_pop(state, 1);
@@ -471,6 +472,9 @@ namespace Game {
 			}
 			if (character.iconOffsetX != 0.0 || character.iconOffsetY != 0.0) {
 				output << ", iconOffset = { x = " << character.iconOffsetX << ", y = " << character.iconOffsetY << " }";
+			}
+			if (character.iconScale != 1.0) {
+				output << ", iconScale = " << character.iconScale;
 			}
 			output << " },\n";
 		}
@@ -595,7 +599,7 @@ namespace Game {
 				sprite->SetTexture(LoadAsset<Texture>(character.icon));
 				const auto textureSize = sprite->GetRawSize();
 				if (not (textureSize.x <= 0.0) && not (textureSize.y <= 0.0)) {
-					const auto scale = Min(_tileSize / textureSize.x, _tileSize / textureSize.y) * 0.8;
+					const auto scale = Min(_tileSize / textureSize.x, _tileSize / textureSize.y) * 0.8 * character.iconScale;
 					sprite->SetScale(scale);
 				}
 				sprite->SetPosition(TilePosition(character.x, character.y) + Vector2D(_tileSize * 0.1, _tileSize * 0.05)
@@ -720,6 +724,12 @@ namespace Game {
 					if (ImGui::InputFloat2("アイコンオフセット", iconOffset)) {
 						character.iconOffsetX = iconOffset[0];
 						character.iconOffsetY = iconOffset[1];
+						_isDirty = true;
+						RebuildCharacterSprites();
+					}
+					float iconScale = static_cast<float>(character.iconScale);
+					if (ImGui::InputFloat("アイコンスケール", &iconScale)) {
+						character.iconScale = Max(static_cast<double>(iconScale), 0.05);
 						_isDirty = true;
 						RebuildCharacterSprites();
 					}
@@ -1303,6 +1313,7 @@ namespace Game {
 			std::vector<std::pair<int, int>> extraTiles;
 			double iconOffsetX = 0.0;
 			double iconOffsetY = 0.0;
+			double iconScale = 1.0;
 			if (team == BoardTeam::Ally) {
 				const auto existing = std::find_if(_characters.begin(), _characters.end(), [&info](const auto& character) {
 					return character.team == BoardTeam::Ally && character.type == info.type;
@@ -1312,6 +1323,7 @@ namespace Game {
 					moveType = existing->moveType;
 					iconOffsetX = existing->iconOffsetX;
 					iconOffsetY = existing->iconOffsetY;
+					iconScale = existing->iconScale;
 					// 再配置では占有マスも同じだけずらして引き継ぐ
 					for (const auto& extra : existing->extraTiles) {
 						extraTiles.push_back({ extra.first + (x - existing->x), extra.second + (y - existing->y) });
@@ -1341,6 +1353,7 @@ namespace Game {
 			character.extraTiles = extraTiles;
 			character.iconOffsetX = iconOffsetX;
 			character.iconOffsetY = iconOffsetY;
+			character.iconScale = iconScale;
 			_characters.push_back(character);
 			_isDirty = true;
 			RebuildCharacterSprites();
