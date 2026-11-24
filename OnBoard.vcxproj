@@ -166,6 +166,7 @@
     <ClCompile Include="Game\Battle\StatusPanel.cpp" />
     <ClCompile Include="Game\Battle\UsingSkillPanel.cpp" />
     <ClCompile Include="Game\Battle\WinScreen.cpp" />
+    <ClCompile Include="Game\Battle\LoseScreen.cpp" />
     <ClCompile Include="Game\Board\BoardBase.cpp" />
     <ClCompile Include="Game\Board\BoardInfoPanel.cpp" />
     <ClCompile Include="Game\Board\BoardStatusPanel.cpp" />
@@ -196,6 +197,7 @@
     <ClCompile Include="Game\LoadingScene.cpp" />
     <ClCompile Include="Game\Battle\BattleLoadingScene.cpp" />
     <ClCompile Include="Game\TestScene.cpp" />
+    <ClCompile Include="Game\StageSelect.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="ThirdParty\imgui-1.92.9b\imgui.cpp" />
     <ClCompile Include="ThirdParty\imgui-1.92.9b\imgui_draw.cpp" />
@@ -218,6 +220,7 @@
     <ClInclude Include="Game\Battle\StatusPanel.h" />
     <ClInclude Include="Game\Battle\UsingSkillPanel.h" />
     <ClInclude Include="Game\Battle\WinScreen.h" />
+    <ClInclude Include="Game\Battle\LoseScreen.h" />
     <ClInclude Include="Game\Battle\BattleStartScene.h" />
     <ClInclude Include="Game\Board\BoardBase.h" />
     <ClInclude Include="Game\Board\BoardInfoPanel.h" />
@@ -231,6 +234,8 @@
     <ClInclude Include="Game\Board\MapEditor.h" />
     <ClInclude Include="Game\Battle\BattleCharacter\BattleCharacterFactory.h" />
     <ClInclude Include="Game\Board\Map\Map1.h" />
+    <ClInclude Include="Game\Board\Map\StageBoard.h" />
+    <ClInclude Include="Game\StageSelect.h" />
     <ClInclude Include="Game\Board\Map\Map3.h" />
     <ClInclude Include="Game\Board\Map\Map4.h" />
     <ClInclude Include="Game\Data\CommonData.h" />

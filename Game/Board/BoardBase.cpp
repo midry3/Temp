@@ -692,6 +692,7 @@ namespace Game {
 		_battleWarningEnemy = _nextEnemyAction.has_value() ? _nextEnemyAction->enemy : nullptr;
 		_battleStartedInEnemyTurn = _isEnemyTurn;
 		CommonData::LastBattleEnemyDefeated = false;
+		CommonData::LastBattleAlliesDefeated = false;
 		const auto battleScene = MakeShared<BattleBase>();
 		SetupBattle(*battleScene, allyUnit, enemyUnit, coopAllies);
 
@@ -752,9 +753,13 @@ namespace Game {
 		if (not _battleEnemyUnit) return;
 
 		// 戦闘結果を Board 側の永続状態へ書き戻し、パネル表示を更新する
+		std::vector<SharedPtr<BoardUnit>> participantAllies;
 		for (const auto& [unit, character] : _battleParticipants) {
 			if (unit && character && unit->GetCharacter()) {
 				unit->GetCharacter()->RestoreState(character->GetState());
+			}
+			if (unit && unit->IsAlly()) {
+				participantAllies.push_back(unit);
 			}
 		}
 		_battleParticipants.clear();
@@ -775,6 +780,25 @@ namespace Game {
 
 		const bool defeated = CommonData::LastBattleEnemyDefeated;
 		CommonData::LastBattleEnemyDefeated = false;
+		const bool alliesDefeated = CommonData::LastBattleAlliesDefeated;
+		CommonData::LastBattleAlliesDefeated = false;
+
+		if (alliesDefeated) {
+			// 参加した味方が全滅したので、その味方を盤面から消し、パネルを薄黒にして次のターンへ
+			for (const auto& allyUnit : participantAllies) {
+				if (_infoPanel) {
+					_infoPanel->AddDefeatedAlly(allyUnit->GetCharacter());
+				}
+				std::erase(_units, allyUnit);
+				allyUnit->Free();
+			}
+			_turn++;
+			_isEnemyTurn = false;
+			UpdateEnemyIntentVisuals();
+			UpdateCoopIcons();
+			UpdateOccupiedTileVisuals();
+			return;
+		}
 
 		auto resumeFlow = [this, defeatedUnits, warningEnemy, defeated, startedInEnemyTurn]() {
 			UpdateCoopIcons();

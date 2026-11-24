@@ -61,6 +61,9 @@
     <ClCompile Include="Game\Battle\WinScreen.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="Game\Battle\LoseScreen.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
     <ClCompile Include="Game\Data\CommonData.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -168,6 +171,9 @@
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="Game\TestScene.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\StageSelect.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="Game\Battle\BattleCharacter\Zon.cpp">
@@ -307,6 +313,12 @@
     <ClInclude Include="Game\Board\Map\Map1.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="Game\Board\Map\StageBoard.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\StageSelect.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
     <ClInclude Include="Game\Battle\Hud.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
@@ -323,6 +335,9 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Game\Battle\WinScreen.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\Battle\LoseScreen.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Game\Data\CommonData.h">

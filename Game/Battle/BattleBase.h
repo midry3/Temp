@@ -43,6 +43,8 @@ namespace Game {
 		StateMachine _state;
 		std::vector<SkillInfo> _selectedSkills;
 		std::vector<std::vector<SharedPtr<BattleCharacter>>> _selectedTargets;
+		// _selectedSkills と同じ順序で、選択した味方の _allies 上のインデックス（死亡キャラは選択を飛ばすため）
+		std::vector<int> _selectedAllyIndices;
 		int _currentCharacterIndex = 0;
 		bool _charactersPut = false;
 

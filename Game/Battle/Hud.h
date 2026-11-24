@@ -10,6 +10,9 @@
 namespace Game {
 	class Hud : public Scene {
 	private:
+		// 死亡したキャラクターのパネルにかける薄黒
+		static constexpr int PANEL_DEAD_DIM_VALUE = 128;
+
 		std::vector<SharedPtr<BattleCharacter>> _allies, _enemies;
 		std::vector<SharedPtr<StatusPanel>> _allyStatusPanels;
 		std::vector<SharedPtr<EnemyStatsPanel>> _enemyStatusPanels;

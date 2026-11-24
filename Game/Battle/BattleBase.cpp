@@ -2,6 +2,7 @@
 #include <Scene/Container/Animation/AnimatedGrid.h>
 #include <Game/Data/CommonData.h>
 #include "WinScreen.h"
+#include "LoseScreen.h"
 #include <Scene/Sound/SoundPlayer.h>
 #include <Math/Utils.h>
 #include <algorithm>
@@ -35,6 +36,7 @@ namespace Game {
 				// 全体対象、または単体対象でも候補が1体以下なら選択をスキップする
 				_selectedSkills.push_back(skill);
 				_selectedTargets.push_back(candidates);
+				_selectedAllyIndices.push_back(_currentCharacterIndex);
 				AdvanceSelection();
 			}
 			else {
@@ -67,12 +69,25 @@ namespace Game {
 			});
 			};
 		_state[Command].Entered += [this]() {
-			_currentCharacterIndex = 0;
 			_selectedSkills.clear();
 			_selectedTargets.clear();
-			// 並びを選択順に戻す（選択先頭の味方が最前列）
+			_selectedAllyIndices.clear();
+			// 死亡した味方のコマンドは飛ばす（最初の生存味方から選択を始める）
+			_currentCharacterIndex = 0;
+			while (_currentCharacterIndex < static_cast<int>(_allies.size())
+				&& (not _allies[_currentCharacterIndex] || _allies[_currentCharacterIndex]->IsDead())) {
+				_currentCharacterIndex++;
+			}
+			if (static_cast<int>(_allies.size()) <= _currentCharacterIndex) {
+				_state >> Lost;
+				return;
+			}
+			// 並びを選択順に戻す（選択先頭の味方が最前列。死亡した味方は並びから外す）
 			_formationFrontX = ALLIES_X;
-			_allyFormation.assign(_allies.rbegin(), _allies.rend());
+			_allyFormation.clear();
+			for (auto it = _allies.rbegin(); it != _allies.rend(); ++it) {
+				if (*it && not (*it)->IsDead()) _allyFormation.push_back(*it);
+			}
 			ApplyAllyFormation(true);
 			_usingSkillView->Out();
 			_battleUI->In();
@@ -92,8 +107,10 @@ namespace Game {
 			};
 
 		_state[Lost].Entered += [this]() {
+			CommonData::LastBattleAlliesDefeated = true;
 			_usingSkillView->Out();
 			_battleUI->Out();
+			CreateScene<LoseScreen>();
 			};
 
 		_state >> Opening;
@@ -107,13 +124,15 @@ namespace Game {
 		_actionQueue.clear();
 		_actionIndex = 0;
 
-		// 味方分は選択済みのスキルと対象を使う
-		for (size_t i = 0; i < _allies.size(); ++i) {
-			if (not _allies[i] || _selectedSkills.size() <= i) continue;
+		// 味方分は選択済みのスキルと対象を使う（選択した味方のインデックスと対応付ける）
+		for (size_t k = 0; k < _selectedSkills.size(); ++k) {
+			if (_selectedAllyIndices.size() <= k) continue;
+			const int allyIndex = _selectedAllyIndices[k];
+			if (allyIndex < 0 || static_cast<int>(_allies.size()) <= allyIndex || not _allies[allyIndex]) continue;
 			QueuedAction queued;
-			queued.actor = _allies[i];
-			queued.skill = _selectedSkills[i];
-			if (i < _selectedTargets.size()) queued.targets = _selectedTargets[i];
+			queued.actor = _allies[allyIndex];
+			queued.skill = _selectedSkills[k];
+			if (k < _selectedTargets.size()) queued.targets = _selectedTargets[k];
 			if (queued.targets.empty() && not _enemies.empty()) {
 				queued.targets.push_back(_enemies.front());
 			}
@@ -364,7 +383,10 @@ namespace Game {
 
 	void BattleBase::AdvanceSelection() {
 		if (NextCharaExists()) {
-			_currentCharacterIndex++;
+			// 死亡した味方は飛ばして次の生存味方へ
+			do {
+				_currentCharacterIndex++;
+			} while (not _allies[_currentCharacterIndex] || _allies[_currentCharacterIndex]->IsDead());
 			// 選択が終わったキャラは後ろへ、次のキャラが最前列へ
 			SetAllyFront(_allies[_currentCharacterIndex]);
 			ApplyAllyFormation(true);
@@ -392,12 +414,14 @@ namespace Game {
 			_selectedTargets.push_back(candidates.empty()
 				? std::vector<SharedPtr<BattleCharacter>>{}
 				: std::vector<SharedPtr<BattleCharacter>>{ candidates.front() });
+			_selectedAllyIndices.push_back(_currentCharacterIndex);
 			AdvanceSelection();
 			return;
 		}
 		_targetSelect->Show(panelCandidates, [this, skill](const SharedPtr<BattleCharacter>& chosen) {
 			_selectedSkills.push_back(skill);
 			_selectedTargets.push_back({ chosen });
+			_selectedAllyIndices.push_back(_currentCharacterIndex);
 			AdvanceSelection();
 			});
 	}
@@ -434,7 +458,11 @@ namespace Game {
 	}
 
 	bool BattleBase::NextCharaExists() {
-		return _currentCharacterIndex + 1 < static_cast<int>(_allies.size());
+		// 死亡した味方は数えない
+		for (int i = _currentCharacterIndex + 1; i < static_cast<int>(_allies.size()); ++i) {
+			if (_allies[i] && not _allies[i]->IsDead()) return true;
+		}
+		return false;
 	}
 
 	bool BattleBase::IsDefeatedAllAllies() {
