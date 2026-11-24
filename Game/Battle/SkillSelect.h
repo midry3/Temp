@@ -16,6 +16,12 @@ namespace Game {
 		static constexpr double BACK_BUTTON_Y = 612.0;
 		static constexpr double BACK_BUTTON_SCALE = 2.0;
 
+		// スキル名ラベル（各スキルボタンの中央）のデザイン定数
+		static constexpr int SKILL_NAME_FONT_SIZE = 18;
+		static constexpr int SKILL_NAME_COLOR_R = 255;
+		static constexpr int SKILL_NAME_COLOR_G = 255;
+		static constexpr int SKILL_NAME_COLOR_B = 255;
+
 		int _availableMP = 0;
 		bool _isAlreadySelected = false;
 		OutLineShaderBuffer _outlineBuffer;
