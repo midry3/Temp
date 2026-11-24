@@ -4,11 +4,17 @@
 
 class Sprite2D;
 class Texture;
+class ColorRect;
 
 namespace Game {
 	class BoardTile : public Button {
 	private:
+		// 点滅をオブジェクト等より上に描くためのオーバーレイの不透明度
+		static constexpr int HINT_OVERLAY_ALPHA = 110;
+
 		SharedPtr<Sprite2D> _sprite;
+		SharedPtr<ColorRect> _hintOverlay;
+		Vector2D _size;
 		BoardTerrain _terrain = BoardTerrain::Normal;
 		bool _selected = false;
 		bool _moveHint = false;
@@ -17,6 +23,8 @@ namespace Game {
 		double _hintTime = 0.0;
 
 		void UpdateColor();
+		void UpdateHintOverlay(const Vector3D& color);
+		void HideHintOverlay();
 
 	protected:
 		void _Load() override;
@@ -24,6 +32,8 @@ namespace Game {
 
 	public:
 		void SetTile(BoardTerrain terrain, const SharedPtr<Texture>& texture, const Vector2D& size);
+		// 点滅オーバーレイの置き場（盤面の上位レイヤー）を設定する
+		void SetHintLayer(const SharedPtr<Scene>& layer);
 		[[nodiscard]] BoardTerrain GetTerrain() const { return _terrain; }
 		[[nodiscard]] bool IsPassable() const { return _terrain != BoardTerrain::Disabled; }
 		void SetSelected(bool selected);
