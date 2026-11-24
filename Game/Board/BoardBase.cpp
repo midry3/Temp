@@ -89,6 +89,9 @@ namespace Game {
 		_bgmPlayer->SetSound(LoadAsset<Sound>("sound/bgm/bgm1.oga"))
 			->SetLoop()
 			->SetVolume(0.5);
+		// FadeAndPlay は一時停止した音の再開には使えるが、未再生の音は始まらないため、
+		// 初回はここで明示的に再生を開始しておく
+		_bgmPlayer->Play();
 
 		EnteredMainScene.Connect([this]() {
 			OnReturnedFromBattle();
