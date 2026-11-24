@@ -232,6 +232,7 @@
     <ClInclude Include="Game\Battle\BattleCharacter\BattleCharacterFactory.h" />
     <ClInclude Include="Game\Board\Map\Map1.h" />
     <ClInclude Include="Game\Board\Map\Map3.h" />
+    <ClInclude Include="Game\Board\Map\Map4.h" />
     <ClInclude Include="Game\Data\CommonData.h" />
     <ClInclude Include="Game\Data\SoundEffects.h" />
     <ClInclude Include="ThirdParty\imgui-1.92.9b\imgui.h" />
@@ -268,6 +269,8 @@
     <None Include="Assets\board\map1.lua" />
     <None Include="Assets\board\map2.lua" />
     <None Include="Assets\board\map3.lua" />
+    <None Include="Assets\board\map4.lua" />
+    <None Include="Assets\chara\golem\attack\attack_1.lua" />
     <None Include="Assets\chara\gou\attack.png.anim" />
     <None Include="Assets\chara\gou\attack\swing.lua" />
     <None Include="Assets\chara\gou\attack_prepare.png.anim" />

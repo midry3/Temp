@@ -12,12 +12,12 @@ namespace Game {
 	class RareSlime : public EnemyBattleCharacter {
 	private:
 		static constexpr int
-			DEFAULT_MAX_HP = 150,
+			DEFAULT_MAX_HP = 250,
 			DEFAULT_MAX_MP = 0,
-			DEFAULT_ATK = 40,
-			DEFAULT_DEF = 10,
-			DEFAULT_MDEF = 10,
-			DEFAULT_SPEED = 15;
+			DEFAULT_ATK = 80,
+			DEFAULT_DEF = 20,
+			DEFAULT_MDEF = 20,
+			DEFAULT_SPEED = 20;
 
 	protected:
 		void _Load() override;

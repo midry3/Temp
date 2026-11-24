@@ -114,7 +114,13 @@ namespace Game {
 			// 死亡演出
 		}
 		else {
-			// 被弾演出
+			const auto& tg = CreateTweenGroup();
+			tg->CreateTween(&offset.x, 20, 0.1);
+			tg->CreateTween(&offset.x, -20, 0.1);
+			tg->CreateTween(&offset.x, 20, 0.1);
+			tg->CreateTween(&offset.x, -20, 0.1);
+			tg->CreateTween(&offset.x, 20, 0.1);
+			tg->CreateTween(&offset.x, 0, 0.1);
 		}
 		CreateScene<DamagedEffect>()->SetDamageAmount(appliedDamage);
 		StatChanged.Emit();

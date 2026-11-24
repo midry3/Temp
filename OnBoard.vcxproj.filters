@@ -340,6 +340,9 @@
     <ClInclude Include="Game\Board\Map\Map3.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="Game\Board\Map\Map4.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\board\default.lua" />
@@ -378,6 +381,8 @@
     <None Include="Assets\chara\witch\attack\attack_1.lua" />
     <None Include="Assets\board\map3.lua" />
     <None Include="Assets\board\map2.lua" />
+    <None Include="Assets\board\map4.lua" />
+    <None Include="Assets\chara\golem\attack\attack_1.lua" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shader\BlurInShader.hlsl" />

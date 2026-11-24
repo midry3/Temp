@@ -12,12 +12,12 @@ namespace Game {
 	class RareGolem : public EnemyBattleCharacter {
 	private:
 		static constexpr int
-			DEFAULT_MAX_HP = 300,
+			DEFAULT_MAX_HP = 2500,
 			DEFAULT_MAX_MP = 0,
-			DEFAULT_ATK = 60,
-			DEFAULT_DEF = 30,
+			DEFAULT_ATK = 500,
+			DEFAULT_DEF = 500,
 			DEFAULT_MDEF = 0,
-			DEFAULT_SPEED = 8;
+			DEFAULT_SPEED = 5;
 
 	protected:
 		void _Load() override;
