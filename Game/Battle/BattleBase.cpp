@@ -171,7 +171,9 @@ namespace Game {
 		for (size_t i = 0; i < _allyFormation.size(); ++i) {
 			const auto& ally = _allyFormation[i];
 			if (not ally) continue;
-			const Vector2D slot(static_cast<double>(i) * ALLY_SPACING, 0.0);
+			// 最前列（最後尾のキャラ）が ALLIES_X に来るよう、左方向へ並べる
+			const double backCount = static_cast<double>(_allyFormation.size() - 1 - i);
+			const Vector2D slot(-backCount * ALLY_SPACING, 0.0);
 			if (animate) {
 				auto tweenGroup = ally->CreateTweenGroup();
 				tweenGroup->CreateTween(&ally->position, slot, FORMATION_ANIMATION_TIME, Easing::EaseInOutQuad);
