@@ -25,7 +25,7 @@ namespace Game {
 		static constexpr int
 			ALLIES_X = 100,
 			ENEMIES_X = 1000,
-			CHARACTER_Y = 280,
+			CHARACTER_Y = 600,
 			CHARACTER_GRID_HEIGHT = 500;
 
 		StateMachine _state;
