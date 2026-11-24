@@ -16,10 +16,15 @@ namespace Game {
 	private:
 		// 倒れた味方のパネルにかける薄黒の割合（元の色味に掛ける）
 		static constexpr double PANEL_DEAD_DIM_RATE = 0.5;
+		// 降参ボタンの大きさと余白（パネル右下に置く）
+		static constexpr double SURRENDER_BUTTON_WIDTH = 120.0;
+		static constexpr double SURRENDER_BUTTON_HEIGHT = 44.0;
+		static constexpr double SURRENDER_BUTTON_MARGIN = 12.0;
 
 		SharedPtr<ColorRect> _background;
 		SharedPtr<GridContainer> _allyGrid;
 		SharedPtr<GridContainer> _enemyGrid;
+		SharedPtr<Scene> _surrenderButton;
 		std::vector<SharedPtr<BoardStatusPanel>> _allyPanels;
 		std::vector<SharedPtr<BoardEnemyStatusPanel>> _enemyPanels;
 		std::vector<SharedPtr<BattleCharacter>> _allyCharacters;
@@ -29,6 +34,8 @@ namespace Game {
 	protected:
 		void _Load() override;
 	public:
+		Signal<> SurrenderPressed;
+
 		void SetPanelSize(double width, double height);
 		void SetAllies(const std::vector<SharedPtr<BattleCharacter>>& allies);
 		// 倒れて盤面から消えた味方を、薄黒のパネルとして残す

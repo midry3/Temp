@@ -1,5 +1,7 @@
 #include "BoardInfoPanel.h"
 #include <Scene/Text/TextLabel.h>
+#include <Scene/Button/Button.h>
+#include <Game/Data/SoundEffects.h>
 #include <algorithm>
 
 namespace Game {
@@ -47,10 +49,36 @@ namespace Game {
 		_enemyGrid->SetSpace({ 0, BoardEnemyStatusPanel::PANEL_HEIGHT + 6 })
 			->SetMatrixSize({ 1, 3 })
 			->SetPosition({ 8, 336 });
+
+		// 降参ボタン（パネル右下。位置は SetPanelSize で決める）
+		const auto& surrenderButton = CreateScene<Button>();
+		surrenderButton->SetArea({ {0, 0}, {SURRENDER_BUTTON_WIDTH, 0}, {SURRENDER_BUTTON_WIDTH, SURRENDER_BUTTON_HEIGHT}, {0, SURRENDER_BUTTON_HEIGHT} });
+		const auto& surrenderBackground = surrenderButton->CreateScene<ColorRect>();
+		surrenderBackground->SetSize({ SURRENDER_BUTTON_WIDTH, SURRENDER_BUTTON_HEIGHT })
+			->SetColor({ 120, 50, 50 });
+		const auto& surrenderLabel = surrenderButton->CreateScene<TextLabel>();
+		surrenderLabel->BeginSetting()
+			->SetFontSize(20)
+			->SetForegroundColor({ 255, 255, 255 })
+			->EndSetting()
+			->SetText("降参")
+			->SetPosition({ 40, 10 });
+		const auto& surrenderSE = CreateSelectSePlayer(surrenderButton.get());
+		surrenderButton->LeftPressed += [this, surrenderSE](const MouseEvent& event) {
+			if (event.just) {
+				surrenderSE->Play();
+				SurrenderPressed.Emit();
+			}
+			};
+		_surrenderButton = surrenderButton;
 	}
 
 	void BoardInfoPanel::SetPanelSize(double width, double height) {
 		_background->SetSize({ width, height });
+		if (_surrenderButton) {
+			_surrenderButton->SetPosition({ width - SURRENDER_BUTTON_WIDTH - SURRENDER_BUTTON_MARGIN,
+				height - SURRENDER_BUTTON_HEIGHT - SURRENDER_BUTTON_MARGIN });
+		}
 	}
 
 	void BoardInfoPanel::SetAllies(const std::vector<SharedPtr<BattleCharacter>>& allies) {

@@ -11,6 +11,7 @@
 #include <Asset/AssetManager.h>
 #include <Scene/Texture/Sprite2D.h>
 #include <Game/Data/CommonData.h>
+#include <Game/StageSelect.h>
 #include <SceneManager.h>
 #include <lua.hpp>
 #include <algorithm>
@@ -78,6 +79,11 @@ namespace Game {
 	void BoardBase::_Load() {
 		CommonData::CurrentBoard = std::dynamic_pointer_cast<BoardBase>(shared_from_this());
 		_infoPanel = CreateScene<BoardInfoPanel>();
+		_infoPanel->SurrenderPressed += [this]() {
+			// 降参: ステージを諦めてステージ選択へ戻る
+			if (_winScreen || _isEnemyTurn || _isAnimating || _isCoopSelecting) return;
+			SceneManager.TransSceneTo(MakeShared<StageSelect>(), 1.0, 0.3, true, SceneTransitionBehavior::Ignore);
+			};
 
 		_bgmPlayer = CreateScene<SoundPlayer>();
 		_bgmPlayer->SetSound(LoadAsset<Sound>("sound/bgm/bgm1.oga"))
