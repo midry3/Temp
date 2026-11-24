@@ -621,7 +621,9 @@ namespace Game {
 		const auto absX = std::abs(dx);
 		const auto absY = std::abs(dy);
 		if (data.moveType == BoardMoveType::Adjacent) return not (1 < absX) && not (1 < absY);
-		if (data.moveType == BoardMoveType::RangeTwo) return not (2 < absX) && not (2 < absY) && not IsBlockedBeyondUnit(unit, dx, dy);
+		// 共闘判定ではレコの「奥側通行不可」を適用せず、移動範囲内かどうかだけで判定する
+		// （実際の移動では IsMoveAllowed 側で引き続き適用される）
+		if (data.moveType == BoardMoveType::RangeTwo) return not (2 < absX) && not (2 < absY);
 		if (data.moveType == BoardMoveType::DiagonalUnlimited) {
 			if (dx == 0 || dy == 0) return not (1 < absX) && not (1 < absY);
 			if (absX != absY) return false;
