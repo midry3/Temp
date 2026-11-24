@@ -31,7 +31,7 @@ namespace Game {
 		SetSkills({
 			{ "射撃", "special", "fire", "chara/zon/attack/gun_shot.lua", 20 },
 			{ "特製手りゅう弾", "special", "fire", "chara/zon/attack/bomb.lua", 20, SkillTargetScope::All },
-			{ "補給物資", "special", "water", "chara/zon/attack/supply.lua", 20 },
+			{ "補給物資", "special", "water", "chara/zon/attack/supply.lua", 20, SkillTargetScope::Single, SkillTargetSide::Ally },
 			{ "Heal", "special", "nature", "battle/heal.lua", 20 }
 			});
 

@@ -3,7 +3,7 @@
 namespace Game {
 	void Hud::_Load() {
 		_allyStatusGrid = CreateScene<GridContainer>();
-		_allyStatusGrid->SetSpace({ 0, 110 })
+		_allyStatusGrid->SetSpace({ 0, 115 })
 			->SetPosition({ 20, 20 });
 
 		_enemyStatusGrid = CreateScene<GridContainer>();
@@ -39,7 +39,7 @@ namespace Game {
 		for (size_t i = 0; i < _allies.size() && i < _allyStatusPanels.size(); ++i) {
 			if (_allies[i] == character && _allyStatusPanels[i]) {
 				const auto position = _allyStatusPanels[i]->GetGlobalPosition() + Vector2D(20, 20);
-				return std::make_pair(position, Vector2D(320, 120));
+				return std::make_pair(position, Vector2D(320, 106));
 			}
 		}
 		for (size_t i = 0; i < _enemies.size() && i < _enemyStatusPanels.size(); ++i) {

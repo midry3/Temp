@@ -41,7 +41,7 @@ namespace Game {
 		addDim({ left, bottom }, { right - left, window.y - bottom });
 
 		// 候補パネルをハイライト色で縁取りし、パネル全体を発光点滅させる
-		const CoreBackend::Drawing::Color highlightColor(HighlightColorR, HighlightColorG, HighlightColorB);
+		const auto highlightColor = CoreBackend::Drawing::Color(HighlightColorR, HighlightColorG, HighlightColorB);
 		for (const auto& [character, rect] : candidates) {
 			const auto& glow = CreateScene<ColorRect>();
 			glow->SetSize(rect.second)

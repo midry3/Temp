@@ -23,12 +23,10 @@ namespace Game {
 			CoreBackend::Drawing::Color(100, 160, 200)
 		});
 		SetStats({
-			DEFAULT_MAX_HP, DEFAULT_MAX_MP, DEFAULT_ATK, DEFAULT_DEF, DEFAULT_SPEED
+			DEFAULT_MAX_HP, DEFAULT_MAX_MP, DEFAULT_ATK, DEFAULT_DEF, DEFAULT_MDEF, DEFAULT_SPEED
 		});
 		SetSkills({
-			{ "たいあたり", "physical", "normal", "" },
-			{ "ねばねばアタック", "physical", "nature", "" },
-			{ "カサカサ突進", "special", "normal", "" }
+			{ "たいあたり", "physical", "normal", "" }
 		});
 		SetRustleParams(20.0, 4, 0.12);
 

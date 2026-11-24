@@ -3,7 +3,7 @@
 namespace Game {
 	void StatusPanel::_Load() {
 		_panel = CreateScene<ColorRect>();
-		_panel->SetSize({ 320, 110 })
+		_panel->SetSize({ 320, 106 })
 			->SetColor({ 30, 50, 30 })
 			->SetAlpha(200)
 			->SetPosition({ 20, 20 });
